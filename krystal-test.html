@@ -1,0 +1,2547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" id="themeColorMeta" content="#0f1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Krystal">
+<link rel="manifest" id="pwaManifest">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<title>Krystal</title>
+
+<!-- Open Graph / link previews (WhatsApp, Facebook, etc.) -->
+<!-- IMPORTANT: og:image and og:url must be absolute URLs once you have your
+     real domain (e.g. https://app.electropro.co.ke/og-image.png) — link-preview
+     crawlers generally won't resolve relative paths. Update these two lines
+     after you deploy. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Krystal">
+<meta property="og:title" content="Krystal — Shop Management Made Simple">
+<meta property="og:description" content="Run your shop from your phone: inventory, POS, staff roles, and sales reports — works offline.">
+<meta property="og:image" content="og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Krystal — Shop Management Made Simple">
+<meta name="twitter:description" content="Run your shop from your phone: inventory, POS, staff roles, and sales reports — works offline.">
+<meta name="twitter:image" content="og-image.png">
+<style>
+/* ── TOKENS ── */
+:root{
+  --bg:#0f1117;--sf:#1a1d27;--sf2:#22263a;--bd:#2e3350;
+  --ac:#00d4aa;--ac3:#6366f1;--re:#ef4444;--wa:#f59e0b;
+  --tx:#e8eaf6;--tx2:#8892b0;--gr:#10b981;
+  --r8:8px;--r12:12px;--r16:16px;
+  --font:'Segoe UI',system-ui,sans-serif;
+  --sh:0 4px 24px rgba(0,0,0,.4);
+  --sidebar-w:260px;
+}
+body.light{--bg:#f0f2f7;--sf:#fff;--sf2:#f5f6fa;--bd:#e0e4ef;--tx:#1a1d27;--tx2:#6b7280;--ac:#009e80;--gr:#059669;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overscroll-behavior:none;}
+body{background:var(--bg);color:var(--tx);font-family:var(--font);font-size:14px;transition:background .2s,color .2s;}
+svg{display:inline-block;vertical-align:middle;flex-shrink:0;pointer-events:none;}
+button{font-family:var(--font);cursor:pointer;}
+input,select,textarea{font-family:var(--font);}
+
+/* ── AUTH SCREENS ── */
+.auth-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:2000;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow:hidden;}
+.auth-screen.show{display:flex;}
+.auth-screen::before,.auth-screen::after{content:'';position:absolute;width:340px;height:340px;border-radius:50%;filter:blur(70px);opacity:.35;pointer-events:none;animation:authDrift 18s ease-in-out infinite alternate;}
+.auth-screen::before{background:var(--ac);top:-90px;left:-70px;}
+.auth-screen::after{background:var(--ac3);bottom:-110px;right:-70px;animation-duration:22s;animation-delay:-7s;}
+body.light .auth-screen::before,body.light .auth-screen::after{opacity:.22;}
+@keyframes authDrift{0%{transform:translate(0,0) scale(1);}50%{transform:translate(30px,22px) scale(1.15);}100%{transform:translate(-22px,30px) scale(.95);}}
+.auth-logo{width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,var(--ac),var(--ac3));display:flex;align-items:center;justify-content:center;margin-bottom:16px;position:relative;z-index:1;animation:logoGlow 2.8s ease-in-out infinite;}
+@keyframes logoGlow{0%,100%{box-shadow:0 4px 24px rgba(0,212,170,.25);}50%{box-shadow:0 4px 34px rgba(0,212,170,.55);}}
+.auth-title{font-size:22px;font-weight:900;margin-bottom:4px;position:relative;z-index:1;}
+.auth-sub{font-size:12px;color:var(--tx2);margin-bottom:28px;text-align:center;position:relative;z-index:1;}
+.auth-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r16);padding:20px;width:100%;max-width:360px;position:relative;z-index:1;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.3);}
+.auth-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--ac),var(--ac3));}
+.auth-err{color:var(--re);font-size:11px;margin-bottom:8px;min-height:16px;text-align:center;}
+.auth-link{text-align:center;font-size:12px;color:var(--tx2);margin-top:14px;}
+.auth-link span{color:var(--ac);cursor:pointer;font-weight:700;}
+.auth-divider{text-align:center;font-size:11px;color:var(--tx2);margin:10px 0;position:relative;}
+.auth-divider::before,.auth-divider::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--bd);}
+.auth-divider::before{left:0;}.auth-divider::after{right:0;}
+
+/* ── LOADING SCREEN ── */
+.loading-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:2500;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.loading-screen.show{display:flex;}
+.spinner{width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--ac);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-msg{font-size:13px;color:var(--tx2);font-weight:600;}
+
+/* ── PAUSED SCREEN ── */
+.paused-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:1900;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;}
+.paused-screen.show{display:flex;}
+.paused-icon{font-size:56px;margin-bottom:16px;}
+.paused-title{font-size:20px;font-weight:900;color:var(--wa);margin-bottom:8px;}
+.paused-msg{font-size:13px;color:var(--tx2);line-height:1.7;margin-bottom:24px;}
+.paused-contact{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r12);padding:16px;width:100%;max-width:320px;margin-bottom:16px;}
+.paused-contact-title{font-size:11px;color:var(--tx2);text-transform:uppercase;letter-spacing:.6px;font-weight:700;margin-bottom:10px;}
+
+/* ── APP LAYOUT ── */
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;opacity:0;transition:opacity .3s;}
+.app.ready{opacity:1;}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--sf);border-bottom:1px solid var(--bd);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:50;}
+.tb-left{display:flex;align-items:center;gap:10px;}
+.hamburger{width:38px;height:38px;background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r8);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;padding:6px;cursor:pointer;flex-shrink:0;}
+.hamburger:active{background:var(--bd);}
+.hamburger span{display:block;width:18px;height:2.5px;background:var(--tx);border-radius:1.5px;transition:all .25s;}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.hamburger.open span:nth-child(2){opacity:0;}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+.tb-brand{display:flex;align-items:center;gap:8px;}
+.tb-icon{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--ac),var(--ac3));display:flex;align-items:center;justify-content:center;}
+.tb-name{font-size:15px;font-weight:800;}
+.tb-right{display:flex;align-items:center;gap:8px;}
+.tb-date{background:var(--sf2);border:1px solid var(--bd);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--tx2);white-space:nowrap;}
+.sync-pill{display:flex;align-items:center;gap:5px;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--tx2);cursor:pointer;}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--tx2);}
+.sync-dot.online{background:var(--gr);}
+.sync-dot.syncing{background:var(--wa);animation:pulse 1s infinite;}
+.sync-dot.offline{background:var(--re);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* ── SIDEBAR ── */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;backdrop-filter:blur(2px);}
+.sidebar-overlay.show{display:block;}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:var(--sf);border-right:1px solid var(--bd);z-index:110;transform:translateX(calc(-1 * var(--sidebar-w)));transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden;}
+.sidebar.open{transform:translateX(0);}
+.sb-header{padding:20px 16px 14px;border-bottom:1px solid var(--bd);}
+.sb-shop{font-size:15px;font-weight:800;margin-bottom:2px;}
+.sb-user{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.sb-av{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--ac),var(--ac3));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#071a15;flex-shrink:0;}
+.sb-uname{font-size:13px;font-weight:700;}
+.sb-urole{font-size:10px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;}
+.sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+.sb-item{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;font-size:13px;font-weight:600;color:var(--tx2);transition:all .15s;border-left:3px solid transparent;}
+.sb-item:hover{background:var(--sf2);color:var(--tx);}
+.sb-item.active{background:var(--sf2);color:var(--ac);border-left-color:var(--ac);}
+.sb-item svg{width:18px;height:18px;flex-shrink:0;}
+.sb-divider{height:1px;background:var(--bd);margin:6px 16px;}
+.sb-section{font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;font-weight:700;padding:10px 16px 4px;}
+.sb-bottom{padding:12px;border-top:1px solid var(--bd);}
+.sb-signout{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r8);cursor:pointer;font-size:13px;font-weight:600;color:var(--re);background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);}
+.sb-brand-mark{display:flex;align-items:center;gap:6px;justify-content:center;padding:2px 0 10px;font-size:10px;font-weight:700;color:var(--tx2);letter-spacing:.2px;}
+
+/* ── CUSTOM CONFIRM DIALOG ── */
+.confirm-sheet{max-width:340px;margin:0 auto;text-align:center;animation:confirmPop .2s ease;}
+@keyframes confirmPop{from{transform:scale(.94) translateY(6px);opacity:0;}to{transform:scale(1) translateY(0);opacity:1;}}
+.confirm-icon{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--ac),var(--ac3));color:#fff;display:flex;align-items:center;justify-content:center;margin:4px auto 14px;}
+.confirm-icon.danger{background:linear-gradient(135deg,#ef4444,#b91c1c);}
+.confirm-title{font-size:16px;font-weight:800;margin-bottom:6px;}
+.confirm-msg{font-size:13px;color:var(--tx2);line-height:1.5;}
+
+/* ── MAIN SCROLL ── */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.page-wrap{padding:12px;padding-bottom:24px;}
+.page{display:none;}.page.active{display:block;}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.sec-title{font-size:15px;font-weight:800;}
+
+/* ── CARDS ── */
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r12);padding:14px;}
+.card-title{font-size:10px;color:var(--tx2);font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+
+/* ── KPI ── */
+.kpi{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r12);padding:12px;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.kpi.k-gr::before{background:var(--gr);}
+.kpi.k-am::before{background:var(--wa);}
+.kpi.k-bl::before{background:var(--ac3);}
+.kpi.k-tl::before{background:var(--ac);}
+.kpi-lbl{font-size:10px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.kpi-val{font-size:18px;font-weight:800;}
+.kpi-sub{font-size:10px;color:var(--tx2);margin-top:2px;}
+.kpi-ico{position:absolute;top:10px;right:10px;opacity:.12;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 14px;border-radius:var(--r8);border:none;font-size:12px;font-weight:700;transition:opacity .12s,transform .08s;}
+.btn:active{opacity:.8;transform:scale(.97);}
+.btn-p{background:var(--ac);color:#071a15;}
+.btn-s{background:var(--sf2);color:var(--tx);border:1px solid var(--bd);}
+.btn-d{background:rgba(239,68,68,.12);color:var(--re);border:1px solid rgba(239,68,68,.22);}
+.btn-w{background:rgba(245,158,11,.12);color:var(--wa);border:1px solid rgba(245,158,11,.22);}
+.btn-sm{padding:6px 10px;font-size:11px;}
+.btn-xs{padding:4px 8px;font-size:11px;border-radius:6px;}
+.btn-ico{width:28px;height:28px;padding:0;border-radius:6px;}
+.btn-full{width:100%;}
+
+/* ── INPUTS ── */
+.fg{display:flex;flex-direction:column;gap:4px;flex:1;min-width:130px;}
+.frow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.fg label{font-size:10px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
+input,select{background:var(--sf2);border:1px solid var(--bd);color:var(--tx);border-radius:var(--r8);padding:9px 11px;font-size:13px;width:100%;outline:none;transition:border-color .15s;}
+input:focus,select:focus{border-color:var(--ac);}
+select option{background:var(--sf);}
+input[disabled]{opacity:.45;}
+textarea{background:var(--sf2);border:1px solid var(--bd);color:var(--tx);border-radius:var(--r8);padding:9px 11px;font-size:13px;width:100%;outline:none;resize:vertical;}
+.search-wrap{position:relative;flex:1;}
+.search-wrap input{padding-left:32px;}
+.search-ico{position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none;}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r12);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{text-align:left;padding:9px 10px;color:var(--tx2);font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--bd);font-weight:700;white-space:nowrap;background:var(--sf);}
+td{padding:10px;border-bottom:1px solid var(--bd);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+
+/* ── BADGES ── */
+.badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:700;}
+.bc-el{background:rgba(245,158,11,.15);color:#fbbf24;}
+.bc-co{background:rgba(16,185,129,.15);color:#34d399;}
+.bc-po{background:rgba(239,68,68,.15);color:#f87171;}
+.bc-in{background:rgba(0,212,170,.15);color:var(--ac);}
+.bc-mo{background:rgba(99,102,241,.2);color:#a5b4fc;}
+.stock-lo{color:var(--re);font-weight:700;}
+.stock-ok{color:var(--gr);}
+.stock-md{color:var(--wa);}
+
+/* ── STAT ROWS ── */
+.srow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--bd);}
+.srow:last-child{border-bottom:none;}
+.srow-l{font-size:12px;color:var(--tx2);}
+.srow-v{font-size:13px;font-weight:700;}
+
+/* ── ALERTS ── */
+.alert-list{display:flex;flex-direction:column;gap:6px;}
+.alert-row{display:flex;align-items:center;gap:8px;background:var(--sf2);border-radius:var(--r8);padding:9px 11px;border-left:3px solid var(--re);}
+.alert-row.warn{border-left-color:var(--wa);}
+.alert-dot{width:7px;height:7px;border-radius:50%;background:var(--re);flex-shrink:0;}
+.alert-row.warn .alert-dot{background:var(--wa);}
+.a-name{font-weight:700;font-size:12px;}
+.a-detail{font-size:10px;color:var(--tx2);}
+.a-badge{margin-left:auto;font-size:10px;padding:2px 7px;border-radius:8px;background:rgba(239,68,68,.15);color:var(--re);font-weight:700;white-space:nowrap;}
+.alert-row.warn .a-badge{background:rgba(245,158,11,.15);color:var(--wa);}
+
+/* ── PROFIT BARS ── */
+.pbar{margin:7px 0;}
+.pbar-lbl{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;}
+.pbar-track{height:5px;background:var(--sf2);border-radius:3px;overflow:hidden;}
+.pbar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--ac),var(--ac3));transition:width .5s;}
+
+/* ── CAT FILTERS ── */
+.cat-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
+.cat-pill{padding:4px 11px;border-radius:20px;border:1px solid var(--bd);background:none;color:var(--tx2);cursor:pointer;font-size:11px;font-weight:600;transition:all .12s;}
+.cat-pill.active{background:var(--ac);color:#071a15;border-color:var(--ac);}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;background:var(--sf2);border-radius:10px;padding:3px;margin-bottom:12px;}
+.tab{flex:1;text-align:center;padding:7px 4px;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;color:var(--tx2);border:none;background:none;white-space:nowrap;transition:all .15s;}
+.tab.active{background:var(--sf);color:var(--ac);}
+
+/* ── POS ── */
+.pos-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:calc(100dvh - 300px);overflow-y:auto;padding-bottom:70px;}
+.pos-item{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r8);padding:10px;cursor:pointer;transition:border-color .12s;}
+.pos-item:active{border-color:var(--ac);}
+.pos-name{font-weight:700;font-size:12px;margin-bottom:3px;}
+.pos-price{color:var(--ac);font-weight:800;font-size:14px;}
+.pos-stock{font-size:10px;color:var(--tx2);}
+.cart-body{max-height:50vh;overflow-y:auto;padding:2px 0 7px;}
+/* Floating cart pill — only shown (via JS) once the cart has items */
+.cart-fab{display:none;position:fixed;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:60;background:linear-gradient(135deg,var(--ac),var(--ac3));color:#fff;border-radius:999px;padding:12px 18px;align-items:center;gap:10px;box-shadow:0 8px 28px rgba(0,0,0,.35);cursor:pointer;animation:cartFabIn .25s ease;}
+.cart-fab.show{display:flex;}
+@keyframes cartFabIn{from{transform:translateY(16px) scale(.96);opacity:0;}to{transform:translateY(0) scale(1);opacity:1;}}
+.cart-fab-count{background:rgba(255,255,255,.25);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;}
+.cart-fab-label{flex:1;font-size:13px;font-weight:800;}
+.cart-fab-total{font-size:13px;font-weight:800;}
+.cart-item{display:flex;align-items:center;flex-wrap:wrap;gap:5px;padding:7px;border-radius:7px;background:var(--sf);margin-bottom:5px;}
+.ci-name{width:100%;font-size:11px;font-weight:700;}
+.qty-wrap{display:flex;align-items:center;gap:4px;}
+.qty-btn{background:var(--bd);border:none;color:var(--tx);width:24px;height:24px;border-radius:5px;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.ci-total{font-size:11px;color:var(--ac);font-weight:800;min-width:60px;text-align:right;}
+.cart-ftr{padding:11px 13px;border-top:1px solid var(--bd);}
+.cart-total-row{display:flex;justify-content:space-between;font-size:15px;font-weight:800;margin-bottom:10px;}
+.cart-total-row span:last-child{color:var(--ac);}
+
+/* ── MODALS ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px);}
+.overlay.open{display:flex;}
+.sheet{background:var(--sf);border-radius:var(--r16) var(--r16) 0 0;padding:0 16px 24px;width:100%;max-height:92dvh;overflow-y:auto;}
+.sheet-handle{width:36px;height:4px;background:var(--bd);border-radius:2px;margin:12px auto;}
+.sheet-hdr{display:flex;justify-content:space-between;align-items:center;padding:2px 0 14px;}
+.sheet-title{font-size:15px;font-weight:800;}
+.sheet-close{background:none;border:none;color:var(--tx2);width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;}
+
+/* ── BARCODE SCANNER ── */
+.scan-overlay{display:none;position:fixed;inset:0;background:#000;z-index:2200;flex-direction:column;}
+.scan-overlay.open{display:flex;}
+.scan-video{flex:1;width:100%;object-fit:cover;background:#000;}
+.scan-hdr{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:14px;z-index:2;}
+.scan-hdr .sheet-close{background:rgba(0,0,0,.5);color:#fff;}
+.scan-hdr-title{color:#fff;font-weight:800;font-size:13px;background:rgba(0,0,0,.5);padding:6px 12px;border-radius:999px;}
+.scan-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:78%;max-width:320px;aspect-ratio:5/3;border:2px solid var(--ac);border-radius:14px;box-shadow:0 0 0 2000px rgba(0,0,0,.45);}
+.scan-line{position:absolute;left:4%;right:4%;top:0;height:2px;background:var(--ac);box-shadow:0 0 8px var(--ac);animation:scanSweep 1.8s ease-in-out infinite;}
+@keyframes scanSweep{0%,100%{top:6%;}50%{top:94%;}}
+.scan-fallback{position:absolute;bottom:0;left:0;right:0;background:var(--sf);border-radius:var(--r16) var(--r16) 0 0;padding:16px;z-index:2;}
+.scan-fallback-msg{font-size:11px;color:var(--tx2);margin-bottom:10px;text-align:center;}
+.scan-manual{display:flex;gap:8px;}
+.scan-manual input{flex:1;}
+
+/* ── INVOICE ── */
+.invoice{background:#fff;color:#111;border-radius:10px;padding:16px;font-size:12px;}
+.inv-hdr{text-align:center;border-bottom:2px solid #eee;padding-bottom:10px;margin-bottom:10px;}
+.inv-title{font-size:16px;font-weight:900;}
+.inv-sub{font-size:10px;color:#888;}
+.invoice table{width:100%;}
+.invoice th,.invoice td{padding:5px 7px;border-bottom:1px solid #eee;font-size:11px;}
+.invoice th{background:#f7f7f7;font-weight:700;}
+.inv-total{font-size:14px;font-weight:900;text-align:right;margin-top:8px;}
+
+/* ── SETTINGS ── */
+.set-sec{margin-bottom:18px;}
+.set-sec-title{font-size:10px;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;font-weight:700;padding-bottom:6px;border-bottom:1px solid var(--bd);margin-bottom:10px;}
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--bd);gap:10px;}
+.set-row:last-child{border-bottom:none;}
+.set-lbl{font-size:13px;font-weight:700;}
+.set-sub{font-size:10px;color:var(--tx2);margin-top:2px;}
+.toggle{position:relative;width:42px;height:24px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.tslider{position:absolute;inset:0;background:var(--bd);border-radius:24px;cursor:pointer;transition:.2s;}
+.tslider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+.toggle input:checked+.tslider{background:var(--ac);}
+.toggle input:checked+.tslider:before{transform:translateX(18px);}
+.cdot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:transform .12s,border-color .12s;flex-shrink:0;}
+.cdot.active{border-color:var(--tx);transform:scale(1.12);}
+
+/* ── STAFF LIST ── */
+.staff-item{display:flex;align-items:center;gap:10px;padding:10px;background:var(--sf2);border-radius:var(--r8);margin-bottom:8px;border:1px solid var(--bd);}
+.staff-av{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--ac),var(--ac3));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#071a15;flex-shrink:0;}
+.staff-name{font-size:13px;font-weight:700;}
+.staff-email{font-size:10px;color:var(--tx2);}
+.staff-role{font-size:10px;padding:2px 7px;border-radius:8px;font-weight:700;background:rgba(99,102,241,.2);color:#a5b4fc;}
+.staff-role.owner{background:rgba(0,212,170,.15);color:var(--ac);}
+
+/* ── ADMIN ── */
+.admin-shop-card{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r12);padding:12px;margin-bottom:10px;}
+.admin-shop-name{font-size:14px;font-weight:800;margin-bottom:2px;}
+.admin-shop-meta{font-size:11px;color:var(--tx2);margin-bottom:10px;}
+.status-badge{display:inline-block;font-size:10px;padding:3px 9px;border-radius:8px;font-weight:700;}
+.status-active{background:rgba(16,185,129,.15);color:var(--gr);}
+.status-paused{background:rgba(239,68,68,.15);color:var(--re);}
+
+/* ── CASHIER BANNER ── */
+.cashier-banner{display:none;background:var(--sf2);border:1px solid var(--wa);border-radius:var(--r8);padding:9px 12px;font-size:12px;font-weight:700;color:var(--wa);align-items:center;gap:8px;margin-bottom:10px;}
+body.cashier-mode .cashier-banner{display:flex;}
+body.cashier-mode #kpiProfitToday{display:none;}
+body.cashier-mode #kpiSalesToday{grid-column:1/-1;}
+body.cashier-mode #dashCatProfitCard{display:none;}
+
+/* ── MISC ── */
+.empty{text-align:center;padding:30px 16px;color:var(--tx2);}
+.sup-chip{font-size:10px;background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:2px 5px;color:var(--tx2);}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--sf);border:1px solid var(--ac);color:var(--tx);padding:9px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9000;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;box-shadow:var(--sh);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.install-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:2px solid var(--ac);padding:12px 16px;z-index:300;align-items:center;gap:10px;box-shadow:0 -4px 20px rgba(0,0,0,.3);}
+.install-banner.show{display:flex;}
+#updateBanner{border-top-color:var(--wa);z-index:301;}
+code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:2px 5px;font-size:10px;font-family:monospace;color:var(--ac);word-break:break-all;display:inline-block;}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px;}
+@keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-6px);}80%{transform:translateX(6px);}}
+</style>
+</head>
+<body>
+
+<!-- ═══════ AUTH SCREENS ═══════ -->
+<!-- Login -->
+<div class="auth-screen" id="authLogin">
+  <div class="auth-logo">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#071a15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 4 9 12 22 20 9"/><line x1="4" y1="9" x2="20" y2="9"/><line x1="12" y1="2" x2="8" y2="9"/><line x1="12" y1="2" x2="16" y2="9"/><line x1="8" y1="9" x2="12" y2="22"/><line x1="16" y1="9" x2="12" y2="22"/></svg>
+  </div>
+  <div class="auth-title">Krystal</div>
+  <div class="auth-sub">Sign in to your shop account</div>
+  <div class="auth-card">
+    <div class="fg" style="margin-bottom:10px">
+      <label>Email</label>
+      <input type="email" id="li-email" placeholder="you@example.com" autocomplete="email">
+    </div>
+    <div class="fg" style="margin-bottom:14px">
+      <label>Password</label>
+      <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div class="auth-err" id="li-err"></div>
+    <button class="btn btn-p btn-full" onclick="doLogin()" id="li-btn">Sign In</button>
+    <div class="auth-link">Forgot password? <span onclick="doResetPassword()">Reset it</span></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px;width:100%;max-width:360px">
+    <button class="btn btn-s btn-full" onclick="showAuth('authCreateShop')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Create a new shop
+    </button>
+    <button class="btn btn-s btn-full" onclick="showAuth('authJoinShop')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      Join a shop (I have a code)
+    </button>
+  </div>
+</div>
+
+<!-- Create Shop (owners only) -->
+<div class="auth-screen" id="authCreateShop">
+  <div class="auth-logo">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#071a15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 4 9 12 22 20 9"/><line x1="4" y1="9" x2="20" y2="9"/><line x1="12" y1="2" x2="8" y2="9"/><line x1="12" y1="2" x2="16" y2="9"/><line x1="8" y1="9" x2="12" y2="22"/><line x1="16" y1="9" x2="12" y2="22"/></svg>
+  </div>
+  <div class="auth-title">Create Your Shop</div>
+  <div class="auth-sub">You will be the owner with full access</div>
+  <div class="auth-card">
+    <div class="frow"><div class="fg"><label>Your Name</label><input type="text" id="cs-uname" placeholder="Ken Mbora"></div></div>
+    <div class="frow"><div class="fg"><label>Shop Name</label><input type="text" id="cs-sname" placeholder="Krystal Wholesale"></div></div>
+    <div class="frow"><div class="fg"><label>Email</label><input type="email" id="cs-email" placeholder="you@example.com" autocomplete="email"></div></div>
+    <div class="frow"><div class="fg"><label>Password</label><input type="password" id="cs-pass" placeholder="Min 6 characters" autocomplete="new-password"></div></div>
+    <div class="auth-err" id="cs-err"></div>
+    <button class="btn btn-p btn-full" onclick="doCreateShop()" id="cs-btn">Create Shop</button>
+  </div>
+  <div class="auth-link" style="margin-top:16px">Already have an account? <span onclick="showAuth('authLogin')">Sign in</span></div>
+</div>
+
+<!-- Join Shop (cashiers / invited staff) -->
+<div class="auth-screen" id="authJoinShop">
+  <div class="auth-logo">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#071a15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 4 9 12 22 20 9"/><line x1="4" y1="9" x2="20" y2="9"/><line x1="12" y1="2" x2="8" y2="9"/><line x1="12" y1="2" x2="16" y2="9"/><line x1="8" y1="9" x2="12" y2="22"/><line x1="16" y1="9" x2="12" y2="22"/></svg>
+  </div>
+  <div class="auth-title">Join a Shop</div>
+  <div class="auth-sub">Enter the shop code your employer shared with you</div>
+  <div class="auth-card">
+    <div style="background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r8);padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--tx2);line-height:1.6">
+      Ask your shop owner for the <strong style="color:var(--tx)">Shop Code</strong>. It looks like <code>EP-7K2M9</code>. They can find it in Settings.
+    </div>
+    <div class="frow"><div class="fg"><label>Your Name</label><input type="text" id="js-name" placeholder="Your full name"></div></div>
+    <div class="frow"><div class="fg"><label>Email</label><input type="email" id="js-email" placeholder="you@example.com" autocomplete="email"></div></div>
+    <div class="frow"><div class="fg"><label>Password</label><input type="password" id="js-pass" placeholder="Min 6 characters" autocomplete="new-password"></div></div>
+    <div class="frow"><div class="fg"><label>Shop Code</label><input type="text" id="js-code" placeholder="XX-XXXXX" style="text-transform:uppercase;letter-spacing:2px;font-weight:700;font-size:15px;text-align:center"></div></div>
+    <div class="auth-err" id="js-err"></div>
+    <button class="btn btn-p btn-full" onclick="doJoinShop()" id="js-btn">Join Shop</button>
+  </div>
+  <div class="auth-link" style="margin-top:16px">Already have an account? <span onclick="showAuth('authLogin')">Sign in</span></div>
+</div>
+
+<!-- ═══════ PAUSED SCREEN ═══════ -->
+<div class="paused-screen" id="pausedScreen">
+  <div class="paused-icon">⚠️</div>
+  <div class="paused-title">Account Paused</div>
+  <div class="paused-msg" id="pausedMsg">Your shop account has been paused. Please contact us to reactivate your account.</div>
+  <div class="paused-contact">
+    <div class="paused-contact-title">Contact to Reactivate</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <a href="tel:+254746770136" class="btn btn-s btn-full" style="text-decoration:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 5.91 5.91l1.7-1.7a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Call: 0746 770 136
+      </a>
+      <a href="https://wa.me/254746770136" target="_blank" class="btn btn-p btn-full" style="text-decoration:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        WhatsApp: 0746 770 136
+      </a>
+      <a href="mailto:kennedymbora@gmail.com" class="btn btn-s btn-full" style="text-decoration:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        kennedymbora@gmail.com
+      </a>
+    </div>
+  </div>
+  <button class="btn btn-s" onclick="doSignOut()">Sign Out</button>
+</div>
+
+<!-- ═══════ LOADING SCREEN ═══════ -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="auth-logo">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#071a15" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 4 9 12 22 20 9"/><line x1="4" y1="9" x2="20" y2="9"/><line x1="12" y1="2" x2="8" y2="9"/><line x1="12" y1="2" x2="16" y2="9"/><line x1="8" y1="9" x2="12" y2="22"/><line x1="16" y1="9" x2="12" y2="22"/></svg>
+  </div>
+  <div class="spinner"></div>
+  <div class="loading-msg" id="loadingMsg">Loading your shop…</div>
+  <button class="btn btn-s btn-sm" id="loadingCancel" style="display:none;margin-top:8px" onclick="cancelBoot()">Cancel</button>
+</div>
+
+<!-- ═══════ MAIN APP ═══════ -->
+<div class="app" id="mainApp">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="hamburger" id="hamburger" onclick="toggleSidebar()">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="tb-brand">
+        <div class="tb-icon" id="tbIcon" onclick="handleLogoTap()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#071a15" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 4 9 12 22 20 9"/><line x1="4" y1="9" x2="20" y2="9"/></svg>
+        </div>
+        <div class="tb-name" id="tbName">Krystal</div>
+      </div>
+    </div>
+    <div class="tb-right">
+      <div class="sync-pill" id="syncPill" style="display:none">
+        <span class="sync-dot" id="syncDot"></span>
+        <span id="syncLabel">Sync</span>
+      </div>
+      <div class="tb-date" id="tbDate"></div>
+    </div>
+  </div>
+
+  <!-- Sidebar overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-header">
+      <div class="sb-shop" id="sbShopName">Krystal</div>
+      <div style="font-size:10px;color:var(--tx2)" id="sbShopLocation">Manyatta, Embu</div>
+      <div class="sb-user">
+        <div class="sb-av" id="sbAv">K</div>
+        <div>
+          <div class="sb-uname" id="sbUname">Loading…</div>
+          <div class="sb-urole" id="sbUrole">Owner</div>
+        </div>
+      </div>
+    </div>
+    <nav class="sb-nav" id="sbNav">
+      <!-- Populated by JS based on role -->
+    </nav>
+    <div class="sb-bottom">
+      <div class="sb-brand-mark">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 4 9 12 22 20 9"/><line x1="4" y1="9" x2="20" y2="9"/></svg>
+        <span>Powered by Krystal</span>
+      </div>
+      <div class="sb-signout" onclick="doSignOut()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign Out
+      </div>
+    </div>
+  </div>
+
+  <!-- Pages -->
+  <div class="scroll" id="mainScroll">
+  <div class="page-wrap">
+
+    <!-- DASHBOARD -->
+    <div id="pg-dashboard" class="page active">
+      <div class="cashier-banner" id="cashierBanner">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Cashier mode — limited access
+      </div>
+      <div class="grid2" style="margin-bottom:10px">
+        <div class="kpi k-gr" id="kpiSalesToday"><div class="kpi-lbl">Sales Today</div><div class="kpi-val" id="k-today">KSh 0</div><div class="kpi-sub" id="k-txn">0 transactions</div><div class="kpi-ico"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
+        <div class="kpi k-am" id="kpiProfitToday"><div class="kpi-lbl">Profit Today</div><div class="kpi-val" id="k-pft">KSh 0</div><div class="kpi-sub" id="k-mrg">0% margin</div><div class="kpi-ico"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div></div>
+        <div class="kpi k-bl"><div class="kpi-lbl">Items</div><div class="kpi-val" id="k-items">0</div><div class="kpi-sub">in inventory</div><div class="kpi-ico"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div></div>
+        <div class="kpi k-tl"><div class="kpi-lbl">Restock Alerts</div><div class="kpi-val" id="k-alerts">0</div><div class="kpi-sub">items low</div><div class="kpi-ico"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div></div>
+      </div>
+      <div class="grid2" style="margin-bottom:10px">
+        <div class="card"><div class="card-title">Recent Sales</div><div id="dash-recent"></div></div>
+        <div class="card"><div class="card-title">Restock Alerts</div><div class="alert-list" id="dash-alerts"></div></div>
+      </div>
+      <div class="card" id="dashCatProfitCard"><div class="card-title">Profit by Category</div><div id="dash-catbars"></div></div>
+    </div>
+
+    <!-- STOCK -->
+    <div id="pg-stock" class="page">
+      <div class="sec-head"><div class="sec-title">Inventory</div><button class="btn btn-p btn-sm" onclick="openAddItem()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Item</button></div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center"><div class="search-wrap" style="margin-bottom:0"><span class="search-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><input type="text" id="stockQ" placeholder="Search items…" oninput="renderStock()"></div><button class="btn btn-s" style="width:38px;height:38px;padding:0;flex-shrink:0" onclick="openScanner('stock-search')" title="Scan barcode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/></svg></button></div>
+      <div class="cat-row" id="stockCats"></div>
+      <div class="card" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Item</th><th>Cat</th><th>Stock</th><th>Cost</th><th>Price</th><th>Profit</th><th>Supplier</th><th></th></tr></thead><tbody id="stockTbody"></tbody></table></div></div>
+    </div>
+
+    <!-- SALES/POS -->
+    <div id="pg-sales" class="page">
+      <div class="sec-head"><div class="sec-title">Point of Sale</div><button class="btn btn-s btn-sm" onclick="toggleHistory()">History</button></div>
+      <div id="posView">
+        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center"><div class="search-wrap" style="margin-bottom:0"><span class="search-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><input type="text" id="posQ" placeholder="Search items to add…" oninput="renderPOS()"></div><button class="btn btn-s" style="width:38px;height:38px;padding:0;flex-shrink:0" onclick="openScanner('pos')" title="Scan barcode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/></svg></button></div>
+        <div class="cat-row" id="posCats"></div>
+        <div class="pos-grid" id="posItems"></div>
+        <!-- Floating cart pill — hidden while empty, tap to expand -->
+        <div class="cart-fab" id="cartFab" onclick="openModal('cartModal')">
+          <span class="cart-fab-count" id="cartFabCount">0</span>
+          <span class="cart-fab-label">View Cart</span>
+          <span class="cart-fab-total" id="cartFabTotal">KSh 0</span>
+        </div>
+      </div>
+      <div id="histView" style="display:none">
+        <div class="sec-head" style="margin-top:4px"><div class="sec-title">Sales History</div><button class="btn btn-s btn-sm" onclick="toggleHistory()">Back to POS</button></div>
+        <div class="card" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>#</th><th>Date</th><th>By</th><th>Customer</th><th>Total</th><th>Profit</th><th></th></tr></thead><tbody id="histTbody"></tbody></table></div></div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div id="pg-reports" class="page">
+      <div class="sec-head"><div class="sec-title">Reports</div></div>
+      <div class="tabs"><button class="tab active" onclick="showReport('movers',this)">Top Movers</button><button class="tab" onclick="showReport('catprofit',this)">Category</button><button class="tab" onclick="showReport('dead',this)">Dead Stock</button><button class="tab" onclick="showReport('monthly',this)">Monthly</button></div>
+      <div id="rp-movers"><div class="card" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>#</th><th>Item</th><th>Cat</th><th>Units</th><th>Revenue</th><th>Profit</th></tr></thead><tbody id="rpMoversTb"></tbody></table></div></div></div>
+      <div id="rp-catprofit" style="display:none"><div class="card" id="rpCatBars" style="margin-bottom:10px"></div><div class="card"><div class="card-title">Breakdown</div><div id="rpCatStats"></div></div></div>
+      <div id="rp-dead" style="display:none"><div class="card" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Item</th><th>Cat</th><th>Stock</th><th>Last Sold</th><th>Idle Days</th><th>Value</th></tr></thead><tbody id="rpDeadTb"></tbody></table></div></div></div>
+      <div id="rp-monthly" style="display:none"><div class="grid3" style="margin-bottom:10px"><div class="kpi k-gr"><div class="kpi-lbl">Revenue</div><div class="kpi-val" id="rpMRev">KSh 0</div></div><div class="kpi k-am"><div class="kpi-lbl">Profit</div><div class="kpi-val" id="rpMPft">KSh 0</div></div><div class="kpi k-bl"><div class="kpi-lbl">Sales</div><div class="kpi-val" id="rpMTx">0</div></div></div><div class="card"><div class="card-title">Daily</div><div id="rpMDaily"></div></div></div>
+    </div>
+
+    <!-- SUPPLIERS -->
+    <div id="pg-suppliers" class="page">
+      <div class="sec-head"><div class="sec-title">Suppliers</div><button class="btn btn-p btn-sm" onclick="openAddSupplier()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add</button></div>
+      <div id="supCards"></div>
+    </div>
+
+    <!-- ORDER STOCK (Krystal Network test integration) -->
+    <div id="pg-orderstock" class="page">
+      <div class="sec-head"><div class="sec-title">Order Stock</div></div>
+
+      <div class="set-sec-title" style="margin-top:0">Low Stock <span id="osLowCount" style="color:var(--wa)">0</span></div>
+      <div class="card" id="osLowList" style="margin-bottom:14px"></div>
+
+      <div class="set-sec-title">Browse Network Catalogue</div>
+      <div id="osSeedWrap" style="display:none;margin-bottom:8px">
+        <button class="btn btn-s btn-sm" onclick="seedTestCatalogue()">Seed Test Catalogue (dev only)</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+        <div class="search-wrap" style="margin-bottom:0">
+          <span class="search-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <input type="text" id="osQ" placeholder="Search products…" oninput="renderCatalogueGrid()">
+        </div>
+      </div>
+      <div class="cat-row" id="osCats"></div>
+      <div class="pos-grid" id="osGrid"></div>
+
+      <div class="set-sec-title">My Orders</div>
+      <div class="card" id="osMyOrders" style="margin-bottom:14px"></div>
+
+      <div class="set-sec-title">Payment Method</div>
+      <div class="card" id="osPayment" style="font-size:12px;color:var(--tx2)"></div>
+
+      <div class="cart-fab" id="netCartFab" onclick="openModal('netCartModal')">
+        <span class="cart-fab-count" id="netCartFabCount">0</span>
+        <span class="cart-fab-label">View Order</span>
+        <span class="cart-fab-total" id="netCartFabTotal">KSh 0</span>
+      </div>
+    </div>
+
+    <!-- STAFF (owner only) -->
+    <div id="pg-staff" class="page">
+      <div class="sec-head"><div class="sec-title">Staff</div><button class="btn btn-p btn-sm" onclick="openModal('inviteModal')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Invite</button></div>
+      <div id="staffList"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="pg-settings" class="page">
+      <div class="sec-head"><div class="sec-title">Settings</div></div>
+
+      <!-- Shop info -->
+      <div class="set-sec">
+        <div class="set-sec-title">Shop Information</div>
+        <div class="card">
+          <div class="frow"><div class="fg"><label>Shop Name</label><input id="s-name" placeholder="Krystal Wholesale"></div></div>
+          <div class="frow"><div class="fg"><label>Location</label><input id="s-loc" placeholder="Manyatta, Embu"></div><div class="fg"><label>Phone</label><input id="s-phone" placeholder="07xx xxx xxx" type="tel"></div></div>
+          <div class="frow"><div class="fg"><label>M-Pesa Till</label><input id="s-mpesa" placeholder="247247"></div><div class="fg"><label>Email</label><input id="s-email" placeholder="shop@email.com" type="email"></div></div>
+          <div class="fg"><label>Tagline</label><input id="s-tag" placeholder="Quality Electronics at Wholesale Prices"></div>
+          <button class="btn btn-p btn-sm" style="margin-top:12px" onclick="saveShopInfo()">Save Shop Info</button>
+        </div>
+      </div>
+
+      <!-- Appearance -->
+      <div class="set-sec">
+        <div class="set-sec-title">Appearance</div>
+        <div class="card">
+          <div class="set-row"><div><div class="set-lbl">Light Theme</div><div class="set-sub">Switch to light / dark mode</div></div><label class="toggle"><input type="checkbox" id="s-light" onchange="applyTheme()"><span class="tslider"></span></label></div>
+          <div class="set-row"><div><div class="set-lbl">Accent Colour</div></div><div style="display:flex;gap:7px"><div class="cdot active" style="background:#00d4aa" onclick="setAccent('#00d4aa',this)"></div><div class="cdot" style="background:#6366f1" onclick="setAccent('#6366f1',this)"></div><div class="cdot" style="background:#f59e0b" onclick="setAccent('#f59e0b',this)"></div><div class="cdot" style="background:#ef4444" onclick="setAccent('#ef4444',this)"></div><div class="cdot" style="background:#10b981" onclick="setAccent('#10b981',this)"></div></div></div>
+        </div>
+      </div>
+
+      <!-- Receipt -->
+      <div class="set-sec">
+        <div class="set-sec-title">Receipt / Invoice</div>
+        <div class="card">
+          <div class="set-row"><div class="set-lbl">Show M-Pesa on receipt</div><label class="toggle"><input type="checkbox" id="s-inv-mpesa" checked><span class="tslider"></span></label></div>
+          <div class="set-row"><div class="set-lbl">Show phone on receipt</div><label class="toggle"><input type="checkbox" id="s-inv-phone" checked><span class="tslider"></span></label></div>
+          <div class="set-row" style="flex-direction:column;align-items:flex-start;gap:6px"><div class="set-lbl">Footer message</div><input id="s-inv-footer" placeholder="Thank you for your business!"></div>
+          <button class="btn btn-p btn-sm" style="margin-top:12px" onclick="saveReceiptSettings()">Save Receipt Settings</button>
+        </div>
+      </div>
+
+      <!-- Stock defaults -->
+      <div class="set-sec">
+        <div class="set-sec-title">Stock Defaults</div>
+        <div class="card">
+          <div class="set-row"><div><div class="set-lbl">Default reorder level</div><div class="set-sub">Used when adding new items</div></div><input id="s-reorder" type="number" min="1" value="10" style="width:60px;text-align:center"></div>
+          <div class="set-row"><div><div class="set-lbl">Dead stock threshold (days)</div></div><input id="s-dead" type="number" min="7" value="30" style="width:60px;text-align:center"></div>
+          <button class="btn btn-p btn-sm" style="margin-top:12px" onclick="saveStockDefaults()">Save</button>
+        </div>
+      </div>
+
+      <!-- Account -->
+      <div class="set-sec">
+        <div class="set-sec-title">Account</div>
+        <div class="card">
+          <div class="srow"><div class="srow-l">Signed in as</div><div class="srow-v" style="font-size:11px;color:var(--tx2)" id="settingsEmail">—</div></div>
+          <div class="srow"><div class="srow-l">Role</div><div class="srow-v" style="font-size:11px;color:var(--ac)" id="settingsRole">—</div></div>
+          <div class="srow"><div class="srow-l">Shop Code</div><div style="display:flex;align-items:center;gap:6px"><code id="settingsShopCode">—</code><button class="btn btn-s btn-xs" onclick="copyShopCode()">Copy</button></div></div>
+          <div class="srow"><div class="srow-l">Offline Mode</div><div class="srow-v" style="font-size:11px" id="aboutOffline">Checking…</div></div>
+          <div class="srow"><div><div class="srow-l">App Updates</div><div class="set-sub" id="updateStatus" style="margin-top:2px">Checks automatically</div></div><button class="btn btn-s btn-xs" onclick="checkForUpdate()">Check Now</button></div>
+          <div style="margin-top:12px"><button class="btn btn-d btn-full" onclick="doSignOut()">Sign Out</button></div>
+        </div>
+      </div>
+
+      <!-- Install -->
+      <div class="set-sec">
+        <div class="set-sec-title">Install App</div>
+        <div class="card">
+          <div id="pwaInstalled" style="display:none;color:var(--gr);font-size:13px;font-weight:700;padding:4px 0">App is installed on your home screen</div>
+          <div id="pwaBlock">
+            <div style="font-size:12px;color:var(--tx2);line-height:1.6;margin-bottom:12px">Install Krystal on your home screen for offline use, full screen experience, and faster loading.</div>
+            <button class="btn btn-p btn-full" id="pwaBtn" onclick="pwaInstall()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Add to Home Screen</button>
+            <div id="pwaHint" style="display:none;margin-top:10px;padding:10px;background:var(--sf2);border-radius:var(--r8);font-size:11px;color:var(--tx2);line-height:1.6;border:1px solid var(--bd)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Share -->
+      <div class="set-sec">
+        <div class="set-sec-title">Share This App</div>
+        <div class="card">
+          <div style="font-size:12px;color:var(--tx2);line-height:1.6;margin-bottom:12px">Share the app link with anyone. They sign up with their own account and connect to their own shop.</div>
+          <button class="btn btn-p btn-full" onclick="shareApp()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share App</button>
+        </div>
+      </div>
+
+      <div style="text-align:center;padding:8px 0 20px;color:var(--tx2);font-size:11px">Krystal v3.0 · Made in Kenya 🇰🇪</div>
+    </div>
+
+    <!-- ADMIN (super-admin only, hidden) -->
+    <div id="pg-admin" class="page">
+      <div class="sec-head"><div class="sec-title">⚡ Admin Panel</div></div>
+      <div class="card" style="margin-bottom:14px;border-color:var(--wa)">
+        <div style="font-size:11px;color:var(--wa);font-weight:700;margin-bottom:4px">Super Admin — Kennedy Mbora</div>
+        <div style="font-size:11px;color:var(--tx2)">All shops connected to this Firebase project. You can pause/resume any shop.</div>
+      </div>
+      <div class="sec-head"><div class="sec-title" style="font-size:13px">Active Shops</div><button class="btn btn-s btn-sm" onclick="loadAdminShops()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refresh</button></div>
+      <div id="adminShopList"><div class="empty"><div style="font-size:12px">Tap Refresh to load shops</div></div></div>
+    </div>
+
+  </div><!-- /page-wrap -->
+  </div><!-- /scroll -->
+
+</div><!-- /app -->
+
+<!-- ═══════ MODALS ═══════ -->
+
+<!-- Add/Edit Item -->
+<div class="overlay" id="itemModal">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title" id="itemModalTitle">Add Item</div><button class="sheet-close" onclick="closeModal('itemModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="frow"><div class="fg"><label>Item Name *</label><input id="ii-name" placeholder="e.g. 3-way extension"></div></div>
+    <div class="frow"><div class="fg" style="flex:1"><label>Barcode</label><div style="display:flex;gap:6px"><input id="ii-barcode" placeholder="Scan or type barcode" style="flex:1"><button class="btn btn-s" style="width:38px;height:38px;padding:0;flex-shrink:0" onclick="openScanner('item-form')" title="Scan barcode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/></svg></button></div></div></div>
+    <div class="frow"><div class="fg"><label>Category</label><select id="ii-cat"><option value="Electrical">Electrical</option><option value="Components">Components</option><option value="Power">Power &amp; Energy</option><option value="Installation">Installation</option><option value="Modules">Modules</option></select></div><div class="fg"><label>Supplier</label><select id="ii-sup"><option value="">-- None --</option></select></div></div>
+    <div class="frow"><div class="fg"><label>Stock Qty</label><input type="number" id="ii-stock" min="0" placeholder="0"></div><div class="fg"><label>Reorder Level</label><input type="number" id="ii-reorder" min="0" placeholder="10"></div></div>
+    <div class="frow"><div class="fg"><label>Cost Price (KSh)</label><input type="number" id="ii-cost" min="0" placeholder="0"></div><div class="fg"><label>Sell Price (KSh) *</label><input type="number" id="ii-price" min="0" placeholder="0"></div></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px"><button class="btn btn-s" onclick="closeModal('itemModal')">Cancel</button><button class="btn btn-p" onclick="saveItem()">Save Item</button></div>
+  </div>
+</div>
+
+<!-- Restock -->
+<div class="overlay" id="restockModal">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title">Restock Item</div><button class="sheet-close" onclick="closeModal('restockModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div id="restockName" style="color:var(--tx2);font-size:12px;margin-bottom:10px"></div>
+    <div class="frow"><div class="fg"><label>Current Stock</label><input id="rs-cur" disabled></div><div class="fg"><label>Add Qty *</label><input type="number" id="rs-add" min="1" placeholder="50"></div></div>
+    <div class="fg" style="margin-bottom:12px"><label>New Cost Price (KSh)</label><input type="number" id="rs-cost" placeholder="Leave blank to keep current"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-s" onclick="closeModal('restockModal')">Cancel</button><button class="btn btn-p" onclick="saveRestock()">Restock</button></div>
+  </div>
+</div>
+
+<!-- Barcode Scanner -->
+<div class="scan-overlay" id="scanOverlay">
+  <div class="scan-hdr">
+    <span class="scan-hdr-title" id="scanTitle">Scan barcode</span>
+    <button class="sheet-close" onclick="stopScanner()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
+  <video id="scanVideo" class="scan-video" autoplay playsinline muted></video>
+  <div class="scan-frame" id="scanFrame"><div class="scan-line"></div></div>
+  <div class="scan-fallback" id="scanFallback" style="display:none">
+    <div class="scan-fallback-msg" id="scanFallbackMsg">Camera scanning isn't available — enter the code manually.</div>
+    <div class="scan-manual">
+      <input type="text" id="scanManualInput" placeholder="Enter barcode" onkeydown="if(event.key==='Enter')submitManualScan()">
+      <button class="btn btn-p" onclick="submitManualScan()">Use</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm -->
+<div class="overlay" id="confirmModal">
+  <div class="sheet confirm-sheet">
+    <div class="sheet-handle"></div>
+    <div class="confirm-icon" id="confirmIcon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <div class="confirm-title" id="confirmTitle">Are you sure?</div>
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-s btn-full" onclick="_confirmResolve(false)">Cancel</button>
+      <button class="btn btn-p btn-full" id="confirmBtn" onclick="_confirmResolve(true)">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cart -->
+<div class="overlay" id="cartModal">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title">Cart <span id="cartCount" style="font-size:11px;color:var(--tx2);font-weight:600;margin-left:2px"></span></div><button class="sheet-close" onclick="closeModal('cartModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="cart-body" id="cartBody"></div>
+    <div class="cart-ftr">
+      <div class="cart-total-row"><span>Total</span><span id="cartTotal">KSh 0</span></div>
+      <div class="fg" style="margin-bottom:9px"><label>Customer (optional)</label><input type="text" id="custName" placeholder="Walk-in customer"></div>
+      <div style="display:flex;gap:7px"><button class="btn btn-d btn-sm" onclick="clearCart()">Clear</button><button class="btn btn-p btn-full" onclick="completeSale()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Complete Sale</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Network Order Cart -->
+<div class="overlay" id="netCartModal">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title">Order <span id="netCartCount" style="font-size:11px;color:var(--tx2);font-weight:600;margin-left:2px"></span></div><button class="sheet-close" onclick="closeModal('netCartModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="cart-body" id="netCartBody"></div>
+    <div class="cart-ftr">
+      <div class="cart-total-row"><span>Total</span><span id="netCartTotal">KSh 0</span></div>
+      <div style="display:flex;gap:7px"><button class="btn btn-d btn-sm" onclick="clearNetCart()">Clear</button><button class="btn btn-p btn-full" onclick="submitNetworkOrder()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Send Order</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice -->
+<div class="overlay" id="invoiceModal">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title">Receipt</div><button class="sheet-close" onclick="closeModal('invoiceModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div id="invoiceBody"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end"><button class="btn btn-s" onclick="closeModal('invoiceModal')">Close</button><button class="btn btn-p" onclick="window.print()">Print</button></div>
+  </div>
+</div>
+
+<!-- Supplier -->
+<div class="overlay" id="supModal">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title" id="supModalTitle">Add Supplier</div><button class="sheet-close" onclick="closeModal('supModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="frow"><div class="fg"><label>Supplier Name *</label><input id="si-name" placeholder="e.g. ABC Traders"></div><div class="fg"><label>Contact Person</label><input id="si-contact" placeholder="Name"></div></div>
+    <div class="frow"><div class="fg"><label>Phone</label><input id="si-phone" placeholder="07xx xxx xxx" type="tel"></div><div class="fg"><label>Location</label><input id="si-loc" placeholder="e.g. Nairobi CBD"></div></div>
+    <div class="fg" style="margin-bottom:12px"><label>Categories Supplied</label><input id="si-cats" placeholder="Electrical, Components…"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-s" onclick="closeModal('supModal')">Cancel</button><button class="btn btn-p" onclick="saveSupplier()">Save</button></div>
+  </div>
+</div>
+
+<!-- Invite Staff -->
+<div class="overlay" id="inviteModal">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title">Invite Staff Member</div><button class="sheet-close" onclick="closeModal('inviteModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div style="font-size:12px;color:var(--tx2);line-height:1.6;margin-bottom:12px">Enter the email address of the person you want to invite. They'll receive an invitation email and can sign up to join your shop.</div>
+    <div class="frow"><div class="fg"><label>Email Address *</label><input type="email" id="inv-email" placeholder="staff@email.com"></div></div>
+    <div class="frow"><div class="fg"><label>Name</label><input id="inv-name" placeholder="Staff member's name"></div></div>
+    <div class="fg" style="margin-bottom:12px"><label>Role</label><select id="inv-role"><option value="cashier">Cashier — POS only</option><option value="owner">Owner — Full access</option></select></div>
+    <div id="inv-err" style="color:var(--re);font-size:11px;margin-bottom:8px;min-height:14px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-s" onclick="closeModal('inviteModal')">Cancel</button><button class="btn btn-p" onclick="inviteStaff()">Send Invite</button></div>
+  </div>
+</div>
+
+<!-- Admin: Pause Shop -->
+<div class="overlay" id="pauseShopModal">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title">Pause Shop</div><button class="sheet-close" onclick="closeModal('pauseShopModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div id="pauseShopName" style="font-weight:700;margin-bottom:10px;font-size:14px"></div>
+    <div class="fg" style="margin-bottom:12px"><label>Message to show the shop owner</label><textarea id="pause-msg" rows="3" placeholder="Your subscription has expired. Contact us to reactivate."></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-s" onclick="closeModal('pauseShopModal')">Cancel</button><button class="btn btn-d" onclick="confirmPauseShop()">Pause Shop</button></div>
+  </div>
+</div>
+
+<!-- Install banner -->
+<div class="install-banner" id="installBanner">
+  <div style="flex:1"><div style="font-size:13px;font-weight:700">Install Krystal</div><div style="font-size:10px;color:var(--tx2)">Add to home screen for offline use</div></div>
+  <button class="btn btn-s btn-sm" onclick="dismissBanner()">Later</button>
+  <button class="btn btn-p btn-sm" onclick="pwaInstall()">Install</button>
+</div>
+<div class="install-banner" id="updateBanner">
+  <div style="flex:1"><div style="font-size:13px;font-weight:700">Update Available</div><div style="font-size:10px;color:var(--tx2)">A newer version is ready</div></div>
+  <button class="btn btn-s btn-sm" onclick="dismissUpdateBanner()">Later</button>
+  <button class="btn btn-p btn-sm" onclick="applyUpdate()">Reload</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ═══════ FIREBASE SDK ═══════ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+'use strict';
+
+// ── FIREBASE LOAD GUARD ───────────────────────────────
+// If the Firebase SDK scripts failed to load (first open with no
+// internet, CDN blocked, or service worker not yet installed),
+// show a clear offline message instead of crashing with
+// "firebase is not defined".
+if (typeof firebase === 'undefined') {
+  document.body.innerHTML = `
+    <div style="position:fixed;inset:0;background:#0f1117;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;font-family:system-ui,sans-serif;color:#e8eaf6">
+      <div style="width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,#00d4aa,#6366f1);display:flex;align-items:center;justify-content:center;margin-bottom:18px">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#071a15" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 4 9 12 22 20 9"/><line x1="4" y1="9" x2="20" y2="9"/><line x1="12" y1="2" x2="8" y2="9"/><line x1="12" y1="2" x2="16" y2="9"/><line x1="8" y1="9" x2="12" y2="22"/><line x1="16" y1="9" x2="12" y2="22"/></svg>
+      </div>
+      <div style="font-size:20px;font-weight:900;margin-bottom:8px">No Internet Connection</div>
+      <div style="font-size:13px;color:#8892b0;line-height:1.7;max-width:300px;margin-bottom:24px">
+        Krystal needs internet the <strong style="color:#e8eaf6">first time</strong> you open it to load its core files.<br><br>
+        Connect to internet and refresh — after that it works fully offline.
+      </div>
+      <button onclick="location.reload()" style="background:#00d4aa;color:#071a15;border:none;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer">
+        Try Again
+      </button>
+    </div>`;
+  throw new Error('Firebase SDK not loaded — no internet on first visit');
+}
+
+// ── CONSTANTS ─────────────────────────────────────────
+const SUPER_ADMIN_EMAIL = 'kennedymbora@gmail.com';
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDnJNf3ea4Gz8JpocC2959qxgH2xU78PDA",
+  authDomain: "electropro-efdaa.firebaseapp.com",
+  projectId: "electropro-efdaa",
+  storageBucket: "electropro-efdaa.firebasestorage.app",
+  messagingSenderId: "866414823376",
+  appId: "1:866414823376:web:329b07501ada20d6dfdbd5"
+};
+// Krystal Network (KSN) test project — separate Firebase app instance so
+// this shop's own data (electropro-efdaa) never mixes with the shared
+// network catalogue/orders (krystal-enterprise).
+const NETWORK_CONFIG = {
+  apiKey: "AIzaSyAmLQTWmrdpCzOdeHf1v8aXZ0sROLYdMTE",
+  authDomain: "krystal-enterprise.firebaseapp.com",
+  projectId: "krystal-enterprise",
+  storageBucket: "krystal-enterprise.firebasestorage.app",
+  messagingSenderId: "137355298478",
+  appId: "1:137355298478:web:fe9b410631977693660f3f"
+};
+const CATS = ['Electrical','Components','Power','Installation','Modules'];
+const CC = {Electrical:'bc-el',Components:'bc-co',Power:'bc-po',Installation:'bc-in',Modules:'bc-mo'};
+
+// ── STATE ─────────────────────────────────────────────
+const S = {
+  items:[], sales:[], suppliers:[],
+  cart:[], editItem:null, editSup:null, restockId:null,
+  stockCat:'All', posCat:'All',
+  catalogue:[], netCart:[], osCat:'All', // Krystal Network (Order Stock tab)
+  user:null,      // Firebase Auth user
+  userDoc:null,   // Firestore user profile doc
+  shopCode:'',
+  shopDoc:null,   // Firestore shop info doc
+  role:'cashier', // 'owner' | 'cashier' | 'superadmin'
+  unsubs:[],      // Firestore listener unsubscribers
+  localPrefs:{    // Stored in localStorage, not Firestore
+    light:false, accent:'#00d4aa',
+    invMpesa:true, invPhone:true,
+    invFooter:'Thank you for your business!',
+    reorder:10, deadDays:30
+  }
+};
+
+// ── FIREBASE INIT ─────────────────────────────────────
+firebase.initializeApp(FIREBASE_CONFIG);
+const db   = firebase.firestore();
+const auth = firebase.auth();
+try { db.enablePersistence({ synchronizeTabs: true }); } catch(e) {}
+
+// Named second app instance — talks to the separate krystal-enterprise
+// (Krystal Network) project for the shared catalogue + orders, without
+// touching this shop's own auth/session on the primary app above.
+firebase.initializeApp(NETWORK_CONFIG, 'network');
+const ndb = firebase.app('network').firestore();
+
+// ── LOGO TAP (triple-tap to access admin) ─────────────
+let _tapCount = 0, _tapTimer = null;
+function handleLogoTap() {
+  _tapCount++;
+  if (_tapTimer) clearTimeout(_tapTimer);
+  _tapTimer = setTimeout(() => { _tapCount = 0; }, 600);
+  if (_tapCount >= 3) {
+    _tapCount = 0;
+    if (S.role === 'superadmin') {
+      showPage('admin');
+      closeSidebar();
+    }
+  }
+}
+
+// ── AUTH STATE ────────────────────────────────────────
+// _creatingShop flag prevents onAuthStateChanged from running bootUser
+// before doCreateShop has finished writing all Firestore documents.
+// Without this flag, bootUser fires immediately after the Auth account
+// is created, finds no userShops/{uid} doc (not written yet), and
+// incorrectly redirects back to the Create Shop screen.
+let _creatingShop = false;
+
+auth.onAuthStateChanged(async user => {
+  if (!user) {
+    showAuth('authLogin');
+    teardownListeners();
+    return;
+  }
+  S.user = user;
+  if (_creatingShop) return; // doCreateShop will call bootUser manually
+  await bootUser(user);
+});
+
+async function bootUser(user) {
+  showLoading('Loading your account…');
+  // Wrap entire boot in a 15-second timeout so it never hangs silently
+  const bootTimeout = setTimeout(() => {
+    if (document.getElementById('loadingScreen').classList.contains('show')) {
+      document.getElementById('loadingMsg').textContent = 'Taking longer than expected…';
+      document.getElementById('loadingCancel').style.display = 'inline-flex';
+    }
+  }, 6000);
+  try {
+    // Super admin — bypass all shop logic
+    if (user.email === SUPER_ADMIN_EMAIL) {
+      S.role = 'superadmin';
+      S.shopCode = 'ADMIN';
+      applyLocalPrefs();
+      clearTimeout(bootTimeout);
+      showApp();
+      buildSidebar();
+      updateSidebarUser({ name: 'Kennedy Mbora', role: 'superadmin', email: user.email });
+      document.getElementById('sbShopName').textContent = 'Admin Panel';
+      document.getElementById('sbShopLocation').textContent = 'Super Admin';
+      document.getElementById('syncPill').style.display = 'none';
+      showPage('admin');
+      return;
+    }
+
+    // Step 1: Look up which shop this user belongs to
+    showLoading('Finding your shop…');
+    const userShopSnap = await db.collection('userShops').doc(user.uid).get();
+
+    if (!userShopSnap.exists) {
+      // No shop linked — this is a brand new account with no shop yet.
+      // Direct them to Create Shop (owner) — cashiers should have used
+      // "Join a Shop" which writes userShops before bootUser runs.
+      clearTimeout(bootTimeout);
+      showAuth('authCreateShop');
+      document.getElementById('cs-err').textContent =
+        'No shop found for this account. Create a shop or use "Join a Shop" if you have a shop code.';
+      return;
+    }
+
+    const shopCode  = userShopSnap.data().shopCode;
+    const savedRole = userShopSnap.data().role || 'cashier';
+
+    // Step 2: Check if shop is paused
+    const registrySnap = await db.collection('shopRegistry').doc(shopCode).get();
+    if (registrySnap.exists && registrySnap.data().status === 'paused') {
+      clearTimeout(bootTimeout);
+      showPausedScreen(registrySnap.data().pauseMessage || 'Your account has been paused. Contact us to reactivate.');
+      return;
+    }
+
+    // Step 3: Load user's profile doc from their shop
+    const userDocSnap = await db.collection('shops').doc(shopCode).collection('users').doc(user.uid).get();
+    if (!userDocSnap.exists) {
+      clearTimeout(bootTimeout);
+      showAuth('authLogin');
+      document.getElementById('li-err').textContent = 'Account not found in shop. Contact your shop owner.';
+      return;
+    }
+    S.userDoc  = userDocSnap.data();
+    S.shopCode = shopCode;
+    // Validate role from both sources. shops/{shopCode}/users/{uid} is
+    // authoritative (an owner can change someone's role there directly);
+    // userShops/{uid} is only a fast-lookup cache and can drift out of
+    // sync. If they disagree, trust the shop record and repair the cache
+    // in the background rather than silently using a stale role.
+    S.role = S.userDoc.role || 'cashier';
+    if (savedRole && savedRole !== S.role) {
+      console.warn(`Role mismatch for ${user.uid}: userShops says "${savedRole}", shop record says "${S.role}". Using shop record.`);
+      db.collection('userShops').doc(user.uid).update({ role: S.role }).catch(()=>{});
+    }
+
+    // Step 4: Load shop config
+    showLoading('Almost ready…');
+    const shopInfoSnap = await db.collection('shops').doc(shopCode).collection('info').doc('config').get();
+    S.shopDoc = shopInfoSnap.exists ? shopInfoSnap.data() : {};
+
+    clearTimeout(bootTimeout);
+    applyLocalPrefs();
+    applyShopInfo();
+    showApp();
+    buildSidebar();
+    updateSidebarUser(S.userDoc);
+    startListeners();
+    showPage('dashboard');
+    ensureNetworkShop(); // fire-and-forget — don't block app load on a second project
+
+  } catch(e) {
+    clearTimeout(bootTimeout);
+    console.error('bootUser error:', e);
+    hideLoading();
+    showAuth('authLogin');
+    const msg = e.code === 'permission-denied'
+      ? 'Permission denied — check your Firestore rules are published'
+      : e.message === 'Failed to get document because the client is offline.'
+      ? 'No internet connection — connect and try again'
+      : 'Error loading account: ' + e.message;
+    document.getElementById('li-err').textContent = msg;
+  }
+}
+
+// Shared writer used once an invite has been validated. Writes the shop
+// user doc + userShops cache doc in one atomic batch so bootUser never
+// sees one without the other, marks the invite accepted, then boots.
+async function acceptInvite(inviteId, invite, user, name) {
+  const shopCode = invite.shopCode;
+  const role = invite.role || 'cashier';
+  const batch = db.batch();
+  batch.set(db.collection('shops').doc(shopCode).collection('users').doc(user.uid), {
+    uid: user.uid,
+    name: name || invite.name || user.email.split('@')[0],
+    email: user.email,
+    role,
+    joinedAt: Date.now()
+  });
+  // Store role here too — this is the fast-lookup cache bootUser and
+  // security rules rely on; it must never be written without a role.
+  batch.set(db.collection('userShops').doc(user.uid), { shopCode, role, updatedAt: Date.now() });
+  batch.update(db.collection('invites').doc(inviteId), { status: 'accepted' });
+  await batch.commit();
+  await bootUser(user);
+}
+
+// ── JOIN SHOP (invited staff — never creates a shop) ──
+// Invites are keyed by a deterministic id (`${shopCode}_${email}`, see
+// inviteStaff) instead of an auto-id specifically so this can look one up
+// with a direct doc().get() — no query permissions needed, and Firestore
+// rules can check the same path when validating the writes below.
+async function doJoinShop() {
+  const name  = document.getElementById('js-name').value.trim();
+  const email = document.getElementById('js-email').value.trim();
+  const pass  = document.getElementById('js-pass').value;
+  const code  = document.getElementById('js-code').value.trim().toUpperCase();
+  const errEl = document.getElementById('js-err');
+  const btn   = document.getElementById('js-btn');
+  if (!name || !email || !pass || !code) { errEl.textContent = 'Fill in all fields'; return; }
+  if (pass.length < 6) { errEl.textContent = 'Password must be at least 6 characters'; return; }
+  errEl.textContent = '';
+
+  const inviteId = code + '_' + email.toLowerCase();
+
+  // Same race-prevention as doCreateShop: onAuthStateChanged fires the
+  // instant the Auth account exists, before we've written the shop
+  // user doc or userShops cache doc — block bootUser until both exist.
+  _creatingShop = true;
+  btn.textContent = 'Creating account…';
+  let cred;
+  try {
+    cred = await withTimeout(
+      auth.createUserWithEmailAndPassword(email, pass),
+      20000, 'Timed out creating your account — check your connection'
+    );
+  } catch(e) {
+    _creatingShop = false;
+    errEl.textContent = e.code === 'timeout' ? e.message : friendlyAuthError(e.code);
+    btn.textContent = 'Join Shop';
+    return;
+  }
+
+  // The invite can only be checked AFTER signing in — the Firestore rule
+  // for reading an invite requires request.auth to match its email, so
+  // checking it pre-signup (when request.auth is still null) is always
+  // denied. This is why "Join Shop" errored for every cashier before:
+  // the account never even got the chance to exist yet.
+  try {
+    btn.textContent = 'Checking invite…';
+    const inviteSnap = await withTimeout(
+      db.collection('invites').doc(inviteId).get(),
+      15000, 'Timed out checking your invite — check your connection'
+    );
+    if (!inviteSnap.exists) {
+      throw { code: 'no-invite', message: 'No pending invite found for this email at this shop code. Ask your shop owner to invite you first.' };
+    }
+    const invite = inviteSnap.data();
+    if (invite.status !== 'pending') {
+      throw { code: 'no-invite', message: invite.status === 'accepted'
+        ? 'This invite has already been used — try signing in instead.'
+        : 'This invite is no longer valid. Ask your shop owner to re-invite you.' };
+    }
+    btn.textContent = 'Joining…';
+    _creatingShop = false;
+    await acceptInvite(inviteId, invite, cred.user, name);
+
+  } catch(e) {
+    // Roll back the account we just created so a bad/missing invite
+    // doesn't leave an orphaned, shop-less Auth user behind.
+    try { await cred.user.delete(); } catch(_) {}
+    try { await auth.signOut(); } catch(_) {}
+    _creatingShop = false;
+    errEl.textContent = (e.code === 'timeout' || e.code === 'no-invite') ? e.message : (friendlyAuthError(e.code) || e.message);
+    btn.textContent = 'Join Shop';
+  }
+}
+
+// ── AUTH FUNCTIONS ────────────────────────────────────
+function showLoading(msg) {
+  document.querySelectorAll('.auth-screen').forEach(s => s.classList.remove('show'));
+  document.getElementById('pausedScreen').classList.remove('show');
+  document.getElementById('loadingMsg').textContent = msg || 'Loading your shop…';
+  document.getElementById('loadingCancel').style.display = 'none';
+  document.getElementById('loadingScreen').classList.add('show');
+  // Reveal cancel button after 8 seconds if still loading
+  setTimeout(() => {
+    if (document.getElementById('loadingScreen').classList.contains('show')) {
+      document.getElementById('loadingCancel').style.display = 'inline-flex';
+    }
+  }, 8000);
+}
+function hideLoading() {
+  document.getElementById('loadingScreen').classList.remove('show');
+}
+function cancelBoot() {
+  hideLoading();
+  teardownListeners();
+  auth.signOut();
+  showAuth('authLogin');
+  document.getElementById('li-err').textContent = 'Timed out — please try again';
+}
+function showAuth(id) {
+  document.querySelectorAll('.auth-screen').forEach(s => s.classList.remove('show'));
+  document.getElementById('loadingScreen').classList.remove('show');
+  document.getElementById('pausedScreen').classList.remove('show');
+  document.getElementById('mainApp').classList.remove('ready');
+  document.getElementById('li-btn').textContent = 'Sign In';
+  document.getElementById('li-err').textContent = '';
+  document.getElementById(id).classList.add('show');
+}
+function showApp() {
+  document.querySelectorAll('.auth-screen').forEach(s => s.classList.remove('show'));
+  document.getElementById('loadingScreen').classList.remove('show');
+  document.getElementById('pausedScreen').classList.remove('show');
+  document.getElementById('mainApp').classList.add('ready');
+  document.getElementById('tbDate').textContent = new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+}
+function showPausedScreen(msg) {
+  document.querySelectorAll('.auth-screen').forEach(s => s.classList.remove('show'));
+  document.getElementById('loadingScreen').classList.remove('show');
+  document.getElementById('mainApp').classList.remove('ready');
+  document.getElementById('pausedMsg').textContent = msg;
+  document.getElementById('pausedScreen').classList.add('show');
+}
+
+// Wraps a promise so it rejects with a clear timeout error instead of
+// hanging forever — used anywhere a network call can otherwise leave a
+// button stuck on "Signing in…" / "Creating…" with no feedback.
+function withTimeout(promise, ms, message) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject({ code: 'timeout', message: message || 'Request timed out' }), ms))
+  ]);
+}
+
+async function doLogin() {
+  const email = document.getElementById('li-email').value.trim();
+  const pass  = document.getElementById('li-pass').value;
+  const errEl = document.getElementById('li-err');
+  const btn   = document.getElementById('li-btn');
+  if (!email || !pass) { errEl.textContent = 'Enter email and password'; return; }
+  btn.textContent = 'Signing in…'; errEl.textContent = '';
+  try {
+    await withTimeout(
+      auth.signInWithEmailAndPassword(email, pass),
+      15000, 'Sign-in timed out — check your connection and try again'
+    );
+    // onAuthStateChanged will fire and call bootUser
+    // Loading screen is shown there — button resets on error only
+  } catch(e) {
+    errEl.textContent = e.code === 'timeout' ? e.message : friendlyAuthError(e.code);
+    btn.textContent = 'Sign In';
+  }
+}
+
+async function doCreateShop() {
+  const uname = document.getElementById('cs-uname').value.trim();
+  const sname = document.getElementById('cs-sname').value.trim();
+  const email = document.getElementById('cs-email').value.trim();
+  const pass  = document.getElementById('cs-pass').value;
+  const errEl = document.getElementById('cs-err');
+  const btn   = document.getElementById('cs-btn');
+  if (!uname||!sname||!email||!pass) { errEl.textContent='Fill in all fields'; return; }
+  if (pass.length < 6) { errEl.textContent='Password must be at least 6 characters'; return; }
+  btn.textContent='Creating…'; errEl.textContent='';
+
+  // Set flag BEFORE creating the Auth account so onAuthStateChanged
+  // knows to wait — it fires the moment the account is created,
+  // before any Firestore writes have happened.
+  _creatingShop = true;
+
+  try {
+    const cred = await withTimeout(
+      auth.createUserWithEmailAndPassword(email, pass),
+      20000, 'Timed out creating your account — check your connection and try again'
+    );
+    const user = cred.user;
+    const shopCode = genShopCode(sname);
+
+    // Write all documents in one atomic batch
+    const batch = db.batch();
+    batch.set(db.collection('shopRegistry').doc(shopCode), {
+      shopCode, shopName:sname, ownerEmail:email,
+      status:'active', createdAt:Date.now()
+    });
+    batch.set(db.collection('shops').doc(shopCode).collection('info').doc('config'), {
+      shopName:sname, location:'Manyatta, Embu', phone:'', mpesa:'',
+      email:'', tag:'Quality Electronics at Wholesale Prices', shopCode
+    });
+    batch.set(db.collection('shops').doc(shopCode).collection('users').doc(user.uid), {
+      uid:user.uid, name:uname, email, role:'owner', joinedAt:Date.now()
+    });
+    // This is the key document bootUser reads — must exist before bootUser runs.
+    // role must be stored here too (not just in the shop's users doc) since
+    // this is the fast-lookup cache bootUser and security rules rely on.
+    batch.set(db.collection('userShops').doc(user.uid), {
+      shopCode, role:'owner', updatedAt:Date.now()
+    });
+    await withTimeout(batch.commit(), 20000, 'Timed out setting up your shop — check your connection and try again');
+
+    // Seed demo inventory after the batch so the shop structure exists
+    await seedShopData(shopCode);
+
+    // All writes done — now safe to boot the user
+    _creatingShop = false;
+    await bootUser(user);
+
+  } catch(e) {
+    _creatingShop = false;
+    errEl.textContent = e.code === 'timeout' ? e.message : (friendlyAuthError(e.code) || e.message);
+    btn.textContent = 'Create Shop';
+  }
+}
+
+async function seedShopData(shopCode) {
+  const shopRef = db.collection('shops').doc(shopCode);
+  const batch = db.batch();
+  const demoItems = [
+    {id:'i1',name:'3-Way Extension',cat:'Electrical',stock:40,reorder:8,cost:220,price:320,supplierId:'s1',lastSold:null},
+    {id:'i2',name:'1.5mm Cable (roll)',cat:'Electrical',stock:15,reorder:5,cost:1800,price:2300,supplierId:'s2',lastSold:null},
+    {id:'i3',name:'Switch Socket 2-gang',cat:'Electrical',stock:35,reorder:10,cost:120,price:180,supplierId:'s1',lastSold:null},
+    {id:'i4',name:'13A Plug Top',cat:'Electrical',stock:60,reorder:15,cost:30,price:55,supplierId:'s1',lastSold:null},
+    {id:'i5',name:'1000uF Capacitor',cat:'Components',stock:500,reorder:100,cost:5,price:10,supplierId:'s3',lastSold:null},
+    {id:'i6',name:'1N4007 Diode',cat:'Components',stock:400,reorder:80,cost:3,price:8,supplierId:'s3',lastSold:null},
+    {id:'i7',name:'12V Relay',cat:'Modules',stock:120,reorder:20,cost:45,price:80,supplierId:'s4',lastSold:null},
+    {id:'i8',name:'18650 Battery',cat:'Power',stock:200,reorder:40,cost:180,price:250,supplierId:'s5',lastSold:null},
+    {id:'i9',name:'5V USB Charger',cat:'Power',stock:25,reorder:10,cost:120,price:200,supplierId:'s5',lastSold:null},
+    {id:'i10',name:'Cable Ties (bag)',cat:'Installation',stock:50,reorder:10,cost:80,price:130,supplierId:'s1',lastSold:null},
+  ];
+  const demoSuppliers = [
+    {id:'s1',name:'ABC Traders',contact:'James Otieno',phone:'0712 345 678',location:'Kisumu CBD',cats:'Electrical'},
+    {id:'s2',name:'Nairobi Supply',contact:'Mary Wanjiku',phone:'0722 111 222',location:'Nairobi Gikomba',cats:'Electrical'},
+    {id:'s3',name:'Tech Parts',contact:'Ahmed Hassan',phone:'0733 999 001',location:'Mombasa',cats:'Components'},
+    {id:'s4',name:'East Electronics',contact:'Peter Kamau',phone:'0700 456 789',location:'Tom Mboya St',cats:'Modules'},
+    {id:'s5',name:'Power Hub',contact:'Faith Achieng',phone:'0718 654 321',location:'Kisumu Kondele',cats:'Power'},
+  ];
+  demoItems.forEach(it => batch.set(shopRef.collection('items').doc(it.id), it));
+  demoSuppliers.forEach(sp => batch.set(shopRef.collection('suppliers').doc(sp.id), sp));
+  await batch.commit();
+}
+
+async function doResetPassword() {
+  const email = document.getElementById('li-email').value.trim();
+  if (!email) { document.getElementById('li-err').textContent = 'Enter your email first'; return; }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    document.getElementById('li-err').style.color = 'var(--gr)';
+    document.getElementById('li-err').textContent = 'Reset email sent — check your inbox';
+  } catch(e) {
+    document.getElementById('li-err').style.color = 'var(--re)';
+    document.getElementById('li-err').textContent = friendlyAuthError(e.code);
+  }
+}
+
+async function doSignOut() {
+  if (!(await customConfirm('You will need to sign in again to access this shop.', {title:'Sign out?'}))) return;
+  teardownListeners();
+  S.items=[]; S.sales=[]; S.suppliers=[]; S.cart=[];
+  auth.signOut();
+}
+
+function friendlyAuthError(code) {
+  const map = {
+    'auth/user-not-found': 'No account found with that email',
+    'auth/wrong-password': 'Incorrect password',
+    'auth/email-already-in-use': 'That email is already registered',
+    'auth/invalid-email': 'Invalid email address',
+    'auth/weak-password': 'Password must be at least 6 characters',
+    'auth/too-many-requests': 'Too many attempts — try again later',
+    'auth/network-request-failed': 'No internet connection',
+  };
+  return map[code] || 'Something went wrong — try again';
+}
+
+// ── FIRESTORE LISTENERS ───────────────────────────────
+function startListeners() {
+  teardownListeners();
+  if (!S.shopCode) return;
+  updateCloudStatus('syncing');
+  const shopRef = db.collection('shops').doc(S.shopCode);
+
+  S.unsubs.push(shopRef.collection('items').onSnapshot(snap => {
+    snap.docChanges().forEach(ch => {
+      const d = ch.doc.data();
+      const idx = S.items.findIndex(i => i.id === d.id);
+      if (ch.type === 'removed') { if (idx > -1) S.items.splice(idx, 1); }
+      else if (idx > -1) S.items[idx] = d;
+      else S.items.push(d);
+    });
+    refreshPage();
+    updateCloudStatus('online');
+  }, () => updateCloudStatus('offline')));
+
+  S.unsubs.push(shopRef.collection('suppliers').onSnapshot(snap => {
+    snap.docChanges().forEach(ch => {
+      const d = ch.doc.data();
+      const idx = S.suppliers.findIndex(s => s.id === d.id);
+      if (ch.type === 'removed') { if (idx > -1) S.suppliers.splice(idx, 1); }
+      else if (idx > -1) S.suppliers[idx] = d;
+      else S.suppliers.push(d);
+    });
+    refreshPage();
+  }, () => {}));
+
+  S.unsubs.push(shopRef.collection('sales').orderBy('ts','desc').limit(200).onSnapshot(snap => {
+    snap.docChanges().forEach(ch => {
+      const d = ch.doc.data();
+      if (!S.sales.find(s => s.id === d.id)) S.sales.unshift(d);
+    });
+    S.sales.sort((a,b) => b.ts - a.ts);
+    refreshPage();
+  }, () => {}));
+}
+
+function teardownListeners() {
+  S.unsubs.forEach(u => { try { u(); } catch(e) {} });
+  S.unsubs = [];
+}
+
+// ── NAVIGATION ────────────────────────────────────────
+const OWNER_PAGES  = ['dashboard','stock','sales','reports','suppliers','orderstock','staff','settings'];
+const CASHIER_PAGES = ['dashboard','sales'];
+const ADMIN_PAGES  = ['admin','settings'];
+
+function showPage(id) {
+  const allowed = S.role === 'superadmin' ? ADMIN_PAGES :
+                  S.role === 'owner'      ? OWNER_PAGES : CASHIER_PAGES;
+  if (!allowed.includes(id)) id = allowed[0];
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('pg-' + id)?.classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(b => {
+    b.classList.toggle('active', b.dataset.page === id);
+  });
+  document.getElementById('mainScroll').scrollTop = 0;
+  document.body.classList.toggle('cashier-mode', S.role === 'cashier');
+  ({dashboard:renderDash, stock:renderStock,
+    sales:() => { renderPOS(); renderHist(); },
+    reports:renderReports, suppliers:renderSuppliers,
+    orderstock:renderOrderStock,
+    staff:renderStaff, settings:renderSettings,
+    admin:loadAdminShops})[id]?.();
+}
+
+function buildSidebar() {
+  const nav = document.getElementById('sbNav');
+  const pages = S.role === 'superadmin' ? [
+    {page:'admin',   icon:svgAdmin(),   label:'Admin Dashboard'},
+    {page:'settings',icon:svgSettings(),label:'Settings'},
+  ] : S.role === 'owner' ? [
+    {page:'dashboard', icon:svgDash(),      label:'Dashboard'},
+    {page:'stock',     icon:svgStock(),     label:'Inventory'},
+    {page:'sales',     icon:svgSales(),     label:'Sales / POS'},
+    {page:'reports',   icon:svgReports(),   label:'Reports'},
+    {page:'suppliers', icon:svgSuppliers(), label:'Suppliers'},
+    {page:'orderstock',icon:svgTruck(),     label:'Order Stock'},
+    {page:'staff',     icon:svgStaff(),     label:'Staff'},
+    {page:'settings',  icon:svgSettings(),  label:'Settings'},
+  ] : [
+    {page:'dashboard', icon:svgDash(),   label:'Dashboard'},
+    {page:'sales',     icon:svgSales(),  label:'Sales / POS'},
+  ];
+  nav.innerHTML = pages.map(p => `
+    <div class="sb-item" data-page="${p.page}" onclick="showPage('${p.page}');closeSidebar()">
+      ${p.icon} ${p.label}
+    </div>`).join('');
+}
+
+function updateSidebarUser(userDoc) {
+  if (!userDoc) return;
+  const name = userDoc.name || userDoc.email || '?';
+  document.getElementById('sbAv').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('sbUname').textContent = name;
+  document.getElementById('sbUrole').textContent = userDoc.role === 'superadmin' ? 'Super Admin' :
+    userDoc.role === 'owner' ? 'Owner' : 'Cashier';
+}
+
+function toggleSidebar() {
+  const open = document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('show', open);
+  document.getElementById('hamburger').classList.toggle('open', open);
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+  document.getElementById('hamburger').classList.remove('open');
+}
+
+// Swipe to open sidebar
+let _swipeX = 0;
+document.addEventListener('touchstart', e => { _swipeX = e.touches[0].clientX; }, { passive: true });
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - _swipeX;
+  if (_swipeX < 30 && dx > 60) toggleSidebar();
+  if (dx < -60 && document.getElementById('sidebar').classList.contains('open')) closeSidebar();
+}, { passive: true });
+
+// ── CATEGORIES ────────────────────────────────────────
+function badge(c) { return `<span class="badge ${CC[c]||''}">${c}</span>`; }
+function stockCls(i) { if(!i.stock)return'stock-lo'; if(i.stock<=i.reorder)return'stock-lo'; if(i.stock<=i.reorder*2)return'stock-md'; return'stock-ok'; }
+function pills(elId, sk, cb) {
+  const el = document.getElementById(elId);
+  const all = ['All', ...CATS];
+  el.innerHTML = all.map(c => `<button class="cat-pill${S[sk]===c?' active':''}">${c}</button>`).join('');
+  el.querySelectorAll('.cat-pill').forEach((b,i) => b.onclick = () => { S[sk] = all[i]; cb(); });
+}
+
+// ── DASHBOARD ─────────────────────────────────────────
+function renderDash() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const ts = S.sales.filter(s => s.ts >= today.getTime());
+  const rev = ts.reduce((a,b)=>a+b.total,0);
+  const pft = ts.reduce((a,b)=>a+b.profit,0);
+  document.getElementById('k-today').textContent = 'KSh '+fmt(rev);
+  document.getElementById('k-txn').textContent = ts.length+' transaction'+(ts.length!==1?'s':'');
+  document.getElementById('k-pft').textContent = 'KSh '+fmt(pft);
+  document.getElementById('k-mrg').textContent = (rev>0?Math.round(pft/rev*100):0)+'% margin';
+  document.getElementById('k-items').textContent = S.items.length;
+  const alts = S.items.filter(i => i.stock <= i.reorder);
+  document.getElementById('k-alerts').textContent = alts.length;
+  const showPft = S.role !== 'cashier';
+  const re = document.getElementById('dash-recent');
+  re.innerHTML = ts.length ? ts.slice(0,5).map(s=>`
+    <div class="srow">
+      <div><div style="font-weight:700;font-size:12px">${s.customer}</div>
+      <div style="font-size:10px;color:var(--tx2)">${(s.staffName?s.staffName+' · ':'')}${s.items.map(i=>i.name).join(', ')}</div></div>
+      <div style="text-align:right">
+        <div style="color:var(--ac);font-weight:800">KSh ${fmt(s.total)}</div>
+        ${showPft?`<div style="font-size:10px;color:var(--gr)">+${fmt(s.profit)}</div>`:''}
+      </div>
+    </div>`).join('') :
+    '<div class="empty"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><div style="font-size:12px">No sales today</div></div>';
+  const ae = document.getElementById('dash-alerts');
+  ae.innerHTML = alts.length ? alts.slice(0,6).map(i=>`
+    <div class="alert-row${i.stock?' warn':''}"><div class="alert-dot"></div>
+    <div><div class="a-name">${i.name}</div><div class="a-detail">${i.cat} · min ${i.reorder}</div></div>
+    <div class="a-badge">${i.stock?'Low: '+i.stock:'OUT'}</div></div>`).join('') :
+    '<div class="empty"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg><div style="font-size:12px">All stock OK</div></div>';
+  const cd = CATS.map(cat => {
+    const p = S.sales.flatMap(s=>s.items.filter(si=>(S.items.find(i=>i.id===si.itemId)||{}).cat===cat)).reduce((a,b)=>a+(b.price-b.cost)*b.qty,0);
+    return {cat,p};
+  }).filter(c=>c.p>0);
+  const mx = Math.max(...cd.map(c=>c.p),1);
+  document.getElementById('dash-catbars').innerHTML = cd.map(c=>`
+    <div class="pbar"><div class="pbar-lbl"><span>${c.cat}</span><span style="color:var(--ac)">KSh ${fmt(c.p)}</span></div>
+    <div class="pbar-track"><div class="pbar-fill" style="width:${Math.round(c.p/mx*100)}%"></div></div></div>`).join('') ||
+    '<div style="color:var(--tx2);font-size:12px">No sales data yet</div>';
+}
+
+// ── STOCK ─────────────────────────────────────────────
+function renderStock() {
+  pills('stockCats','stockCat',renderStock);
+  const q = document.getElementById('stockQ').value.toLowerCase();
+  const list = S.items.filter(i=>(S.stockCat==='All'||i.cat===S.stockCat)&&(!q||i.name.toLowerCase().includes(q)||(i.barcode&&i.barcode.toLowerCase().includes(q))));
+  const tb = document.getElementById('stockTbody');
+  if (!list.length) { tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--tx2);padding:24px">No items found</td></tr>'; return; }
+  const ICO_EDIT = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+  const ICO_BOX = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><line x1="12" y1="12" x2="12" y2="19"/><line x1="9" y1="15" x2="15" y2="15"/></svg>';
+  const ICO_DEL = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
+  const ICO_NET = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 3h15v13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>';
+  tb.innerHTML = list.map(i => {
+    const sp = S.suppliers.find(x=>x.id===i.supplierId);
+    return `<tr><td style="font-weight:700">${i.name}</td><td>${badge(i.cat)}</td>
+      <td><span class="${stockCls(i)}">${i.stock}</span><span style="font-size:10px;color:var(--tx2)">/${i.reorder}</span></td>
+      <td>KSh ${fmt(i.cost)}</td><td style="font-weight:800">KSh ${fmt(i.price)}</td>
+      <td style="color:var(--gr)">+${fmt(i.price-i.cost)}</td>
+      <td><span class="sup-chip">${sp?sp.name:'—'}</span></td>
+      <td><div style="display:flex;gap:3px">
+        <button class="btn btn-s btn-ico btn-sm" onclick="openEditItem('${i.id}')">${ICO_EDIT}</button>
+        <button class="btn btn-s btn-ico btn-sm" onclick="openRestock('${i.id}')">${ICO_BOX}</button>
+        <button class="btn btn-s btn-ico btn-sm" title="List on Krystal Network" onclick="listOnNetwork('${i.id}')">${ICO_NET}</button>
+        <button class="btn btn-d btn-ico btn-sm" onclick="delItem('${i.id}')">${ICO_DEL}</button>
+      </div></td></tr>`;
+  }).join('');
+}
+async function listOnNetwork(itemId) {
+  const it = S.items.find(x => x.id===itemId); if (!it) return;
+  try {
+    const existing = await ndb.collection('catalogue')
+      .where('addedBy','==',S.shopCode).where('name','==',it.name).limit(1).get();
+    if (!existing.empty) { toast('Already listed — waiting on network admin to price it'); return; }
+    await ndb.collection('catalogue').add({
+      name: it.name, category: it.cat, supplier: '',
+      buyPrice: 0, sellPrice: 0, status: 'pending',
+      addedBy: S.shopCode, createdAt: Date.now()
+    });
+    toast('Sent to Krystal Network — admin will set a price');
+  } catch(e) { toast('Could not list item: '+e.message); }
+}
+
+function openAddItem() {
+  S.editItem = null;
+  document.getElementById('itemModalTitle').textContent = 'Add Item';
+  ['ii-name','ii-stock','ii-cost','ii-price','ii-barcode'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ii-cat').value = 'Electrical';
+  document.getElementById('ii-reorder').value = S.localPrefs.reorder || 10;
+  refreshSupSel(); openModal('itemModal');
+}
+function openEditItem(id) {
+  const it = S.items.find(i=>i.id===id); S.editItem = id;
+  document.getElementById('itemModalTitle').textContent = 'Edit Item';
+  document.getElementById('ii-name').value = it.name;
+  document.getElementById('ii-barcode').value = it.barcode||'';
+  document.getElementById('ii-cat').value = it.cat;
+  document.getElementById('ii-stock').value = it.stock;
+  document.getElementById('ii-reorder').value = it.reorder;
+  document.getElementById('ii-cost').value = it.cost;
+  document.getElementById('ii-price').value = it.price;
+  refreshSupSel(it.supplierId); openModal('itemModal');
+}
+function refreshSupSel(sel) {
+  document.getElementById('ii-sup').innerHTML = '<option value="">-- None --</option>'+
+    S.suppliers.map(s=>`<option value="${s.id}"${s.id===sel?' selected':''}>${s.name}</option>`).join('');
+}
+async function saveItem() {
+  const name = document.getElementById('ii-name').value.trim();
+  if (!name) { toast('Enter item name'); return; }
+  const price = parseFloat(document.getElementById('ii-price').value)||0;
+  if (!price) { toast('Enter sell price'); return; }
+  const barcode = document.getElementById('ii-barcode').value.trim();
+  if (barcode) {
+    const dupe = S.items.find(i=>i.barcode===barcode && i.id!==S.editItem);
+    if (dupe) { toast('That barcode is already used by "'+dupe.name+'"'); return; }
+  }
+  const d = { name, cat:document.getElementById('ii-cat').value,
+    barcode: barcode || null,
+    stock:parseInt(document.getElementById('ii-stock').value)||0,
+    reorder:parseInt(document.getElementById('ii-reorder').value)||10,
+    cost:parseFloat(document.getElementById('ii-cost').value)||0,
+    price, supplierId:document.getElementById('ii-sup').value||null };
+  const id = S.editItem || 'i'+Date.now();
+  d.id = id;
+  await db.collection('shops').doc(S.shopCode).collection('items').doc(id).set(d, {merge:true});
+  closeModal('itemModal'); toast(S.editItem?'Item updated':'Item added');
+}
+async function delItem(id) {
+  if (!(await customConfirm('This can\'t be undone.', {title:'Delete this item?', danger:true, confirmLabel:'Delete'}))) return;
+  await db.collection('shops').doc(S.shopCode).collection('items').doc(id).delete();
+  toast('Deleted');
+}
+function openRestock(id) {
+  const it = S.items.find(i=>i.id===id); S.restockId = id;
+  document.getElementById('restockName').textContent = it.name+' · '+it.cat;
+  document.getElementById('rs-cur').value = it.stock;
+  document.getElementById('rs-add').value = '';
+  document.getElementById('rs-cost').value = '';
+  openModal('restockModal');
+}
+async function saveRestock() {
+  const qty = parseInt(document.getElementById('rs-add').value)||0;
+  if (qty<=0) { toast('Enter quantity'); return; }
+  const it = S.items.find(i=>i.id===S.restockId);
+  const newStock = it.stock + qty;
+  const nc = parseFloat(document.getElementById('rs-cost').value)||0;
+  const upd = { stock: newStock };
+  if (nc > 0) upd.cost = nc;
+  await db.collection('shops').doc(S.shopCode).collection('items').doc(S.restockId).update(upd);
+  closeModal('restockModal'); toast('Restocked '+qty+' units');
+}
+
+// ── CUSTOM CONFIRM DIALOG ────────────────────────────
+// Promise-based replacement for the browser's native confirm() — usage:
+// if (!(await customConfirm('Delete this item?'))) return;
+let _confirmResolver = null;
+const ICO_WARN = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
+const ICO_TRASH = '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>';
+function customConfirm(message, opts={}) {
+  return new Promise(resolve => {
+    _confirmResolver = resolve;
+    document.getElementById('confirmTitle').textContent = opts.title || 'Are you sure?';
+    document.getElementById('confirmMsg').textContent = message;
+    document.getElementById('confirmIcon').innerHTML =
+      `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${opts.danger ? ICO_TRASH : ICO_WARN}</svg>`;
+    document.getElementById('confirmIcon').className = 'confirm-icon' + (opts.danger ? ' danger' : '');
+    const btn = document.getElementById('confirmBtn');
+    btn.textContent = opts.confirmLabel || 'Confirm';
+    btn.className = 'btn btn-full ' + (opts.danger ? 'btn-d' : 'btn-p');
+    openModal('confirmModal');
+  });
+}
+function _confirmResolve(val) {
+  closeModal('confirmModal');
+  if (_confirmResolver) { const r = _confirmResolver; _confirmResolver = null; r(val); }
+}
+
+// ── BARCODE SCANNER ──────────────────────────────────
+// Uses the native BarcodeDetector API (supported on Chrome/Android
+// WebView, which is what this PWA runs in). Falls back to a manual
+// text-entry field on browsers that don't support it, so scanning is
+// never a hard dependency for using the app.
+let _scanStream = null, _scanRAF = null, _scanDetector = null, _scanCtx = null, _scanLastTick = 0;
+
+async function openScanner(context) {
+  _scanCtx = context;
+  document.getElementById('scanTitle').textContent =
+    context==='pos' ? 'Scan item to add' :
+    context==='item-form' ? 'Scan item barcode' : 'Scan to find item';
+  document.getElementById('scanManualInput').value = '';
+  document.getElementById('scanFallback').style.display = 'none';
+  document.getElementById('scanFrame').style.display = 'block';
+  document.getElementById('scanOverlay').classList.add('open');
+
+  if (!('BarcodeDetector' in window) || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showScanFallback('Camera scanning isn\'t supported on this browser — enter the code manually.');
+    return;
+  }
+  try {
+    _scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    const video = document.getElementById('scanVideo');
+    video.srcObject = _scanStream;
+    _scanDetector = new BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39','qr_code','itf','codabar'] });
+    _scanRAF = requestAnimationFrame(scanTick);
+  } catch(e) {
+    showScanFallback('Couldn\'t access the camera (' + (e.message||'permission denied') + ') — enter the code manually.');
+  }
+}
+async function scanTick(ts) {
+  if (!_scanStream) return;
+  if (ts - _scanLastTick < 150) { _scanRAF = requestAnimationFrame(scanTick); return; }
+  _scanLastTick = ts;
+  const video = document.getElementById('scanVideo');
+  if (video.readyState >= 2) {
+    try {
+      const codes = await _scanDetector.detect(video);
+      if (codes.length) { onScanDetected(codes[0].rawValue); return; }
+    } catch(e) { /* transient decode errors are normal between frames */ }
+  }
+  _scanRAF = requestAnimationFrame(scanTick);
+}
+function showScanFallback(msg) {
+  document.getElementById('scanFrame').style.display = 'none';
+  document.getElementById('scanFallbackMsg').textContent = msg;
+  document.getElementById('scanFallback').style.display = 'block';
+  setTimeout(()=>document.getElementById('scanManualInput').focus(), 100);
+}
+function submitManualScan() {
+  const v = document.getElementById('scanManualInput').value.trim();
+  if (!v) return;
+  onScanDetected(v);
+}
+function onScanDetected(code) {
+  stopScanner();
+  handleScanResult(code.trim(), _scanCtx);
+}
+function stopScanner() {
+  if (_scanRAF) cancelAnimationFrame(_scanRAF);
+  if (_scanStream) _scanStream.getTracks().forEach(t=>t.stop());
+  _scanStream = null; _scanRAF = null; _scanDetector = null;
+  document.getElementById('scanOverlay').classList.remove('open');
+}
+function handleScanResult(code, context) {
+  if (context === 'item-form') {
+    document.getElementById('ii-barcode').value = code;
+    return;
+  }
+  const it = S.items.find(i => i.barcode === code);
+  if (context === 'pos') {
+    if (!it) { toast('No item matches barcode '+code); return; }
+    if (!it.stock) { toast(it.name+' is out of stock'); return; }
+    addCart(it.id);
+    toast('Added '+it.name);
+    return;
+  }
+  if (context === 'stock-search') {
+    document.getElementById('stockQ').value = it ? it.name : code;
+    renderStock();
+    if (!it) toast('No item matches barcode '+code);
+    return;
+  }
+}
+
+// ── POS ───────────────────────────────────────────────
+function renderPOS() {
+  pills('posCats','posCat',renderPOS);
+  const q = document.getElementById('posQ').value.toLowerCase();
+  const list = S.items.filter(i=>(S.posCat==='All'||i.cat===S.posCat)&&(!q||i.name.toLowerCase().includes(q))&&i.stock>0);
+  document.getElementById('posItems').innerHTML = list.map(i=>`
+    <div class="pos-item" onclick="addCart('${i.id}')">
+      <div class="pos-name">${i.name}</div>
+      <div class="pos-price">KSh ${fmt(i.price)}</div>
+      <div class="pos-stock">Stock: ${i.stock}</div>
+    </div>`).join('') || '<div style="grid-column:span 2;text-align:center;color:var(--tx2);padding:20px;font-size:12px">No items</div>';
+  renderCart();
+}
+function addCart(id) {
+  const it = S.items.find(i=>i.id===id); if (!it||!it.stock) return;
+  const ex = S.cart.find(c=>c.itemId===id);
+  if (ex) { if (ex.qty>=it.stock) { toast('Max stock'); return; } ex.qty++; }
+  else S.cart.push({itemId:id,name:it.name,price:it.price,origPrice:it.price,cost:it.cost,qty:1});
+  renderCart();
+}
+function renderCart() {
+  const el = document.getElementById('cartBody');
+  const fab = document.getElementById('cartFab');
+  const totalQty = S.cart.reduce((a,b)=>a+b.qty,0);
+  if (!S.cart.length) {
+    el.innerHTML = '<div class="empty" style="padding:14px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><div style="font-size:11px">Tap items above to add</div></div>';
+    document.getElementById('cartCount').textContent = '';
+    document.getElementById('cartTotal').textContent = 'KSh 0';
+    if (fab) fab.classList.remove('show');
+    closeModal('cartModal'); // nothing left to review — collapse the sheet if it was open
+    return;
+  }
+  const total = S.cart.reduce((a,b)=>a+b.price*b.qty,0);
+  el.innerHTML = S.cart.map((c,i) => {
+    const chg = c.price !== c.origPrice;
+    return `<div class="cart-item"><div class="ci-name">${c.name}</div>
+      <div class="qty-wrap"><button class="qty-btn" onclick="chQty(${i},-1)">-</button>
+      <span style="font-size:12px;font-weight:800;min-width:18px;text-align:center">${c.qty}</span>
+      <button class="qty-btn" onclick="chQty(${i},1)">+</button></div>
+      <div style="display:flex;align-items:center;gap:3px;flex:1">
+        <span style="font-size:10px;color:var(--tx2)">KSh</span>
+        <input type="number" value="${c.price}" min="0" style="width:68px;padding:3px 5px;font-size:12px;font-weight:800;color:${chg?'var(--wa)':'var(--ac)'};border-color:${chg?'var(--wa)':'var(--bd)'}" onchange="setPrice(${i},this.value)">
+        ${chg?`<span style="font-size:10px;color:var(--tx2);text-decoration:line-through">${fmt(c.origPrice)}</span>`:''}
+      </div>
+      <div class="ci-total">KSh ${fmt(c.price*c.qty)}</div></div>`;
+  }).join('');
+  document.getElementById('cartCount').textContent = '('+totalQty+')';
+  document.getElementById('cartTotal').textContent = 'KSh '+fmt(total);
+  if (fab) {
+    fab.classList.add('show');
+    document.getElementById('cartFabCount').textContent = totalQty;
+    document.getElementById('cartFabTotal').textContent = 'KSh '+fmt(total);
+  }
+}
+function setPrice(i,v) {
+  const p = parseFloat(v)||0;
+  if (p>0&&p<S.cart[i].cost) toast('Warning: below cost');
+  S.cart[i].price = p; renderCart();
+}
+function chQty(i,d) {
+  const it = S.items.find(x=>x.id===S.cart[i].itemId);
+  S.cart[i].qty += d;
+  if (S.cart[i].qty<=0) S.cart.splice(i,1);
+  else if (it&&S.cart[i].qty>it.stock) { S.cart[i].qty=it.stock; toast('Max stock'); }
+  renderCart();
+}
+function clearCart() { S.cart=[]; renderCart(); }
+async function completeSale() {
+  if (!S.cart.length) { toast('Cart is empty'); return; }
+  const customer = document.getElementById('custName').value.trim()||'Walk-in';
+  const items = S.cart.map(c=>({...c}));
+  const sale = {
+    id:'sl'+Date.now()+Math.random().toString(36).slice(2,6),
+    ts:Date.now(), customer, items,
+    total:items.reduce((a,b)=>a+b.price*b.qty,0),
+    profit:items.reduce((a,b)=>a+(b.price-b.cost)*b.qty,0),
+    staffUid: S.user?.uid || '',
+    staffName: S.userDoc?.name || ''
+  };
+  const shopRef = db.collection('shops').doc(S.shopCode);
+  const batch = db.batch();
+  batch.set(shopRef.collection('sales').doc(sale.id), sale);
+  items.forEach(c => {
+    batch.update(shopRef.collection('items').doc(c.itemId), {
+      stock: firebase.firestore.FieldValue.increment(-c.qty),
+      lastSold: Date.now()
+    });
+  });
+
+  // Update local state immediately instead of awaiting the network
+  // round-trip. Firestore's batch.commit() promise only resolves once the
+  // server acknowledges the write — while offline that never happens, so
+  // awaiting it here hung the whole flow: the sale sat queued "in the
+  // background" and the cashier never saw a receipt or a cleared cart.
+  // The write is already applied to Firestore's local cache the instant
+  // commit() is called, so it's safe to update the UI now and let the
+  // commit sync whenever connectivity returns.
+  S.sales.unshift(sale);
+  items.forEach(c => {
+    const it = S.items.find(i => i.id === c.itemId);
+    if (it) { it.stock -= c.qty; it.lastSold = Date.now(); }
+  });
+  batch.commit().catch(e => {
+    console.error('Sale sync error:', e);
+    toast('Sale saved on this device — will sync when back online');
+  });
+
+  S.cart=[]; document.getElementById('custName').value='';
+  renderCart(); renderPOS(); renderHist();
+  showInvoice(sale);
+  toast('Sale recorded — KSh '+fmt(sale.total));
+}
+function toggleHistory() {
+  const pv=document.getElementById('posView'), hv=document.getElementById('histView');
+  const h=hv.style.display!=='none';
+  pv.style.display=h?'block':'none'; hv.style.display=h?'none':'block';
+}
+function renderHist() {
+  const tb = document.getElementById('histTbody');
+  if (!S.sales.length) { tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--tx2);padding:20px">No sales yet</td></tr>'; return; }
+  const ICO_INV = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+  const showPft = S.role !== 'cashier';
+  tb.innerHTML = S.sales.slice(0,100).map((s,i)=>`
+    <tr><td style="color:var(--tx2)">${i+1}</td>
+    <td style="font-size:10px;color:var(--tx2);white-space:nowrap">${fmtDate(s.ts)}</td>
+    <td style="font-size:11px">${s.staffName||'—'}</td>
+    <td>${s.customer}</td>
+    <td style="font-weight:800">KSh ${fmt(s.total)}</td>
+    <td style="color:var(--gr)">${showPft?'+'+fmt(s.profit):'—'}</td>
+    <td><button class="btn btn-s btn-ico btn-sm" onclick="showInvoice(S.sales[${i}])">${ICO_INV}</button></td></tr>`).join('');
+}
+function showInvoice(sale) {
+  const p = S.localPrefs;
+  const shopInfo = S.shopDoc || {};
+  const footer = [p.invFooter, p.invMpesa&&shopInfo.mpesa?'M-Pesa: '+shopInfo.mpesa:'', p.invPhone&&shopInfo.phone?'Tel: '+shopInfo.phone:''].filter(Boolean).join(' · ');
+  document.getElementById('invoiceBody').innerHTML = `
+    <div class="invoice">
+      <div class="inv-hdr">
+        <div class="inv-title">${shopInfo.shopName||'Krystal'}</div>
+        ${shopInfo.tag?`<div class="inv-sub">${shopInfo.tag}</div>`:''}
+        ${shopInfo.location?`<div class="inv-sub">${shopInfo.location}</div>`:''}
+        <div class="inv-sub">${fmtDate(sale.ts)}</div>
+        ${sale.staffName?`<div class="inv-sub">Served by: ${sale.staffName}</div>`:''}
+      </div>
+      <div style="margin-bottom:7px;font-size:11px"><strong>Customer:</strong> ${sale.customer}</div>
+      <table><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Total</th></tr></thead>
+      <tbody>${sale.items.map(i=>`<tr><td>${i.name}</td><td>${i.qty}</td><td>KSh ${fmt(i.price)}</td><td>KSh ${fmt(i.price*i.qty)}</td></tr>`).join('')}</tbody></table>
+      <div class="inv-total">TOTAL: KSh ${fmt(sale.total)}</div>
+      ${footer?`<div style="text-align:center;margin-top:8px;font-size:10px;color:#999">${footer}</div>`:''}
+    </div>`;
+  openModal('invoiceModal');
+}
+
+// ── REPORTS ───────────────────────────────────────────
+function renderReports() { renderMovers(); }
+function showReport(id,btn) {
+  ['movers','catprofit','dead','monthly'].forEach(r=>document.getElementById('rp-'+r).style.display='none');
+  document.getElementById('rp-'+id).style.display='block';
+  document.querySelectorAll('#pg-reports .tab').forEach(t=>t.classList.remove('active'));
+  btn?.classList.add('active');
+  ({movers:renderMovers,catprofit:renderCatProfit,dead:renderDead,monthly:renderMonthly})[id]?.();
+}
+function renderMovers() {
+  const agg={};
+  S.sales.forEach(s=>s.items.forEach(i=>{if(!agg[i.itemId])agg[i.itemId]={name:i.name,qty:0,rev:0,pft:0};agg[i.itemId].qty+=i.qty;agg[i.itemId].rev+=i.price*i.qty;agg[i.itemId].pft+=(i.price-i.cost)*i.qty;}));
+  const sorted=Object.entries(agg).map(([id,v])=>({...v,cat:(S.items.find(i=>i.id===id)||{}).cat||''})).sort((a,b)=>b.qty-a.qty).slice(0,10);
+  const tb=document.getElementById('rpMoversTb');
+  tb.innerHTML=sorted.length?sorted.map((s,i)=>`<tr><td style="color:var(--ac);font-weight:800">${i+1}</td><td style="font-weight:700">${s.name}</td><td>${badge(s.cat)}</td><td style="font-weight:800">${s.qty}</td><td>KSh ${fmt(s.rev)}</td><td style="color:var(--gr)">+${fmt(s.pft)}</td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--tx2);padding:20px">No sales yet</td></tr>';
+}
+function renderCatProfit() {
+  const cd=CATS.map(cat=>{const its=S.items.filter(i=>i.cat===cat);const cs=S.sales.flatMap(s=>s.items.filter(si=>its.find(i=>i.id===si.itemId)));return{cat,rev:cs.reduce((a,b)=>a+b.price*b.qty,0),pft:cs.reduce((a,b)=>a+(b.price-b.cost)*b.qty,0),cnt:its.length};});
+  const mx=Math.max(...cd.map(c=>c.pft),1);
+  document.getElementById('rpCatBars').innerHTML='<div class="card-title">Profit Distribution</div>'+cd.map(c=>`<div class="pbar"><div class="pbar-lbl"><span>${c.cat}</span><span style="color:var(--ac)">KSh ${fmt(c.pft)}</span></div><div class="pbar-track"><div class="pbar-fill" style="width:${Math.round(c.pft/mx*100)}%"></div></div></div>`).join('');
+  document.getElementById('rpCatStats').innerHTML=cd.map(c=>`<div class="srow"><div>${badge(c.cat)} <span style="font-size:10px;color:var(--tx2)">${c.cnt} items</span></div><div style="text-align:right"><div style="font-weight:700;font-size:12px">KSh ${fmt(c.rev)}</div><div style="font-size:11px;color:var(--gr)">+${fmt(c.pft)}</div></div></div>`).join('');
+}
+function renderDead() {
+  const now=Date.now(),td=S.localPrefs.deadDays||30;
+  const dead=S.items.map(i=>({...i,days:i.lastSold?Math.floor((now-i.lastSold)/86400000):999})).filter(i=>i.days>=td||!i.stock).sort((a,b)=>b.days-a.days);
+  const tb=document.getElementById('rpDeadTb');
+  tb.innerHTML=dead.length?dead.map(i=>`<tr><td style="font-weight:700">${i.name}</td><td>${badge(i.cat)}</td><td class="${i.stock?'stock-md':'stock-lo'}">${i.stock}</td><td style="font-size:10px;color:var(--tx2)">${i.lastSold?fmtDate(i.lastSold):'Never'}</td><td style="color:${i.days>=90?'var(--re)':'var(--wa)'};font-weight:700">${i.days>=999?'Never sold':i.days+'d ago'}</td><td>KSh ${fmt(i.cost*i.stock)}</td></tr>`).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--gr);padding:20px">No dead stock</td></tr>';
+}
+function renderMonthly() {
+  const now=new Date(),ms=new Date(now.getFullYear(),now.getMonth(),1).getTime();
+  const ms2=S.sales.filter(s=>s.ts>=ms);
+  document.getElementById('rpMRev').textContent='KSh '+fmt(ms2.reduce((a,b)=>a+b.total,0));
+  document.getElementById('rpMPft').textContent='KSh '+fmt(ms2.reduce((a,b)=>a+b.profit,0));
+  document.getElementById('rpMTx').textContent=ms2.length;
+  const dm={};ms2.forEach(s=>{const d=new Date(s.ts);const k=d.getDate()+' '+d.toLocaleString('en',{month:'short'});if(!dm[k])dm[k]={rev:0,pft:0};dm[k].rev+=s.total;dm[k].pft+=s.profit;});
+  document.getElementById('rpMDaily').innerHTML=Object.keys(dm).length?Object.entries(dm).map(([day,v])=>`<div class="srow"><div style="font-weight:700">${day}</div><div style="text-align:right"><span style="font-weight:800">KSh ${fmt(v.rev)}</span><span style="color:var(--gr);font-size:11px;margin-left:6px">+${fmt(v.pft)}</span></div></div>`).join(''):'<div style="color:var(--tx2);font-size:12px">No sales this month</div>';
+}
+
+// ── SUPPLIERS ─────────────────────────────────────────
+function renderSuppliers() {
+  const el=document.getElementById('supCards');
+  if(!S.suppliers.length){el.innerHTML='<div class="empty"><div>No suppliers yet</div></div>';return;}
+  el.innerHTML=S.suppliers.map(s=>{const si=S.items.filter(i=>i.supplierId===s.id);const sv=si.reduce((a,b)=>a+b.stock*b.cost,0);return`<div class="card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="font-size:14px;font-weight:800">${s.name}</div><div style="font-size:11px;color:var(--tx2)">${s.location||''}</div></div><button class="btn btn-s btn-sm" onclick="openEditSup('${s.id}')">Edit</button></div>${s.contact?`<div class="srow"><div class="srow-l">Contact</div><div class="srow-v">${s.contact}</div></div>`:''} ${s.phone?`<div class="srow"><div class="srow-l">Phone</div><div class="srow-v" style="color:var(--ac)">${s.phone}</div></div>`:''}<div class="srow"><div class="srow-l">Items</div><div class="srow-v">${si.length}</div></div><div class="srow"><div class="srow-l">Stock Value</div><div class="srow-v">KSh ${fmt(sv)}</div></div>${s.cats?`<div style="margin-top:5px;font-size:11px;color:var(--tx2)">${s.cats}</div>`:''}</div>`;}).join('');
+}
+function openAddSupplier(){S.editSup=null;document.getElementById('supModalTitle').textContent='Add Supplier';['si-name','si-contact','si-phone','si-loc','si-cats'].forEach(id=>document.getElementById(id).value='');openModal('supModal');}
+function openEditSup(id){const s=S.suppliers.find(x=>x.id===id);S.editSup=id;document.getElementById('supModalTitle').textContent='Edit Supplier';document.getElementById('si-name').value=s.name||'';document.getElementById('si-contact').value=s.contact||'';document.getElementById('si-phone').value=s.phone||'';document.getElementById('si-loc').value=s.location||'';document.getElementById('si-cats').value=s.cats||'';openModal('supModal');}
+async function saveSupplier() {
+  const name=document.getElementById('si-name').value.trim();
+  if(!name){toast('Enter supplier name');return;}
+  const id=S.editSup||'su'+Date.now();
+  const d={id,name,contact:document.getElementById('si-contact').value.trim(),phone:document.getElementById('si-phone').value.trim(),location:document.getElementById('si-loc').value.trim(),cats:document.getElementById('si-cats').value.trim()};
+  await db.collection('shops').doc(S.shopCode).collection('suppliers').doc(id).set(d,{merge:true});
+  closeModal('supModal'); toast(S.editSup?'Updated':'Supplier added');
+}
+
+// ── ORDER STOCK (Krystal Network — test integration) ──
+// Auto-creates this shop's record on the separate krystal-enterprise
+// project the first time the owner logs in, so it shows up on the network
+// side without a second registration step.
+async function ensureNetworkShop() {
+  if (!S.shopCode || S.role === 'superadmin') return;
+  try {
+    const ref = ndb.collection('shops').doc(S.shopCode);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      await ref.set({
+        shopCode: S.shopCode,
+        shopName: S.shopDoc?.shopName || S.shopCode,
+        phone: S.shopDoc?.phone || '',
+        location: S.shopDoc?.location || '',
+        source: 'krystal-manager',
+        createdAt: Date.now()
+      });
+    }
+  } catch(e) { console.warn('Network shop sync skipped:', e.message); }
+}
+async function loadCatalogue(force) {
+  if (S.catalogue.length && !force) return;
+  try {
+    const snap = await ndb.collection('catalogue').where('status','==','priced').get();
+    S.catalogue = snap.docs.map(d => ({id:d.id, ...d.data()}));
+  } catch(e) { toast('Could not load network catalogue'); }
+}
+async function renderOrderStock() {
+  const low = S.items.filter(i => i.stock <= i.reorder);
+  const lowEl = document.getElementById('osLowList');
+  lowEl.innerHTML = low.length ? low.map(i => `
+    <div class="srow">
+      <div><div style="font-weight:700;font-size:12px">${i.name}</div>
+      <div style="font-size:10px;color:var(--tx2)">${i.stock} left · reorder at ${i.reorder}</div></div>
+      <button class="btn btn-s btn-sm" onclick="quickFindInCatalogue('${i.name.replace(/'/g,"\\'")}')">Find</button>
+    </div>`).join('') : '<div class="empty" style="padding:14px"><div style="font-size:11px">Nothing low on stock 🎉</div></div>';
+  document.getElementById('osLowCount').textContent = low.length;
+  await loadCatalogue();
+  document.getElementById('osSeedWrap').style.display = S.catalogue.length ? 'none' : 'block';
+  renderCatalogueGrid();
+  renderNetCart();
+  loadMyOrders();
+  loadNetworkPaymentMethod();
+}
+async function loadMyOrders() {
+  const el = document.getElementById('osMyOrders');
+  try {
+    const snap = await ndb.collection('orders').where('shopCode','==',S.shopCode).orderBy('createdAt','desc').limit(15).get();
+    const orders = snap.docs.map(d => d.data());
+    if (!orders.length) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">No orders submitted yet</div></div>'; return; }
+    const pillCls = {Submitted:'wa', Invoiced:'ac', Fulfilled:'gr'};
+    const outstanding = orders.filter(o=>o.status!=='Fulfilled').reduce((a,o)=>a+(o.total||0),0);
+    el.innerHTML = `<div class="srow" style="font-weight:800;font-size:12px"><div>Total owed on open orders</div><div>KSh ${fmt(outstanding)}</div></div>` +
+      orders.map(o => `<div class="srow">
+        <div><div style="font-size:12px;font-weight:600">${o.items.map(i=>i.name+' ×'+i.qty).join(', ')}</div>
+        <div style="font-size:10px;color:var(--tx2)">${new Date(o.createdAt).toLocaleDateString()}</div></div>
+        <div style="text-align:right"><div style="font-size:10px;font-weight:800;color:var(--${pillCls[o.status]||'wa'})">${o.status}</div>
+        <div style="font-size:11px">KSh ${fmt(o.total)}</div></div></div>`).join('');
+  } catch(e) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">Could not load orders</div></div>'; }
+}
+async function loadNetworkPaymentMethod() {
+  const el = document.getElementById('osPayment');
+  try {
+    const snap = await ndb.collection('settings').doc('network').get();
+    const text = snap.exists ? (snap.data().paymentMethod||'') : '';
+    el.textContent = text || 'Not set yet — check back once the network admin sets a payment method.';
+  } catch(e) { el.textContent = 'Could not load payment method.'; }
+}
+async function seedTestCatalogue() {
+  const sample = [
+    {name:'Type C Charger (Fast Charge)', category:'Chargers', buyPrice:250, sellPrice:350, supplier:'Nairobi Wholesalers Ltd'},
+    {name:'Samsung A06 Screen', category:'Screens', buyPrice:1700, sellPrice:2200, supplier:'Tech Parts Nairobi'},
+    {name:'Solder Wire (60/40) 100g', category:'Repair Tools', buyPrice:200, sellPrice:280, supplier:'ElectroSupply Kenya'},
+    {name:'Bluetooth Earphones (TWS)', category:'Accessories', buyPrice:420, sellPrice:600, supplier:'Nairobi Wholesalers Ltd'},
+    {name:'Universal Phone Battery', category:'Batteries', buyPrice:320, sellPrice:450, supplier:'Tech Parts Nairobi'},
+    {name:'iPhone Lightning Cable', category:'Chargers', buyPrice:180, sellPrice:250, supplier:'ElectroSupply Kenya'},
+    {name:'Screen Protector (Tempered Glass)', category:'Accessories', buyPrice:35, sellPrice:60, supplier:'Nairobi Wholesalers Ltd'},
+    {name:'Phone Repair Toolkit (Full Set)', category:'Repair Tools', buyPrice:650, sellPrice:900, supplier:'ElectroSupply Kenya'}
+  ];
+  try {
+    const batch = ndb.batch();
+    sample.forEach(p => { const ref = ndb.collection('catalogue').doc(); batch.set(ref, {...p, status:'priced', addedBy:'admin', createdAt: Date.now()}); });
+    await batch.commit();
+    toast('Test catalogue seeded ✓');
+    await loadCatalogue(true);
+    document.getElementById('osSeedWrap').style.display = 'none';
+    renderCatalogueGrid();
+  } catch(e) { toast('Seed failed: '+e.message); }
+}
+function quickFindInCatalogue(name) { document.getElementById('osQ').value = name; renderCatalogueGrid(); }
+function osPills() {
+  const cats = ['All', ...new Set(S.catalogue.map(p => p.category).filter(Boolean))];
+  const el = document.getElementById('osCats');
+  el.innerHTML = cats.map(c => `<button class="cat-pill${S.osCat===c?' active':''}">${c}</button>`).join('');
+  el.querySelectorAll('.cat-pill').forEach((b,i) => b.onclick = () => { S.osCat = cats[i]; renderCatalogueGrid(); });
+}
+function renderCatalogueGrid() {
+  osPills();
+  const q = (document.getElementById('osQ').value||'').toLowerCase();
+  const list = S.catalogue.filter(p => (S.osCat==='All'||p.category===S.osCat) && (!q||p.name.toLowerCase().includes(q)));
+  document.getElementById('osGrid').innerHTML = list.map(p => `
+    <div class="pos-item" onclick="addNetCart('${p.id}')">
+      <div class="pos-name">${p.name}</div>
+      <div class="pos-price">KSh ${fmt(p.sellPrice||0)}</div>
+      <div class="pos-stock">${p.supplier||'Krystal Network'}</div>
+    </div>`).join('') || '<div style="grid-column:span 2;text-align:center;color:var(--tx2);padding:20px;font-size:12px">No products found</div>';
+}
+function addNetCart(id) {
+  const p = S.catalogue.find(x => x.id===id); if (!p) return;
+  const ex = S.netCart.find(c => c.prodId===id);
+  if (ex) ex.qty++;
+  else S.netCart.push({prodId:id, name:p.name, price:p.sellPrice||0, qty:1});
+  renderNetCart();
+  toast(p.name+' added to order');
+}
+function chNetQty(i,d) {
+  S.netCart[i].qty += d;
+  if (S.netCart[i].qty<=0) S.netCart.splice(i,1);
+  renderNetCart();
+}
+function clearNetCart() { S.netCart=[]; renderNetCart(); }
+function renderNetCart() {
+  const el = document.getElementById('netCartBody');
+  const fab = document.getElementById('netCartFab');
+  if (!el) return;
+  const totalQty = S.netCart.reduce((a,b)=>a+b.qty,0);
+  const total = S.netCart.reduce((a,b)=>a+b.price*b.qty,0);
+  if (!S.netCart.length) {
+    el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">Browse products above to add</div></div>';
+    document.getElementById('netCartCount').textContent = '';
+    document.getElementById('netCartTotal').textContent = 'KSh 0';
+    if (fab) fab.classList.remove('show');
+    closeModal('netCartModal');
+    return;
+  }
+  el.innerHTML = S.netCart.map((c,i) => `
+    <div class="cart-item"><div class="ci-name">${c.name}</div>
+      <div class="qty-wrap"><button class="qty-btn" onclick="chNetQty(${i},-1)">-</button>
+      <span style="font-size:12px;font-weight:800;min-width:18px;text-align:center">${c.qty}</span>
+      <button class="qty-btn" onclick="chNetQty(${i},1)">+</button></div>
+      <div class="ci-total">KSh ${fmt(c.price*c.qty)}</div></div>`).join('');
+  document.getElementById('netCartCount').textContent = '('+totalQty+')';
+  document.getElementById('netCartTotal').textContent = 'KSh '+fmt(total);
+  if (fab) {
+    fab.classList.add('show');
+    document.getElementById('netCartFabCount').textContent = totalQty;
+    document.getElementById('netCartFabTotal').textContent = 'KSh '+fmt(total);
+  }
+}
+async function submitNetworkOrder() {
+  if (!S.netCart.length) { toast('Cart is empty'); return; }
+  try {
+    await ndb.collection('orders').add({
+      shopCode: S.shopCode,
+      shopName: S.shopDoc?.shopName || S.shopCode,
+      items: S.netCart.map(c => ({prodId:c.prodId, name:c.name, price:c.price, qty:c.qty})),
+      total: S.netCart.reduce((a,b)=>a+b.price*b.qty,0),
+      status: 'Submitted',
+      createdAt: Date.now()
+    });
+    S.netCart = [];
+    renderNetCart();
+    closeModal('netCartModal');
+    toast('Order sent to network ✓');
+  } catch(e) { toast('Could not submit order: '+e.message); }
+}
+
+// ── STAFF ─────────────────────────────────────────────
+async function renderStaff() {
+  const el = document.getElementById('staffList');
+  el.innerHTML = '<div style="color:var(--tx2);font-size:12px">Loading…</div>';
+  try {
+    const snap = await db.collection('shops').doc(S.shopCode).collection('users').get();
+    const staff = snap.docs.map(d => d.data());
+    el.innerHTML = staff.map(u => `
+      <div class="staff-item">
+        <div class="staff-av">${(u.name||u.email||'?').charAt(0).toUpperCase()}</div>
+        <div style="flex:1">
+          <div class="staff-name">${u.name||'—'}</div>
+          <div class="staff-email">${u.email}</div>
+        </div>
+        <span class="staff-role ${u.role}">${u.role==='owner'?'Owner':'Cashier'}</span>
+        ${u.uid!==S.user?.uid?`<button class="btn btn-d btn-xs" onclick="removeStaff('${u.uid}','${(u.name||u.email).replace(/'/g,'')}')" style="margin-left:6px">Remove</button>`:'<span style="font-size:10px;color:var(--tx2);margin-left:6px">You</span>'}
+      </div>`).join('') || '<div class="empty"><div>No staff found</div></div>';
+    // Also show pending invites
+    const invSnap = await db.collection('invites').where('shopCode','==',S.shopCode).where('status','==','pending').get();
+    if (!invSnap.empty) {
+      el.innerHTML += '<div class="set-sec-title" style="margin-top:14px">Pending Invites</div>' +
+        '<div style="font-size:10px;color:var(--tx2);margin-bottom:8px">No emails are sent automatically — share the shop code yourself using the buttons below.</div>' +
+        invSnap.docs.map(d => {
+          const inv=d.data();
+          const msg = encodeURIComponent(`You've been invited to join ${inv.shopName||S.shopCode} on Krystal as ${inv.role==='owner'?'an owner':'a cashier'}.\n\nShop code: ${S.shopCode}\nYour email: ${inv.email}\n\nOpen the app, tap "Join a Shop", and enter these details to get started.`);
+          return`<div class="staff-item"><div class="staff-av" style="background:var(--sf2);color:var(--tx2)">?</div><div style="flex:1"><div class="staff-name">${inv.name||'—'}</div><div class="staff-email">${inv.email}</div></div><span class="staff-role" style="background:rgba(245,158,11,.15);color:var(--wa)">Pending</span><a href="https://wa.me/?text=${msg}" target="_blank" class="btn btn-s btn-xs" style="margin-left:6px;text-decoration:none">Share</a><button class="btn btn-d btn-xs" onclick="cancelInvite('${d.id}')" style="margin-left:6px">Cancel</button></div>`;
+        }).join('');
+    }
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--re);font-size:12px">Error: ${e.message}</div>`;
+  }
+}
+
+async function inviteStaff() {
+  const emailRaw = document.getElementById('inv-email').value.trim();
+  const email = emailRaw.toLowerCase();
+  const name  = document.getElementById('inv-name').value.trim();
+  const role  = document.getElementById('inv-role').value;
+  const errEl = document.getElementById('inv-err');
+  if (!email) { errEl.textContent = 'Enter email address'; return; }
+  errEl.textContent = '';
+  try {
+    // Deterministic id (not auto-id) so doJoinShop can look this up with a
+    // single get() — no query permissions needed — and so Firestore rules
+    // can validate the same path when the invited user's docs get written.
+    const inviteId = S.shopCode + '_' + email;
+    await db.collection('invites').doc(inviteId).set({
+      email, name, role, shopCode:S.shopCode,
+      shopName: S.shopDoc?.shopName||S.shopCode,
+      invitedBy: S.userDoc?.name||S.user?.email,
+      status:'pending', createdAt:Date.now()
+    });
+    closeModal('inviteModal');
+    // There's no email backend wired up — nothing is actually sent.
+    // Be upfront about that and tell the owner what to do instead.
+    toast('Invite created — share the shop code with '+email+' so they can use "Join a Shop"');
+    renderStaff();
+  } catch(e) {
+    errEl.textContent = 'Error: '+e.message;
+  }
+}
+
+async function removeStaff(uid, name) {
+  if (!(await customConfirm(name+' will lose access to this shop immediately.', {title:'Remove '+name+'?', danger:true, confirmLabel:'Remove'}))) return;
+  await db.collection('shops').doc(S.shopCode).collection('users').doc(uid).delete();
+  toast(name+' removed');
+  renderStaff();
+}
+
+async function cancelInvite(id) {
+  if (!(await customConfirm('They won\'t be able to join with this invite anymore.', {title:'Cancel this invite?', danger:true, confirmLabel:'Cancel Invite'}))) return;
+  await db.collection('invites').doc(id).update({status:'cancelled'});
+  toast('Invite cancelled');
+  renderStaff();
+}
+
+// ── SETTINGS ─────────────────────────────────────────
+function renderSettings() {
+  const p = S.localPrefs;
+  const shopInfo = S.shopDoc || {};
+  document.getElementById('s-name').value = shopInfo.shopName||'';
+  document.getElementById('s-loc').value  = shopInfo.location||'';
+  document.getElementById('s-phone').value= shopInfo.phone||'';
+  document.getElementById('s-mpesa').value= shopInfo.mpesa||'';
+  document.getElementById('s-email').value= shopInfo.email||'';
+  document.getElementById('s-tag').value  = shopInfo.tag||'';
+  document.getElementById('s-light').checked = !!p.light;
+  document.getElementById('s-inv-mpesa').checked = p.invMpesa!==false;
+  document.getElementById('s-inv-phone').checked = p.invPhone!==false;
+  document.getElementById('s-inv-footer').value = p.invFooter||'';
+  document.getElementById('s-reorder').value = p.reorder||10;
+  document.getElementById('s-dead').value = p.deadDays||30;
+  document.querySelectorAll('.cdot').forEach(d=>d.classList.toggle('active',d.style.background===p.accent));
+  document.getElementById('settingsEmail').textContent = S.user?.email||'—';
+  document.getElementById('settingsRole').textContent = S.role==='superadmin'?'Super Admin':S.role==='owner'?'Owner':'Cashier';
+  document.getElementById('settingsShopCode').textContent = S.shopCode||'—';
+  updateOfflineStatus();
+}
+
+async function saveShopInfo() {
+  const d = {
+    shopName: document.getElementById('s-name').value.trim(),
+    location: document.getElementById('s-loc').value.trim(),
+    phone:    document.getElementById('s-phone').value.trim(),
+    mpesa:    document.getElementById('s-mpesa').value.trim(),
+    email:    document.getElementById('s-email').value.trim(),
+    tag:      document.getElementById('s-tag').value.trim(),
+  };
+  await db.collection('shops').doc(S.shopCode).collection('info').doc('config').set(d, {merge:true});
+  S.shopDoc = Object.assign(S.shopDoc||{}, d);
+  applyShopInfo();
+  toast('Shop info saved');
+}
+
+function saveReceiptSettings() {
+  S.localPrefs.invMpesa  = document.getElementById('s-inv-mpesa').checked;
+  S.localPrefs.invPhone  = document.getElementById('s-inv-phone').checked;
+  S.localPrefs.invFooter = document.getElementById('s-inv-footer').value.trim();
+  saveLocalPrefs();
+  toast('Receipt settings saved');
+}
+
+function saveStockDefaults() {
+  S.localPrefs.reorder  = parseInt(document.getElementById('s-reorder').value)||10;
+  S.localPrefs.deadDays = parseInt(document.getElementById('s-dead').value)||30;
+  saveLocalPrefs();
+  toast('Stock defaults saved');
+}
+
+function applyTheme() {
+  const light = document.getElementById('s-light').checked;
+  S.localPrefs.light = light;
+  document.body.classList.toggle('light', light);
+  document.getElementById('themeColorMeta').content = light?'#f0f2f7':'#0f1117';
+  saveLocalPrefs();
+}
+
+function setAccent(col, el) {
+  document.querySelectorAll('.cdot').forEach(d=>d.classList.remove('active'));
+  el.classList.add('active');
+  S.localPrefs.accent = col;
+  document.documentElement.style.setProperty('--ac', col);
+  saveLocalPrefs();
+}
+
+function applyShopInfo() {
+  const info = S.shopDoc || {};
+  document.getElementById('sbShopName').textContent = info.shopName||'Krystal';
+  document.getElementById('sbShopLocation').textContent = info.location||'';
+  document.getElementById('tbName').textContent = info.shopName||'Krystal';
+  document.title = (info.shopName||'Krystal')+' · Krystal';
+}
+
+function applyLocalPrefs() {
+  const p = S.localPrefs;
+  if (p.light) document.body.classList.add('light');
+  if (p.accent) document.documentElement.style.setProperty('--ac', p.accent);
+}
+
+function saveLocalPrefs() {
+  try { localStorage.setItem('ep_prefs', JSON.stringify(S.localPrefs)); } catch(e) {}
+}
+function loadLocalPrefs() {
+  try {
+    const d = JSON.parse(localStorage.getItem('ep_prefs'));
+    if (d) S.localPrefs = Object.assign({}, S.localPrefs, d);
+  } catch(e) {}
+}
+
+function copyShopCode() {
+  navigator.clipboard?.writeText(S.shopCode).then(()=>toast('Shop code copied')).catch(()=>toast('Code: '+S.shopCode));
+}
+
+function updateOfflineStatus() {
+  const el = document.getElementById('aboutOffline');
+  if (!el) return;
+  if (location.protocol!=='https:') { el.textContent='Unavailable (needs HTTPS)'; el.style.color='var(--tx2)'; return; }
+  if (navigator.onLine) { el.textContent='Online — offline cache active'; el.style.color='var(--gr)'; }
+  else { el.textContent='Offline — using cached data'; el.style.color='var(--wa)'; }
+}
+
+function shareApp() {
+  if (navigator.share) {
+    navigator.share({title:'Krystal',text:'Shop management app — works offline, no install needed.',url:location.href}).catch(()=>{});
+  } else {
+    navigator.clipboard?.writeText(location.href).then(()=>toast('Link copied'));
+  }
+}
+
+// ── ADMIN PANEL (super-admin only) ───────────────────
+let _pausingShopCode = '';
+async function loadAdminShops() {
+  if (S.role !== 'superadmin') return;
+  const el = document.getElementById('adminShopList');
+  el.innerHTML = '<div style="color:var(--tx2);font-size:12px">Loading…</div>';
+  try {
+    const snap = await db.collection('shopRegistry').orderBy('createdAt','desc').get();
+    if (snap.empty) { el.innerHTML='<div class="empty"><div>No shops registered yet</div></div>'; return; }
+    el.innerHTML = snap.docs.map(d => {
+      const sh = d.data();
+      const paused = sh.status === 'paused';
+      return `<div class="admin-shop-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+          <div>
+            <div class="admin-shop-name">${sh.shopName||sh.shopCode}</div>
+            <div class="admin-shop-meta">${sh.ownerEmail} · Code: ${sh.shopCode}</div>
+            <div class="admin-shop-meta">${new Date(sh.createdAt||0).toLocaleDateString('en-GB')}</div>
+          </div>
+          <span class="status-badge ${paused?'status-paused':'status-active'}">${paused?'Paused':'Active'}</span>
+        </div>
+        <div style="display:flex;gap:7px">
+          ${paused
+            ? `<button class="btn btn-p btn-sm btn-full" onclick="resumeShop('${sh.shopCode}')">Resume Shop</button>`
+            : `<button class="btn btn-w btn-sm btn-full" onclick="openPauseShop('${sh.shopCode}','${(sh.shopName||'').replace(/'/g,'')}')">Pause Shop</button>`}
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--re);font-size:12px">Error: ${e.message}</div>`;
+  }
+}
+
+function openPauseShop(code, name) {
+  _pausingShopCode = code;
+  document.getElementById('pauseShopName').textContent = name || code;
+  document.getElementById('pause-msg').value = 'Your subscription has expired. Please contact us to reactivate your account.';
+  openModal('pauseShopModal');
+}
+
+async function confirmPauseShop() {
+  const msg = document.getElementById('pause-msg').value.trim() || 'Your account has been paused. Contact us to reactivate.';
+  await db.collection('shopRegistry').doc(_pausingShopCode).update({ status:'paused', pauseMessage:msg });
+  closeModal('pauseShopModal');
+  toast('Shop paused');
+  loadAdminShops();
+}
+
+async function resumeShop(code) {
+  if (!(await customConfirm('This shop will become accessible to its staff again.', {title:'Resume this shop?'}))) return;
+  await db.collection('shopRegistry').doc(code).update({ status:'active', pauseMessage:'' });
+  toast('Shop resumed');
+  loadAdminShops();
+}
+
+// ── CLOUD STATUS ─────────────────────────────────────
+function updateCloudStatus(state) {
+  const pill  = document.getElementById('syncPill');
+  const dot   = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  if (S.role === 'superadmin') { if(pill) pill.style.display='none'; return; }
+  if (pill) pill.style.display = 'flex';
+  const map = {online:['online','Synced'],syncing:['syncing','Syncing…'],offline:['offline','Offline']};
+  const [cls,text] = map[state]||map.offline;
+  if (dot)   { dot.className='sync-dot '+cls; }
+  if (label) label.textContent = text;
+}
+window.addEventListener('online',  ()=>updateCloudStatus('online'));
+window.addEventListener('offline', ()=>updateCloudStatus('offline'));
+
+// ── UTILS ─────────────────────────────────────────────
+function fmt(n) { return Math.round(n).toLocaleString(); }
+function fmtDate(ts) { const d=new Date(ts); return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+function toast(msg) { const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500); }
+function openModal(id)  { document.getElementById(id).classList.add('open');  }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function refreshPage() {
+  const active = document.querySelector('.page.active');
+  if (!active) return;
+  const id = active.id.replace('pg-','');
+  ({dashboard:renderDash,stock:renderStock,sales:()=>{renderPOS();renderHist();},reports:renderReports,suppliers:renderSuppliers,staff:renderStaff,settings:renderSettings,admin:loadAdminShops})[id]?.();
+}
+function genShopCode(shopName) {
+  const chars='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  const prefix=(shopName||'EP').replace(/[^a-zA-Z]/g,'').slice(0,2).toUpperCase()||'EP';
+  let code=''; for(let i=0;i<5;i++) code+=chars[Math.floor(Math.random()*chars.length)];
+  return prefix+'-'+code;
+}
+
+// ── SVG ICONS ─────────────────────────────────────────
+const svg=(d,extra='')=>`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ${extra}>${d}</svg>`;
+const svgDash      =()=>svg('<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>');
+const svgStock     =()=>svg('<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>');
+const svgSales     =()=>svg('<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>');
+const svgReports   =()=>svg('<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>');
+const svgSuppliers =()=>svg('<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>');
+const svgStaff     =()=>svg('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>');
+const svgSettings  =()=>svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>');
+const svgAdmin     =()=>svg('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>');
+const svgTruck     =()=>svg('<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>');
+
+// ── PWA ───────────────────────────────────────────────
+let _pwaPrompt=null,_swReg=null,_swRefreshing=false;
+
+function initPWA() {
+  if ('serviceWorker' in navigator && location.protocol==='https:') {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => { _swReg=reg; watchForUpdates(reg); updateOfflineStatus(); })
+      .catch(e => console.warn('SW:', e.message));
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (_swRefreshing) return; _swRefreshing=true; location.reload();
+    });
+  }
+  if (location.protocol==='https:') {
+    const name = S.shopDoc?.shopName||'Krystal';
+    const manifest = {name:name+' Manager',short_name:name,display:'standalone',orientation:'portrait',background_color:'#0f1117',theme_color:'#0f1117',start_url:'./',icons:[{src:makeIcon(192,name.slice(0,2).toUpperCase()),sizes:'192x192',type:'image/png',purpose:'any maskable'}]};
+    const blob = new Blob([JSON.stringify(manifest)],{type:'application/json'});
+    document.getElementById('pwaManifest').href = URL.createObjectURL(blob);
+  }
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); _pwaPrompt=e;
+    const dismissed=localStorage.getItem('pwaDismissed');
+    if (!dismissed||Date.now()-parseInt(dismissed)>3*86400000) document.getElementById('installBanner').classList.add('show');
+    document.getElementById('pwaBtn').style.display='flex';
+    document.getElementById('pwaHint').style.display='none';
+  });
+  window.addEventListener('appinstalled', () => {
+    _pwaPrompt=null; document.getElementById('installBanner').classList.remove('show');
+    document.getElementById('pwaBlock').style.display='none';
+    document.getElementById('pwaInstalled').style.display='block';
+  });
+  if (window.matchMedia('(display-mode: standalone)').matches||navigator.standalone) {
+    document.getElementById('pwaBlock').style.display='none';
+    document.getElementById('pwaInstalled').style.display='block';
+  } else {
+    setTimeout(()=>{
+      if (!_pwaPrompt) {
+        const hint=document.getElementById('pwaHint');
+        hint.innerHTML=location.protocol==='https:'?'Chrome menu → <strong>Add to Home screen</strong> to install.':'Host on <strong>GitHub Pages</strong> or <strong>Netlify</strong>, then open in Chrome on Android.';
+        hint.style.display='block'; document.getElementById('pwaBtn').style.display='none';
+      }
+    },1200);
+  }
+}
+function pwaInstall() {
+  if (_pwaPrompt) { _pwaPrompt.prompt(); _pwaPrompt.userChoice.then(()=>{ _pwaPrompt=null; document.getElementById('installBanner').classList.remove('show'); }); }
+  else { document.getElementById('pwaHint').style.display='block'; document.getElementById('pwaBtn').style.display='none'; }
+}
+function dismissBanner() { document.getElementById('installBanner').classList.remove('show'); localStorage.setItem('pwaDismissed',Date.now()); }
+function watchForUpdates(reg) {
+  if (reg.waiting) showUpdateBanner();
+  reg.addEventListener('updatefound', () => {
+    const nw=reg.installing; if(!nw)return;
+    nw.addEventListener('statechange', () => { if(nw.state==='installed'&&reg.waiting) showUpdateBanner(); });
+  });
+}
+function showUpdateBanner() { document.getElementById('updateBanner').classList.add('show'); const st=document.getElementById('updateStatus'); if(st) st.textContent='Update ready — tap Reload'; }
+function dismissUpdateBanner() { document.getElementById('updateBanner').classList.remove('show'); }
+function applyUpdate() { if(_swReg?.waiting) _swReg.waiting.postMessage('SKIP_WAITING'); else location.reload(); }
+async function checkForUpdate() {
+  const st=document.getElementById('updateStatus');
+  if (location.protocol!=='https:') { toast('Host on GitHub Pages to enable updates'); return; }
+  if (st) st.textContent='Checking…';
+  try {
+    if (_swReg) await _swReg.update();
+    const liveRes=await fetch('./index.html',{cache:'no-store'});
+    const liveText=await liveRes.text();
+    let cachedText=null;
+    try { const names=await caches.keys(); const ourCache=names.find(n=>n.startsWith('electropro-v')); if(ourCache){const c=await caches.open(ourCache);const cr=await c.match('./index.html');if(cr)cachedText=await cr.text();} } catch(e){}
+    setTimeout(()=>{
+      if ((_swReg?.waiting)||(cachedText!==null&&cachedText!==liveText)) { showUpdateBanner(); if(st)st.textContent='Update ready — tap Reload'; }
+      else { if(st)st.textContent='You have the latest version'; toast("You're up to date"); }
+    },800);
+  } catch(e) { if(st) st.textContent='Could not check — try again'; }
+  if (!_swReg) { try{const names=await caches.keys();await Promise.all(names.map(n=>caches.delete(n)));}catch(e){} location.reload(); }
+}
+function makeIcon(size, text) {
+  try {
+    const c=document.createElement('canvas'); c.width=c.height=size; const ctx=c.getContext('2d');
+    const g=ctx.createLinearGradient(0,0,size,size); g.addColorStop(0,'#00d4aa'); g.addColorStop(1,'#6366f1');
+    ctx.fillStyle=g; const r=size*.18; ctx.beginPath(); ctx.moveTo(r,0); ctx.lineTo(size-r,0); ctx.quadraticCurveTo(size,0,size,r); ctx.lineTo(size,size-r); ctx.quadraticCurveTo(size,size,size-r,size); ctx.lineTo(r,size); ctx.quadraticCurveTo(0,size,0,size-r); ctx.lineTo(0,r); ctx.quadraticCurveTo(0,0,r,0); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.92)'; ctx.font=`900 ${size*.28}px 'Segoe UI',sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(text.slice(0,2),size/2,size/2);
+    return c.toDataURL('image/png');
+  } catch(e) { return ''; }
+}
+
+// ── BOOT ─────────────────────────────────────────────
+(function boot() {
+  loadLocalPrefs();
+  applyLocalPrefs();
+  document.getElementById('tbDate').textContent = new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+  document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => {
+    if (e.target===o) { o.classList.remove('open'); if (o.id==='confirmModal') _confirmResolve(false); }
+  }));
+  initPWA();
+  // auth.onAuthStateChanged handles everything else
+})();
+</script>
+</body>
+</html>

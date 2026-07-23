@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Krystal Network — Admin</title>
+<style>
+:root{
+  --bg:#0f1117;--sf:#1a1d27;--sf2:#22263a;--bd:#2e3350;
+  --ac:#00d4aa;--ac3:#6366f1;--re:#ef4444;--wa:#f59e0b;
+  --tx:#e8eaf6;--tx2:#8892b0;--gr:#10b981;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--tx);font-family:var(--font);font-size:14px;min-height:100vh;}
+input,select,textarea,button{font-family:inherit;font-size:inherit;color:inherit;}
+button{cursor:pointer;border:none;background:none;}
+
+/* ---- Login ---- */
+.auth-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+.auth-brand{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.gem{width:26px;height:26px;background:linear-gradient(135deg,var(--ac),var(--ac3));border-radius:7px;transform:rotate(45deg);}
+.auth-title{font-size:20px;font-weight:900;letter-spacing:-.3px;}
+.auth-sub{font-size:12px;color:var(--tx2);margin-bottom:26px;}
+.auth-card{width:100%;max-width:340px;background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:22px;}
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:11px;color:var(--tx2);margin-bottom:5px;font-weight:600;}
+.field input{width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px;}
+.field input:focus{outline:none;border-color:var(--ac);}
+.err{font-size:12px;color:var(--re);margin-bottom:10px;display:none;}
+.btn{border-radius:10px;padding:11px 16px;font-weight:700;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:opacity .15s;}
+.btn:active{opacity:.8;}
+.btn-p{background:linear-gradient(135deg,var(--ac),var(--ac3));color:#fff;width:100%;}
+.btn-s{background:var(--sf2);border:1px solid var(--bd);color:var(--tx);}
+.btn-d{background:rgba(239,68,68,.12);color:var(--re);border:1px solid rgba(239,68,68,.25);}
+.btn-sm{padding:7px 12px;font-size:11px;}
+.btn-full{width:100%;}
+.btn[disabled]{opacity:.5;pointer-events:none;}
+
+/* ---- App shell ---- */
+.app{display:none;min-height:100vh;}
+.topbar{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:100;}
+.tb-brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;}
+.tb-brand .gem{width:18px;height:18px;border-radius:5px;}
+.tb-logout{font-size:11px;color:var(--tx2);border:1px solid var(--bd);border-radius:8px;padding:6px 10px;}
+
+.tabs{display:flex;gap:4px;padding:10px 12px;overflow-x:auto;border-bottom:1px solid var(--bd);}
+.tab-btn{flex:none;padding:8px 14px;border-radius:9px;font-size:12px;font-weight:700;color:var(--tx2);white-space:nowrap;}
+.tab-btn.active{background:var(--sf2);color:var(--tx);}
+
+.page{display:none;padding:14px 16px 90px;}
+.page.active{display:block;}
+
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.sec-title{font-size:16px;font-weight:800;}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:10px;}
+.empty{text-align:center;color:var(--tx2);padding:30px 10px;font-size:12px;}
+
+.srow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--bd);}
+.srow:last-child{border-bottom:none;}
+.pill{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;padding:3px 8px;border-radius:6px;}
+.pill-ok{background:rgba(16,185,129,.15);color:var(--gr);}
+.pill-wa{background:rgba(245,158,11,.15);color:var(--wa);}
+.pill-re{background:rgba(239,68,68,.15);color:var(--re);}
+.pill-ac{background:rgba(99,102,241,.15);color:var(--ac3);}
+
+input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);border-radius:7px;padding:6px 8px;font-size:12px;width:78px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.stack{display:flex;flex-direction:column;gap:8px;}
+.chk{width:16px;height:16px;accent-color:var(--ac);}
+
+.fab{position:fixed;bottom:18px;left:16px;right:16px;max-width:420px;margin:0 auto;background:linear-gradient(135deg,var(--ac),var(--ac3));border-radius:14px;padding:13px 16px;display:none;align-items:center;justify-content:space-between;font-weight:800;font-size:13px;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:200;}
+.fab.show{display:flex;}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:900;align-items:flex-end;justify-content:center;}
+.overlay.show{display:flex;}
+.sheet{background:var(--sf);width:100%;max-width:460px;border-radius:18px 18px 0 0;padding:16px;max-height:88vh;overflow-y:auto;}
+.sheet-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.sheet-title{font-size:15px;font-weight:800;}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--sf2);border:1px solid var(--bd);padding:10px 16px;border-radius:10px;font-size:12px;font-weight:600;z-index:1000;opacity:0;transition:opacity .2s;pointer-events:none;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-brand"><div class="gem"></div><div class="auth-title">Krystal Network</div></div>
+  <div class="auth-sub">Admin console</div>
+  <div class="auth-card">
+    <div class="err" id="authErr"></div>
+    <div class="field"><label>Email</label><input type="email" id="authEmail" placeholder="admin@krystal.co.ke"></div>
+    <div class="field"><label>Password</label><input type="password" id="authPass" placeholder="••••••••"></div>
+    <button class="btn btn-p btn-full" id="authBtn" onclick="doLogin()">Sign in</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="tb-brand"><div class="gem"></div>Krystal Network Admin</div>
+    <button class="tb-logout" onclick="doLogout()">Sign out</button>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" data-p="users" onclick="showPage('users')">Users</button>
+    <button class="tab-btn" data-p="stock" onclick="showPage('stock')">Stock</button>
+    <button class="tab-btn" data-p="orders" onclick="showPage('orders')">Orders</button>
+    <button class="tab-btn" data-p="payment" onclick="showPage('payment')">Payment</button>
+    <button class="tab-btn" data-p="settings" onclick="showPage('settings')">Settings</button>
+  </div>
+
+  <!-- USERS -->
+  <div class="page active" id="pg-users">
+    <div class="sec-head"><div class="sec-title">Shops</div></div>
+    <div class="card" id="usersList"><div class="empty">Loading shops…</div></div>
+  </div>
+
+  <!-- STOCK -->
+  <div class="page" id="pg-stock">
+    <div class="sec-head"><div class="sec-title">Network Stock</div>
+      <button class="btn btn-s btn-sm" onclick="openModal('addStockModal')">+ Add Product</button>
+    </div>
+    <div class="card" style="margin-bottom:8px;background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.25)" id="pendingWrap">
+      <div class="card-title" style="color:var(--wa);font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:8px">Awaiting your price</div>
+      <div id="pendingList"></div>
+    </div>
+    <div class="card" id="stockList"><div class="empty">Loading catalogue…</div></div>
+  </div>
+
+  <!-- ORDERS -->
+  <div class="page" id="pg-orders">
+    <div class="sec-head"><div class="sec-title">Orders</div></div>
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <button class="btn btn-s btn-sm active" id="ordViewBy" onclick="setOrdView('shop')">By Shop</button>
+      <button class="btn btn-s btn-sm" id="ordViewCombined" onclick="setOrdView('combined')">Combined</button>
+    </div>
+    <div id="ordersWrap"><div class="empty">Loading orders…</div></div>
+  </div>
+
+  <!-- PAYMENT -->
+  <div class="page" id="pg-payment">
+    <div class="sec-head"><div class="sec-title">Payment Method</div></div>
+    <div class="card">
+      <div class="field"><label>Instructions shown to every shop</label>
+        <textarea id="payText" rows="4" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px;resize:vertical" placeholder="e.g. M-Pesa Paybill 400200, Account: your shop code"></textarea>
+      </div>
+      <button class="btn btn-p btn-full" onclick="savePaymentMethod()">Save</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="pg-settings">
+    <div class="sec-head"><div class="sec-title">Settings</div></div>
+    <div class="card">
+      <div class="srow"><div>Signed in as</div><div id="setAdminEmail" style="color:var(--tx2);font-size:12px"></div></div>
+      <div class="srow"><div>Project</div><div style="color:var(--tx2);font-size:12px">krystal-enterprise</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="font-size:10px;text-transform:uppercase;color:var(--tx2);margin-bottom:8px">Danger zone</div>
+      <button class="btn btn-d btn-full" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Product Modal -->
+<div class="overlay" id="addStockModal">
+  <div class="sheet">
+    <div class="sheet-hdr"><div class="sheet-title">Add Product</div><button onclick="closeModal('addStockModal')">✕</button></div>
+    <div class="stack">
+      <div class="field"><label>Product name</label><input id="npName" placeholder="e.g. Type C Charger"></div>
+      <div class="grid-2">
+        <div class="field"><label>Category</label><input id="npCat" placeholder="Chargers"></div>
+        <div class="field"><label>Supplier</label><input id="npSup" placeholder="Nairobi Wholesalers Ltd"></div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label>Buying price (KSh)</label><input id="npBuy" type="number" placeholder="0"></div>
+        <div class="field"><label>Selling price to shops (KSh)</label><input id="npSell" type="number" placeholder="0"></div>
+      </div>
+      <button class="btn btn-p btn-full" onclick="addProduct()">Add to Catalogue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice builder modal -->
+<div class="overlay" id="invoiceModal">
+  <div class="sheet">
+    <div class="sheet-hdr"><div class="sheet-title" id="invTitle">Create Invoice</div><button onclick="closeModal('invoiceModal')">✕</button></div>
+    <div id="invItemsWrap" class="stack" style="margin-bottom:10px"></div>
+    <div class="srow"><div style="font-weight:800">Total</div><div style="font-weight:800" id="invTotal">KSh 0</div></div>
+    <button class="btn btn-p btn-full" style="margin-top:10px" onclick="sendInvoice()">Send Invoice</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+const NETWORK_CONFIG = {
+  apiKey: "AIzaSyAmLQTWmrdpCzOdeHf1v8aXZ0sROLYdMTE",
+  authDomain: "krystal-enterprise.firebaseapp.com",
+  projectId: "krystal-enterprise",
+  storageBucket: "krystal-enterprise.firebasestorage.app",
+  messagingSenderId: "137355298478",
+  appId: "1:137355298478:web:fe9b410631977693660f3f"
+};
+firebase.initializeApp(NETWORK_CONFIG);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+const S = { shops:[], catalogue:[], orders:[], ordView:'shop', invoiceCtx:null };
+const fmt = n => Math.round(n||0).toLocaleString();
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+// ---- Auth / admin gate ----
+async function doLogin(){
+  const email = document.getElementById('authEmail').value.trim();
+  const pass = document.getElementById('authPass').value;
+  const btn = document.getElementById('authBtn'); const err = document.getElementById('authErr');
+  err.style.display='none'; btn.disabled = true; btn.textContent='Signing in…';
+  try{
+    const cred = await auth.signInWithEmailAndPassword(email, pass);
+    const adminSnap = await db.collection('admins').doc(cred.user.uid).get();
+    if (!adminSnap.exists){
+      await auth.signOut();
+      throw new Error('This account is not registered as a Krystal Network admin.');
+    }
+  }catch(e){
+    err.textContent = (e.message||'Sign in failed').replace('Firebase: ','');
+    err.style.display='block';
+  }
+  btn.disabled=false; btn.textContent='Sign in';
+}
+function doLogout(){ auth.signOut(); }
+auth.onAuthStateChanged(async user=>{
+  if (!user){ document.getElementById('authScreen').style.display='flex'; document.getElementById('app').style.display='none'; return; }
+  const adminSnap = await db.collection('admins').doc(user.uid).get();
+  if (!adminSnap.exists){ return; } // onAuthStateChanged will fire again after signOut in doLogin's catch
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('setAdminEmail').textContent = user.email;
+  loadAll();
+});
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pg-'+id).classList.add('active');
+  document.querySelector(`.tab-btn[data-p="${id}"]`).classList.add('active');
+}
+
+async function loadAll(){
+  await Promise.all([loadShops(), loadCatalogue(), loadOrders(), loadPaymentMethod()]);
+}
+
+// ---- USERS ----
+async function loadShops(){
+  const snap = await db.collection('shops').orderBy('createdAt','desc').get();
+  S.shops = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  renderUsers();
+}
+function renderUsers(){
+  const el = document.getElementById('usersList');
+  if (!S.shops.length){ el.innerHTML = '<div class="empty">No shops have joined the network yet.</div>'; return; }
+  el.innerHTML = S.shops.map(s=>{
+    const paused = s.status==='paused';
+    return `<div class="srow">
+      <div><div style="font-weight:700;font-size:12px">${s.shopName||s.shopCode}</div>
+      <div style="font-size:10px;color:var(--tx2)">${s.shopCode} · ${s.location||'—'}</div></div>
+      <div style="display:flex;gap:6px">
+        <span class="pill ${paused?'pill-wa':'pill-ok'}">${paused?'Paused':'Active'}</span>
+        <button class="btn btn-s btn-sm" onclick="toggleShopStatus('${s.id}',${!paused})">${paused?'Resume':'Pause'}</button>
+        <button class="btn btn-d btn-sm" onclick="deleteShop('${s.id}')">Delete</button>
+      </div></div>`;
+  }).join('');
+}
+async function toggleShopStatus(id, pause){
+  await db.collection('shops').doc(id).update({status: pause?'paused':'active'});
+  toast(pause?'Shop paused':'Shop resumed');
+  loadShops();
+}
+async function deleteShop(id){
+  if (!confirm('Delete this shop from the network? This cannot be undone.')) return;
+  await db.collection('shops').doc(id).delete();
+  toast('Shop deleted');
+  loadShops();
+}
+
+// ---- STOCK ----
+async function loadCatalogue(){
+  const snap = await db.collection('catalogue').orderBy('createdAt','desc').get();
+  S.catalogue = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  renderStock();
+}
+function renderStock(){
+  const pending = S.catalogue.filter(p=>p.status==='pending');
+  const priced = S.catalogue.filter(p=>p.status!=='pending');
+  document.getElementById('pendingWrap').style.display = pending.length ? 'block' : 'none';
+  document.getElementById('pendingList').innerHTML = pending.map(p=>`
+    <div class="srow">
+      <div><div style="font-weight:700;font-size:12px">${p.name}</div>
+      <div style="font-size:10px;color:var(--tx2)">Added by ${p.addedBy}</div></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input class="inline" type="number" placeholder="Buy" id="pb-${p.id}">
+        <input class="inline" type="number" placeholder="Sell" id="ps-${p.id}">
+        <button class="btn btn-p btn-sm" onclick="priceProduct('${p.id}')">Save</button>
+      </div></div>`).join('');
+  document.getElementById('stockList').innerHTML = priced.length ? priced.map(p=>`
+    <div class="srow">
+      <div><div style="font-weight:700;font-size:12px">${p.name}</div>
+      <div style="font-size:10px;color:var(--tx2)">${p.category||'—'} · ${p.supplier||'—'}</div></div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--tx2)">Buy KSh ${fmt(p.buyPrice)}</div>
+        <div style="font-size:12px;font-weight:800;color:var(--ac)">Sell KSh ${fmt(p.sellPrice)}</div>
+      </div></div>`).join('') : '<div class="empty">No priced products yet.</div>';
+}
+async function priceProduct(id){
+  const buy = parseFloat(document.getElementById('pb-'+id).value)||0;
+  const sell = parseFloat(document.getElementById('ps-'+id).value)||0;
+  if (!sell){ toast('Enter a selling price'); return; }
+  await db.collection('catalogue').doc(id).update({buyPrice:buy, sellPrice:sell, status:'priced'});
+  toast('Product priced and published to shops');
+  loadCatalogue();
+}
+async function addProduct(){
+  const name = document.getElementById('npName').value.trim();
+  const sell = parseFloat(document.getElementById('npSell').value)||0;
+  if (!name || !sell){ toast('Name and selling price are required'); return; }
+  await db.collection('catalogue').add({
+    name, category: document.getElementById('npCat').value.trim(),
+    supplier: document.getElementById('npSup').value.trim(),
+    buyPrice: parseFloat(document.getElementById('npBuy').value)||0,
+    sellPrice: sell, status:'priced', addedBy:'admin', createdAt: Date.now()
+  });
+  closeModal('addStockModal');
+  ['npName','npCat','npSup','npBuy','npSell'].forEach(id=>document.getElementById(id).value='');
+  toast('Product added');
+  loadCatalogue();
+}
+
+// ---- ORDERS ----
+async function loadOrders(){
+  const snap = await db.collection('orders').orderBy('createdAt','desc').get();
+  S.orders = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  renderOrders();
+}
+function setOrdView(v){
+  S.ordView = v;
+  document.getElementById('ordViewBy').classList.toggle('active', v==='shop');
+  document.getElementById('ordViewCombined').classList.toggle('active', v==='combined');
+  renderOrders();
+}
+function statusPill(st){
+  const map = {Submitted:'pill-wa', Invoiced:'pill-ac', Fulfilled:'pill-ok'};
+  return `<span class="pill ${map[st]||'pill-wa'}">${st}</span>`;
+}
+function renderOrders(){
+  const wrap = document.getElementById('ordersWrap');
+  if (!S.orders.length){ wrap.innerHTML = '<div class="empty">No orders submitted yet.</div>'; return; }
+  if (S.ordView==='shop'){
+    const byShop = {};
+    S.orders.forEach(o=>{ (byShop[o.shopCode]=byShop[o.shopCode]||[]).push(o); });
+    wrap.innerHTML = Object.entries(byShop).map(([code,list])=>`
+      <div class="card">
+        <div class="sec-head" style="margin-bottom:6px"><div style="font-weight:800;font-size:13px">${list[0].shopName||code}</div>
+        <button class="btn btn-s btn-sm" onclick='openInvoiceBuilder(${JSON.stringify(code)})'>Create Invoice</button></div>
+        ${list.map(o=>`<div class="srow"><div><div style="font-size:12px;font-weight:600">${o.items.map(i=>i.name+' ×'+i.qty).join(', ')}</div>
+          <div style="font-size:10px;color:var(--tx2)">${new Date(o.createdAt).toLocaleDateString()}</div></div>
+          <div style="text-align:right">${statusPill(o.status)}<div style="font-size:11px;margin-top:3px">KSh ${fmt(o.total)}</div></div></div>`).join('')}
+      </div>`).join('');
+  } else {
+    const agg = {};
+    S.orders.filter(o=>o.status==='Submitted').forEach(o=>o.items.forEach(i=>{
+      agg[i.prodId] = agg[i.prodId] || {name:i.name, qty:0, byShop:[]};
+      agg[i.prodId].qty += i.qty;
+      agg[i.prodId].byShop.push(`${i.qty}× ${o.shopName||o.shopCode}`);
+    }));
+    const rows = Object.values(agg);
+    wrap.innerHTML = rows.length ? `<div class="card">${rows.map(r=>`
+      <div class="srow"><div><div style="font-weight:700;font-size:12px">${r.name}</div>
+      <div style="font-size:10px;color:var(--tx2)">${r.byShop.join(' · ')}</div></div>
+      <div style="font-weight:800;font-size:13px">${r.qty} units</div></div>`).join('')}</div>`
+      : '<div class="empty">Nothing pending combination.</div>';
+  }
+}
+
+// ---- Invoicing ----
+function openInvoiceBuilder(shopCode){
+  const list = S.orders.filter(o=>o.shopCode===shopCode && o.status==='Submitted');
+  if (!list.length){ toast('No pending orders for this shop'); return; }
+  S.invoiceCtx = {shopCode, shopName: list[0].shopName, orders:list};
+  document.getElementById('invTitle').textContent = 'Invoice — '+(list[0].shopName||shopCode);
+  document.getElementById('invItemsWrap').innerHTML = list.flatMap(o=>o.items).map((it,i)=>`
+    <label class="srow" style="cursor:pointer"><span style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" class="chk inv-chk" data-price="${it.price}" data-qty="${it.qty}" checked onchange="updateInvoiceTotal()">
+      ${it.name} ×${it.qty}</span><span>KSh ${fmt(it.price*it.qty)}</span></label>`).join('');
+  updateInvoiceTotal();
+  openModal('invoiceModal');
+}
+function updateInvoiceTotal(){
+  const total = [...document.querySelectorAll('.inv-chk')].filter(c=>c.checked)
+    .reduce((a,c)=>a + parseFloat(c.dataset.price)*parseFloat(c.dataset.qty), 0);
+  document.getElementById('invTotal').textContent = 'KSh '+fmt(total);
+}
+async function sendInvoice(){
+  const checks = [...document.querySelectorAll('.inv-chk')];
+  const marked = checks.filter(c=>c.checked);
+  if (!marked.length){ toast('Mark at least one item'); return; }
+  const ctx = S.invoiceCtx;
+  const items = ctx.orders.flatMap(o=>o.items);
+  const chosen = marked.map((c,idx)=>items[checks.indexOf(c)]);
+  const total = chosen.reduce((a,i)=>a+i.price*i.qty,0);
+  await db.collection('invoices').add({
+    shopCode: ctx.shopCode, shopName: ctx.shopName, items: chosen, total,
+    status:'sent', createdAt: Date.now()
+  });
+  await Promise.all(ctx.orders.map(o=>db.collection('orders').doc(o.id).update({status:'Invoiced'})));
+  closeModal('invoiceModal');
+  toast('Invoice sent to '+ctx.shopName);
+  loadOrders();
+}
+
+// ---- PAYMENT ----
+async function loadPaymentMethod(){
+  const snap = await db.collection('settings').doc('network').get();
+  document.getElementById('payText').value = snap.exists ? (snap.data().paymentMethod||'') : '';
+}
+async function savePaymentMethod(){
+  await db.collection('settings').doc('network').set({paymentMethod: document.getElementById('payText').value.trim(), updatedAt: Date.now()}, {merge:true});
+  toast('Payment method saved — shops will see this');
+}
+</script>
+</body>
+</html>
