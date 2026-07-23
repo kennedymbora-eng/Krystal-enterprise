@@ -40,8 +40,29 @@ button{cursor:pointer;border:none;background:none;}
 /* ---- App shell ---- */
 .app{display:none;min-height:100vh;}
 .topbar{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:100;}
+.tb-left{display:flex;align-items:center;gap:10px;}
+.hamburger{width:34px;height:34px;background:var(--sf2);border:1px solid var(--bd);border-radius:9px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;flex-shrink:0;}
+.hamburger span{display:block;width:16px;height:2.5px;background:var(--tx);border-radius:1.5px;transition:all .25s;}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.hamburger.open span:nth-child(2){opacity:0;}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
 .tb-brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;}
 .tb-brand .gem{width:18px;height:18px;border-radius:5px;}
+
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;backdrop-filter:blur(2px);}
+.sidebar-overlay.show{display:block;}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:250px;background:var(--sf);border-right:1px solid var(--bd);z-index:210;transform:translateX(-250px);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;}
+.sidebar.open{transform:translateX(0);}
+.sb-header{padding:20px 16px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;}
+.sb-brand-title{font-size:14px;font-weight:800;}
+.sb-brand-sub{font-size:10px;color:var(--tx2);}
+.sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+.sb-item{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;font-size:13px;font-weight:600;color:var(--tx2);transition:all .15s;border-left:3px solid transparent;}
+.sb-item:hover{background:var(--sf2);color:var(--tx);}
+.sb-item.active{background:var(--sf2);color:var(--ac);border-left-color:var(--ac);}
+.sb-item svg{width:18px;height:18px;flex-shrink:0;}
+.sb-bottom{padding:12px;border-top:1px solid var(--bd);}
+.sb-signout{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--re);background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);}
 .tb-logout{font-size:11px;color:var(--tx2);border:1px solid var(--bd);border-radius:8px;padding:6px 10px;}
 
 .tabs{display:flex;gap:4px;padding:10px 12px;overflow-x:auto;border-bottom:1px solid var(--bd);}
@@ -98,15 +119,26 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
 <!-- APP -->
 <div class="app" id="app">
   <div class="topbar">
-    <div class="tb-brand"><div class="gem"></div>Krystal Network Admin</div>
+    <div class="tb-left">
+      <button class="hamburger" id="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+      <div class="tb-brand"><div class="gem"></div>Krystal Network</div>
+    </div>
     <button class="tb-logout" onclick="doLogout()">Sign out</button>
   </div>
-  <div class="tabs">
-    <button class="tab-btn active" data-p="users" onclick="showPage('users')">Users</button>
-    <button class="tab-btn" data-p="stock" onclick="showPage('stock')">Stock</button>
-    <button class="tab-btn" data-p="orders" onclick="showPage('orders')">Orders</button>
-    <button class="tab-btn" data-p="payment" onclick="showPage('payment')">Payment</button>
-    <button class="tab-btn" data-p="settings" onclick="showPage('settings')">Settings</button>
+
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sb-header"><div class="gem"></div>
+      <div><div class="sb-brand-title">Krystal Network</div><div class="sb-brand-sub">Admin console</div></div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-item active" data-p="users" onclick="showPage('users')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Users</div>
+      <div class="sb-item" data-p="stock" onclick="showPage('stock')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><line x1="12" y1="12" x2="12" y2="19"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Stock</div>
+      <div class="sb-item" data-p="orders" onclick="showPage('orders')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Orders</div>
+      <div class="sb-item" data-p="payment" onclick="showPage('payment')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Payment</div>
+      <div class="sb-item" data-p="settings" onclick="showPage('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</div>
+    </nav>
+    <div class="sb-bottom"><div class="sb-signout" onclick="doLogout()">Sign Out</div></div>
   </div>
 
   <!-- USERS -->
@@ -247,9 +279,21 @@ auth.onAuthStateChanged(async user=>{
 
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('pg-'+id).classList.add('active');
-  document.querySelector(`.tab-btn[data-p="${id}"]`).classList.add('active');
+  document.querySelector(`.sb-item[data-p="${id}"]`).classList.add('active');
+  closeSidebar();
+}
+function toggleSidebar(){
+  const open = !document.getElementById('sidebar').classList.contains('open');
+  document.getElementById('sidebar').classList.toggle('open', open);
+  document.getElementById('sidebarOverlay').classList.toggle('show', open);
+  document.getElementById('hamburger').classList.toggle('open', open);
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+  document.getElementById('hamburger').classList.remove('open');
 }
 
 async function loadAll(){
@@ -267,10 +311,15 @@ function renderUsers(){
   if (!S.shops.length){ el.innerHTML = '<div class="empty">No shops have joined the network yet.</div>'; return; }
   el.innerHTML = S.shops.map(s=>{
     const paused = s.status==='paused';
-    return `<div class="srow">
+    const details = [s.ownerName, s.phone, s.email, s.location].filter(Boolean).join(' · ');
+    return `<div class="srow" style="align-items:flex-start">
       <div><div style="font-weight:700;font-size:12px">${s.shopName||s.shopCode}</div>
-      <div style="font-size:10px;color:var(--tx2)">${s.shopCode} · ${s.location||'—'}</div></div>
-      <div style="display:flex;gap:6px">
+      <div style="font-size:10px;color:var(--tx2)">${s.shopCode}</div>
+      ${details ? `<div style="font-size:10px;color:var(--tx2);margin-top:2px">${details}</div>` : ''}
+      ${s.tagline ? `<div style="font-size:10px;color:var(--tx2);font-style:italic;margin-top:2px">"${s.tagline}"</div>` : ''}
+      ${s.mpesa ? `<div style="font-size:10px;color:var(--tx2);margin-top:2px">M-Pesa: ${s.mpesa}</div>` : ''}
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
         <span class="pill ${paused?'pill-wa':'pill-ok'}">${paused?'Paused':'Active'}</span>
         <button class="btn btn-s btn-sm" onclick="toggleShopStatus('${s.id}',${!paused})">${paused?'Resume':'Pause'}</button>
         <button class="btn btn-d btn-sm" onclick="deleteShop('${s.id}')">Delete</button>
