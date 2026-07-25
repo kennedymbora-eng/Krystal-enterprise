@@ -135,6 +135,7 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
       <div class="sb-item active" data-p="users" onclick="showPage('users')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Users</div>
       <div class="sb-item" data-p="stock" onclick="showPage('stock')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><line x1="12" y1="12" x2="12" y2="19"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Stock</div>
       <div class="sb-item" data-p="orders" onclick="showPage('orders')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Orders</div>
+      <div class="sb-item" data-p="suppliers" onclick="showPage('suppliers')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="7" width="15" height="12"/><path d="M16 10h4l3 3v6h-7"/><circle cx="6.5" cy="19.5" r="2"/><circle cx="18.5" cy="19.5" r="2"/></svg>Suppliers</div>
       <div class="sb-item" data-p="payment" onclick="showPage('payment')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Payment</div>
       <div class="sb-item" data-p="settings" onclick="showPage('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</div>
     </nav>
@@ -162,11 +163,20 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
   <!-- ORDERS -->
   <div class="page" id="pg-orders">
     <div class="sec-head"><div class="sec-title">Orders</div></div>
-    <div style="display:flex;gap:6px;margin-bottom:10px">
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn btn-s btn-sm active" id="ordViewBy" onclick="setOrdView('shop')">By Shop</button>
       <button class="btn btn-s btn-sm" id="ordViewCombined" onclick="setOrdView('combined')">Combined</button>
+      <button class="btn btn-s btn-sm" id="ordViewAssign" onclick="setOrdView('assignments')">Assignments</button>
     </div>
     <div id="ordersWrap"><div class="empty">Loading orders…</div></div>
+  </div>
+
+  <!-- SUPPLIERS -->
+  <div class="page" id="pg-suppliers">
+    <div class="sec-head"><div class="sec-title">Suppliers</div>
+      <button class="btn btn-s btn-sm" onclick="openModal('addSupplierModal')">+ Add Supplier</button>
+    </div>
+    <div class="card" id="suppliersList"><div class="empty">Loading suppliers…</div></div>
   </div>
 
   <!-- PAYMENT -->
@@ -202,7 +212,7 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
       <div class="field"><label>Product name</label><input id="npName" placeholder="e.g. Type C Charger"></div>
       <div class="grid-2">
         <div class="field"><label>Category</label><input id="npCat" placeholder="Chargers"></div>
-        <div class="field"><label>Supplier</label><input id="npSup" placeholder="Nairobi Wholesalers Ltd"></div>
+        <div class="field"><label>Supplier</label><select id="npSup" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px"><option value="">— none —</option></select></div>
       </div>
       <div class="grid-2">
         <div class="field"><label>Buying price (KSh)</label><input id="npBuy" type="number" placeholder="0"></div>
@@ -220,6 +230,38 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
     <div id="invItemsWrap" class="stack" style="margin-bottom:10px"></div>
     <div class="srow"><div style="font-weight:800">Total</div><div style="font-weight:800" id="invTotal">KSh 0</div></div>
     <button class="btn btn-p btn-full" style="margin-top:10px" onclick="sendInvoice()">Send Invoice</button>
+  </div>
+</div>
+
+<!-- Add Supplier Modal -->
+<div class="overlay" id="addSupplierModal">
+  <div class="sheet">
+    <div class="sheet-hdr"><div class="sheet-title">Add Supplier</div><button onclick="closeModal('addSupplierModal')">✕</button></div>
+    <div class="stack">
+      <div class="field"><label>Company / supplier name</label><input id="nsName" placeholder="e.g. Nairobi Wholesalers Ltd"></div>
+      <div class="grid-2">
+        <div class="field"><label>Contact person</label><input id="nsContact" placeholder="Contact name"></div>
+        <div class="field"><label>Phone</label><input id="nsPhone" placeholder="07..."></div>
+      </div>
+      <div class="field"><label>Email</label><input id="nsEmail" type="email" placeholder="supplier@example.com"></div>
+      <div class="field"><label>Login UID</label><input id="nsUid" placeholder="Firebase Auth UID"></div>
+      <div style="font-size:10px;color:var(--tx2);margin-top:-4px">Suppliers can now sign up themselves in the supplier console and appear above for approval — only use this to add one manually (paste their UID from Firebase Auth).</div>
+      <button class="btn btn-p btn-full" onclick="addSupplier()">Add Supplier</button>
+    </div>
+  </div>
+</div>
+
+<!-- Assign to Supplier Modal -->
+<div class="overlay" id="assignModal">
+  <div class="sheet">
+    <div class="sheet-hdr"><div class="sheet-title" id="assignTitle">Assign Product</div><button onclick="closeModal('assignModal')">✕</button></div>
+    <div class="stack">
+      <div class="field"><label>Supplier</label>
+        <select id="assignSupplier" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px"></select>
+      </div>
+      <div class="field"><label>Quantity</label><input id="assignQty" type="number"></div>
+      <button class="btn btn-p btn-full" onclick="createAssignment()">Assign</button>
+    </div>
   </div>
 </div>
 
@@ -241,7 +283,7 @@ firebase.initializeApp(NETWORK_CONFIG);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-const S = { shops:[], catalogue:[], orders:[], ordView:'shop', invoiceCtx:null };
+const S = { shops:[], catalogue:[], orders:[], suppliers:[], assignments:[], ordView:'shop', invoiceCtx:null, assignCtx:null };
 const fmt = n => Math.round(n||0).toLocaleString();
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
 function openModal(id){ document.getElementById(id).classList.add('show'); }
@@ -297,7 +339,7 @@ function closeSidebar(){
 }
 
 async function loadAll(){
-  await Promise.all([loadShops(), loadCatalogue(), loadOrders(), loadPaymentMethod()]);
+  await Promise.all([loadShops(), loadCatalogue(), loadOrders(), loadPaymentMethod(), loadSuppliers(), loadAssignments()]);
 }
 
 // ---- USERS ----
@@ -338,6 +380,65 @@ async function deleteShop(id){
   loadShops();
 }
 
+// ---- SUPPLIERS ----
+async function loadSuppliers(){
+  const snap = await db.collection('suppliers').orderBy('createdAt','desc').get();
+  S.suppliers = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  renderSuppliers();
+}
+function renderSuppliers(){
+  const el = document.getElementById('suppliersList');
+  const pending = S.suppliers.filter(s=>s.status==='pending');
+  const active = S.suppliers.filter(s=>s.status!=='pending');
+  let html = '';
+  if (pending.length){
+    html += `<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--wa);margin-bottom:6px">Awaiting approval</div>` +
+      pending.map(s=>`<div class="srow">
+        <div><div style="font-weight:700;font-size:12px">${s.name}</div>
+        <div style="font-size:10px;color:var(--tx2)">${[s.contact,s.phone,s.email].filter(Boolean).join(' · ')}</div></div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-p btn-sm" onclick="approveSupplier('${s.id}')">Approve</button>
+          <button class="btn btn-d btn-sm" onclick="deleteSupplier('${s.id}')">Reject</button>
+        </div></div>`).join('') +
+      `<div style="height:10px"></div>`;
+  }
+  html += active.length ? active.map(s=>`<div class="srow">
+    <div><div style="font-weight:700;font-size:12px">${s.name}</div>
+    <div style="font-size:10px;color:var(--tx2)">${[s.contact,s.phone,s.email].filter(Boolean).join(' · ')}</div></div>
+    <button class="btn btn-d btn-sm" onclick="deleteSupplier('${s.id}')">Remove</button></div>`).join('')
+    : (pending.length ? '' : '<div class="empty">No suppliers added yet.</div>');
+  el.innerHTML = html;
+  const opts = '<option value="">— none —</option>' + active.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  const npSel = document.getElementById('npSup'); if (npSel) npSel.innerHTML = opts;
+  const asSel = document.getElementById('assignSupplier'); if (asSel) asSel.innerHTML = opts;
+}
+async function approveSupplier(id){
+  await db.collection('suppliers').doc(id).update({status:'active'});
+  toast('Supplier approved — they can now sign in');
+  loadSuppliers();
+}
+async function addSupplier(){
+  const name = document.getElementById('nsName').value.trim();
+  const uid = document.getElementById('nsUid').value.trim();
+  if (!name || !uid){ toast('Supplier name and UID are required'); return; }
+  await db.collection('suppliers').doc(uid).set({
+    name, contact: document.getElementById('nsContact').value.trim(),
+    phone: document.getElementById('nsPhone').value.trim(),
+    email: document.getElementById('nsEmail').value.trim(),
+    status:'active', createdAt: Date.now()
+  });
+  closeModal('addSupplierModal');
+  ['nsName','nsContact','nsPhone','nsEmail','nsUid'].forEach(id=>document.getElementById(id).value='');
+  toast('Supplier added');
+  loadSuppliers();
+}
+async function deleteSupplier(id){
+  if (!confirm('Remove this supplier? They will lose access to the supplier console.')) return;
+  await db.collection('suppliers').doc(id).delete();
+  toast('Supplier removed');
+  loadSuppliers();
+}
+
 // ---- STOCK ----
 async function loadCatalogue(){
   const snap = await db.collection('catalogue').orderBy('createdAt','desc').get();
@@ -348,15 +449,18 @@ function renderStock(){
   const pending = S.catalogue.filter(p=>p.status==='pending');
   const priced = S.catalogue.filter(p=>p.status!=='pending');
   document.getElementById('pendingWrap').style.display = pending.length ? 'block' : 'none';
-  document.getElementById('pendingList').innerHTML = pending.map(p=>`
-    <div class="srow">
+  document.getElementById('pendingList').innerHTML = pending.map(p=>{
+    const opts = '<option value="">Supplier…</option>' + S.suppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    return `<div class="srow">
       <div><div style="font-weight:700;font-size:12px">${p.name}</div>
       <div style="font-size:10px;color:var(--tx2)">Added by ${p.addedBy}</div></div>
-      <div style="display:flex;gap:6px;align-items:center">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+        <select id="psup-${p.id}" style="background:var(--sf2);border:1px solid var(--bd);border-radius:7px;padding:6px 8px;font-size:11px">${opts}</select>
         <input class="inline" type="number" placeholder="Buy" id="pb-${p.id}">
         <input class="inline" type="number" placeholder="Sell" id="ps-${p.id}">
         <button class="btn btn-p btn-sm" onclick="priceProduct('${p.id}')">Save</button>
-      </div></div>`).join('');
+      </div></div>`;
+  }).join('');
   document.getElementById('stockList').innerHTML = priced.length ? priced.map(p=>`
     <div class="srow">
       <div><div style="font-weight:700;font-size:12px">${p.name}</div>
@@ -369,23 +473,28 @@ function renderStock(){
 async function priceProduct(id){
   const buy = parseFloat(document.getElementById('pb-'+id).value)||0;
   const sell = parseFloat(document.getElementById('ps-'+id).value)||0;
+  const supplierId = document.getElementById('psup-'+id).value;
+  const sup = S.suppliers.find(s=>s.id===supplierId);
   if (!sell){ toast('Enter a selling price'); return; }
-  await db.collection('catalogue').doc(id).update({buyPrice:buy, sellPrice:sell, status:'priced'});
+  await db.collection('catalogue').doc(id).update({buyPrice:buy, sellPrice:sell, status:'priced', supplierId:supplierId||'', supplier:sup?sup.name:''});
   toast('Product priced and published to shops');
   loadCatalogue();
 }
 async function addProduct(){
   const name = document.getElementById('npName').value.trim();
   const sell = parseFloat(document.getElementById('npSell').value)||0;
+  const supplierId = document.getElementById('npSup').value;
+  const sup = S.suppliers.find(s=>s.id===supplierId);
   if (!name || !sell){ toast('Name and selling price are required'); return; }
   await db.collection('catalogue').add({
     name, category: document.getElementById('npCat').value.trim(),
-    supplier: document.getElementById('npSup').value.trim(),
+    supplierId: supplierId||'', supplier: sup?sup.name:'',
     buyPrice: parseFloat(document.getElementById('npBuy').value)||0,
     sellPrice: sell, status:'priced', addedBy:'admin', createdAt: Date.now()
   });
   closeModal('addStockModal');
-  ['npName','npCat','npSup','npBuy','npSell'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('npSup').value='';
+  ['npName','npCat','npBuy','npSell'].forEach(id=>document.getElementById(id).value='');
   toast('Product added');
   loadCatalogue();
 }
@@ -400,14 +509,20 @@ function setOrdView(v){
   S.ordView = v;
   document.getElementById('ordViewBy').classList.toggle('active', v==='shop');
   document.getElementById('ordViewCombined').classList.toggle('active', v==='combined');
+  document.getElementById('ordViewAssign').classList.toggle('active', v==='assignments');
   renderOrders();
 }
 function statusPill(st){
   const map = {Submitted:'pill-wa', Invoiced:'pill-ac', Fulfilled:'pill-ok'};
   return `<span class="pill ${map[st]||'pill-wa'}">${st}</span>`;
 }
+function assignStatusPill(st){
+  const map = {Assigned:'pill-wa', Confirmed:'pill-ac', Dispatched:'pill-ac', Delivered:'pill-ok'};
+  return `<span class="pill ${map[st]||'pill-wa'}">${st}</span>`;
+}
 function renderOrders(){
   const wrap = document.getElementById('ordersWrap');
+  if (S.ordView==='assignments'){ renderAssignments(wrap); return; }
   if (!S.orders.length){ wrap.innerHTML = '<div class="empty">No orders submitted yet.</div>'; return; }
   if (S.ordView==='shop'){
     const byShop = {};
@@ -423,17 +538,65 @@ function renderOrders(){
   } else {
     const agg = {};
     S.orders.filter(o=>o.status==='Submitted').forEach(o=>o.items.forEach(i=>{
-      agg[i.prodId] = agg[i.prodId] || {name:i.name, qty:0, byShop:[]};
+      agg[i.prodId] = agg[i.prodId] || {name:i.name, qty:0, byShop:[], orderIds:[]};
       agg[i.prodId].qty += i.qty;
       agg[i.prodId].byShop.push(`${i.qty}× ${o.shopName||o.shopCode}`);
+      agg[i.prodId].orderIds.push(o.id);
     }));
-    const rows = Object.values(agg);
-    wrap.innerHTML = rows.length ? `<div class="card">${rows.map(r=>`
+    const rows = Object.entries(agg);
+    wrap.innerHTML = rows.length ? `<div class="card">${rows.map(([prodId,r])=>`
       <div class="srow"><div><div style="font-weight:700;font-size:12px">${r.name}</div>
       <div style="font-size:10px;color:var(--tx2)">${r.byShop.join(' · ')}</div></div>
-      <div style="font-weight:800;font-size:13px">${r.qty} units</div></div>`).join('')}</div>`
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="font-weight:800;font-size:13px">${r.qty} units</div>
+        <button class="btn btn-s btn-sm" onclick='openAssignModal(${JSON.stringify(prodId)},${JSON.stringify(r.name)},${r.qty},${JSON.stringify(r.orderIds)})'>Assign</button>
+      </div></div>`).join('')}</div>`
       : '<div class="empty">Nothing pending combination.</div>';
   }
+}
+
+// ---- SUPPLIER ASSIGNMENTS ----
+async function loadAssignments(){
+  const snap = await db.collection('assignments').orderBy('createdAt','desc').get();
+  S.assignments = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  if (S.ordView==='assignments') renderOrders();
+}
+function renderAssignments(wrap){
+  if (!S.assignments.length){ wrap.innerHTML = '<div class="empty">No assignments yet — assign combined items to a supplier from the Combined view.</div>'; return; }
+  wrap.innerHTML = `<div class="card">${S.assignments.map(a=>`
+    <div class="srow">
+      <div><div style="font-weight:700;font-size:12px">${a.prodName}</div>
+      <div style="font-size:10px;color:var(--tx2)">${a.qty} units · ${a.supplierName}</div></div>
+      <div style="text-align:right">
+        ${assignStatusPill(a.status)}
+        <div style="margin-top:4px">
+          <span class="pill ${a.paymentStatus==='Paid'?'pill-ok':'pill-wa'}" style="cursor:pointer" onclick="toggleAssignmentPayment('${a.id}','${a.paymentStatus}')">${a.paymentStatus||'Pending'}</span>
+        </div>
+      </div></div>`).join('')}</div>`;
+}
+function openAssignModal(prodId, name, qty, orderIds){
+  S.assignCtx = {prodId, name, orderIds: orderIds||[]};
+  document.getElementById('assignTitle').textContent = 'Assign — '+name;
+  document.getElementById('assignQty').value = qty;
+  openModal('assignModal');
+}
+async function createAssignment(){
+  const supplierId = document.getElementById('assignSupplier').value;
+  const qty = parseFloat(document.getElementById('assignQty').value)||0;
+  const sup = S.suppliers.find(s=>s.id===supplierId);
+  if (!supplierId || !qty){ toast('Pick a supplier and a quantity'); return; }
+  await db.collection('assignments').add({
+    prodId: S.assignCtx.prodId, prodName: S.assignCtx.name, qty,
+    supplierId, supplierName: sup.name, sourceOrderIds: S.assignCtx.orderIds,
+    status: 'Assigned', paymentStatus: 'Pending', createdAt: Date.now()
+  });
+  closeModal('assignModal');
+  toast('Assigned to '+sup.name);
+  loadAssignments();
+}
+async function toggleAssignmentPayment(id, current){
+  await db.collection('assignments').doc(id).update({paymentStatus: current==='Paid' ? 'Pending' : 'Paid'});
+  loadAssignments();
 }
 
 // ---- Invoicing ----
