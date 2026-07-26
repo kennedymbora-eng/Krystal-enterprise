@@ -608,6 +608,9 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
       <div class="cat-row" id="osCats"></div>
       <div class="pos-grid" id="osGrid"></div>
 
+      <div class="set-sec-title">My Network Listings</div>
+      <div class="card" id="osMyListings" style="margin-bottom:14px"></div>
+
       <div class="set-sec-title">My Orders</div>
       <div class="card" id="osMyOrders" style="margin-bottom:14px"></div>
 
@@ -2072,6 +2075,42 @@ async function renderOrderStock() {
   loadMyOrders();
   loadMyInvoices();
   loadNetworkPaymentMethod();
+  loadMyListings();
+}
+async function loadMyListings() {
+  const el = document.getElementById('osMyListings');
+  try {
+    const snap = await ndb.collection('catalogue').where('addedBy','==',S.shopCode).get();
+    const list = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    if (!list.length) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">You haven\'t listed any products yet</div></div>'; return; }
+    el.innerHTML = list.map(p => `<div class="srow">
+      <div><div style="font-size:12px;font-weight:600">${p.name}</div>
+      <div style="font-size:10px;color:var(--tx2)">${p.status==='pending' ? 'Awaiting admin price' : 'Live · KSh '+fmt(p.sellPrice)}</div></div>
+      ${p.status==='pending'
+        ? `<div style="display:flex;gap:5px"><button class="btn btn-s btn-sm" onclick="editMyListing('${p.id}','${p.name.replace(/'/g,"\\'")}','${(p.category||'').replace(/'/g,"\\'")}')">Edit</button>
+           <button class="btn btn-d btn-sm" onclick="deleteMyListing('${p.id}')">Delete</button></div>`
+        : `<span style="font-size:10px;color:var(--tx2)">Contact admin to remove</span>`}
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">Could not load your listings</div></div>'; }
+}
+async function editMyListing(id, currentName, currentCat) {
+  const name = prompt('Product name', currentName);
+  if (name===null) return;
+  const cat = prompt('Category', currentCat);
+  if (cat===null) return;
+  try {
+    await ndb.collection('catalogue').doc(id).update({name: name.trim(), category: cat.trim()});
+    toast('Listing updated');
+    loadMyListings();
+  } catch(e) { toast('Could not update — it may already be priced'); }
+}
+async function deleteMyListing(id) {
+  if (!confirm('Remove this listing? The admin will no longer see it to price.')) return;
+  try {
+    await ndb.collection('catalogue').doc(id).delete();
+    toast('Listing removed');
+    loadMyListings();
+  } catch(e) { toast('Could not delete — it may already be priced'); }
 }
 async function loadMyInvoices() {
   const el = document.getElementById('osInvoices');
@@ -2087,20 +2126,48 @@ async function loadMyInvoices() {
       <div style="font-size:11px">KSh ${fmt(inv.total)}</div></div></div>`).join('');
   } catch(e) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">Could not load invoices</div></div>'; }
 }
+const ORDER_STEPS = ['Submitted','Reviewed','Invoiced','Paid','Dispatched','Fulfilled'];
+function stepperHtml(status) {
+  if (status==='Declined') return `<div style="font-size:10px;font-weight:800;color:var(--re);margin-top:5px">Declined by admin</div>`;
+  const idx = ORDER_STEPS.indexOf(status);
+  return `<div style="display:flex;gap:3px;margin-top:6px">` + ORDER_STEPS.map((s,i) =>
+    `<div style="flex:1;height:4px;border-radius:2px;background:${i<=idx?'var(--ac)':'var(--bd)'}"></div>`
+  ).join('') + `</div>`;
+}
 async function loadMyOrders() {
   const el = document.getElementById('osMyOrders');
   try {
     const snap = await ndb.collection('orders').where('shopCode','==',S.shopCode).orderBy('createdAt','desc').limit(15).get();
-    const orders = snap.docs.map(d => d.data());
+    const orders = snap.docs.map(d => ({id:d.id, ...d.data()}));
     if (!orders.length) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">No orders submitted yet</div></div>'; return; }
-    const pillCls = {Submitted:'wa', Invoiced:'ac', Fulfilled:'gr'};
-    const outstanding = orders.filter(o=>o.status!=='Fulfilled').reduce((a,o)=>a+(o.total||0),0);
-    el.innerHTML = `<div class="srow" style="font-weight:800;font-size:12px"><div>Total owed on open orders</div><div>KSh ${fmt(outstanding)}</div></div>` +
-      orders.map(o => `<div class="srow">
-        <div><div style="font-size:12px;font-weight:600">${o.items.map(i=>i.name+' ×'+i.qty).join(', ')}</div>
-        <div style="font-size:10px;color:var(--tx2)">${new Date(o.createdAt).toLocaleDateString()}</div></div>
-        <div style="text-align:right"><div style="font-size:10px;font-weight:800;color:var(--${pillCls[o.status]||'wa'})">${o.status}</div>
-        <div style="font-size:11px">KSh ${fmt(o.total)}</div></div></div>`).join('');
+    const outstanding = orders.filter(o => !['Fulfilled','Declined'].includes(o.status)).reduce((a,o)=>a+(o.total||0),0);
+    const pillCls = {Submitted:'wa', Reviewed:'wa', Invoiced:'ac', Paid:'ac', Dispatched:'ac', Fulfilled:'gr', Declined:'re'};
+    const rows = await Promise.all(orders.map(async o => {
+      let subLabel = '';
+      if (o.status==='Dispatched') {
+        if (o.route==='direct') subLabel = 'Ready at Krystal Enterprise';
+        else {
+          try {
+            const asnap = await ndb.collection('assignments').where('sourceOrderIds','array-contains', o.id).limit(1).get();
+            if (!asnap.empty) {
+              const map = {Assigned:'Assigned to supplier', Confirmed:'Confirmed by supplier', Dispatched:'En route from supplier'};
+              subLabel = map[asnap.docs[0].data().status] || '';
+            }
+          } catch(e) {}
+        }
+      }
+      return `<div class="srow" style="display:block;padding:10px 0">
+        <div style="display:flex;justify-content:space-between;gap:10px">
+          <div><div style="font-size:12px;font-weight:600">${o.items.map(i=>i.name+' ×'+i.qty).join(', ')}</div>
+          <div style="font-size:10px;color:var(--tx2)">${new Date(o.createdAt).toLocaleDateString()}</div></div>
+          <div style="text-align:right"><div style="font-size:10px;font-weight:800;color:var(--${pillCls[o.status]||'wa'})">${o.status}</div>
+          <div style="font-size:11px">KSh ${fmt(o.total)}</div></div>
+        </div>
+        ${subLabel ? `<div style="font-size:10px;color:var(--tx2);margin-top:3px">${subLabel}</div>` : ''}
+        ${stepperHtml(o.status)}
+      </div>`;
+    }));
+    el.innerHTML = `<div class="srow" style="font-weight:800;font-size:12px"><div>Total owed on open orders</div><div>KSh ${fmt(outstanding)}</div></div>` + rows.join('');
   } catch(e) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">Could not load orders</div></div>'; }
 }
 async function loadNetworkPaymentMethod() {

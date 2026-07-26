@@ -151,7 +151,7 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
   <!-- STOCK -->
   <div class="page" id="pg-stock">
     <div class="sec-head"><div class="sec-title">Network Stock</div>
-      <button class="btn btn-s btn-sm" onclick="openModal('addStockModal')">+ Add Product</button>
+      <button class="btn btn-s btn-sm" onclick="openNewProduct()">+ Add Product</button>
     </div>
     <div class="card" style="margin-bottom:8px;background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.25)" id="pendingWrap">
       <div class="card-title" style="color:var(--wa);font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:8px">Awaiting your price</div>
@@ -204,11 +204,12 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
   </div>
 </div>
 
-<!-- Add Product Modal -->
+<!-- Add/Edit Product Modal -->
 <div class="overlay" id="addStockModal">
   <div class="sheet">
-    <div class="sheet-hdr"><div class="sheet-title">Add Product</div><button onclick="closeModal('addStockModal')">✕</button></div>
+    <div class="sheet-hdr"><div class="sheet-title" id="addStockTitle">Add Product</div><button onclick="closeModal('addStockModal')">✕</button></div>
     <div class="stack">
+      <input type="hidden" id="npEditId" value="">
       <div class="field"><label>Product name</label><input id="npName" placeholder="e.g. Type C Charger"></div>
       <div class="grid-2">
         <div class="field"><label>Category</label><input id="npCat" placeholder="Chargers"></div>
@@ -218,18 +219,18 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
         <div class="field"><label>Buying price (KSh)</label><input id="npBuy" type="number" placeholder="0"></div>
         <div class="field"><label>Selling price to shops (KSh)</label><input id="npSell" type="number" placeholder="0"></div>
       </div>
-      <button class="btn btn-p btn-full" onclick="addProduct()">Add to Catalogue</button>
+      <button class="btn btn-p btn-full" onclick="addProduct()">Save</button>
     </div>
   </div>
 </div>
 
-<!-- Invoice builder modal -->
-<div class="overlay" id="invoiceModal">
+<!-- Review order modal -->
+<div class="overlay" id="reviewModal">
   <div class="sheet">
-    <div class="sheet-hdr"><div class="sheet-title" id="invTitle">Create Invoice</div><button onclick="closeModal('invoiceModal')">✕</button></div>
-    <div id="invItemsWrap" class="stack" style="margin-bottom:10px"></div>
-    <div class="srow"><div style="font-weight:800">Total</div><div style="font-weight:800" id="invTotal">KSh 0</div></div>
-    <button class="btn btn-p btn-full" style="margin-top:10px" onclick="sendInvoice()">Send Invoice</button>
+    <div class="sheet-hdr"><div class="sheet-title" id="reviewTitle">Review Order</div><button onclick="closeModal('reviewModal')">✕</button></div>
+    <div style="font-size:11px;color:var(--tx2);margin-bottom:10px">Uncheck or adjust quantity for anything you can't fulfill — the rest goes to invoice.</div>
+    <div id="reviewItemsWrap" class="stack" style="margin-bottom:10px"></div>
+    <button class="btn btn-p btn-full" onclick="saveReview()">Save Review</button>
   </div>
 </div>
 
@@ -468,7 +469,35 @@ function renderStock(){
       <div style="text-align:right">
         <div style="font-size:11px;color:var(--tx2)">Buy KSh ${fmt(p.buyPrice)}</div>
         <div style="font-size:12px;font-weight:800;color:var(--ac)">Sell KSh ${fmt(p.sellPrice)}</div>
+        <div style="display:flex;gap:5px;margin-top:5px">
+          <button class="btn btn-s btn-sm" onclick='openEditProduct(${JSON.stringify(p.id)})'>Edit</button>
+          <button class="btn btn-d btn-sm" onclick="deleteProduct('${p.id}')">Delete</button>
+        </div>
       </div></div>`).join('') : '<div class="empty">No priced products yet.</div>';
+}
+function openNewProduct(){
+  document.getElementById('addStockTitle').textContent = 'Add Product';
+  document.getElementById('npEditId').value = '';
+  ['npName','npCat','npBuy','npSell'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('npSup').value = '';
+  openModal('addStockModal');
+}
+function openEditProduct(id){
+  const p = S.catalogue.find(x=>x.id===id);
+  document.getElementById('addStockTitle').textContent = 'Edit Product';
+  document.getElementById('npEditId').value = id;
+  document.getElementById('npName').value = p.name;
+  document.getElementById('npCat').value = p.category||'';
+  document.getElementById('npSup').value = p.supplierId||'';
+  document.getElementById('npBuy').value = p.buyPrice||'';
+  document.getElementById('npSell').value = p.sellPrice||'';
+  openModal('addStockModal');
+}
+async function deleteProduct(id){
+  if (!confirm('Delete this product from the network catalogue? Shops will no longer be able to order it.')) return;
+  await db.collection('catalogue').doc(id).delete();
+  toast('Product deleted');
+  loadCatalogue();
 }
 async function priceProduct(id){
   const buy = parseFloat(document.getElementById('pb-'+id).value)||0;
@@ -485,17 +514,21 @@ async function addProduct(){
   const sell = parseFloat(document.getElementById('npSell').value)||0;
   const supplierId = document.getElementById('npSup').value;
   const sup = S.suppliers.find(s=>s.id===supplierId);
+  const editId = document.getElementById('npEditId').value;
   if (!name || !sell){ toast('Name and selling price are required'); return; }
-  await db.collection('catalogue').add({
+  const data = {
     name, category: document.getElementById('npCat').value.trim(),
     supplierId: supplierId||'', supplier: sup?sup.name:'',
     buyPrice: parseFloat(document.getElementById('npBuy').value)||0,
-    sellPrice: sell, status:'priced', addedBy:'admin', createdAt: Date.now()
-  });
+    sellPrice: sell, status:'priced'
+  };
+  if (editId) await db.collection('catalogue').doc(editId).update(data);
+  else await db.collection('catalogue').add({...data, addedBy:'admin', createdAt: Date.now()});
   closeModal('addStockModal');
-  document.getElementById('npSup').value='';
+  document.getElementById('npSup').value=''; document.getElementById('npEditId').value='';
+  document.getElementById('addStockTitle').textContent = 'Add Product';
   ['npName','npCat','npBuy','npSell'].forEach(id=>document.getElementById(id).value='');
-  toast('Product added');
+  toast(editId ? 'Product updated' : 'Product added');
   loadCatalogue();
 }
 
@@ -512,13 +545,29 @@ function setOrdView(v){
   document.getElementById('ordViewAssign').classList.toggle('active', v==='assignments');
   renderOrders();
 }
+const ORDER_STEPS = ['Submitted','Reviewed','Invoiced','Paid','Dispatched','Fulfilled'];
 function statusPill(st){
-  const map = {Submitted:'pill-wa', Invoiced:'pill-ac', Fulfilled:'pill-ok'};
+  if (st==='Declined') return `<span class="pill pill-re">Declined</span>`;
+  const map = {Submitted:'pill-wa', Reviewed:'pill-wa', Invoiced:'pill-ac', Paid:'pill-ac', Dispatched:'pill-ac', Fulfilled:'pill-ok'};
   return `<span class="pill ${map[st]||'pill-wa'}">${st}</span>`;
 }
 function assignStatusPill(st){
   const map = {Assigned:'pill-wa', Confirmed:'pill-ac', Dispatched:'pill-ac', Delivered:'pill-ok'};
   return `<span class="pill ${map[st]||'pill-wa'}">${st}</span>`;
+}
+// The action button(s) shown for an order depend entirely on its current
+// status — this is what keeps the pipeline from skipping a step.
+function orderActionsHtml(o){
+  switch(o.status){
+    case 'Submitted': return `<button class="btn btn-s btn-sm" onclick="openReviewModal('${o.id}')">Review</button>`;
+    case 'Reviewed': return `<button class="btn btn-s btn-sm" onclick="sendInvoiceForOrder('${o.id}')">Send Invoice</button>`;
+    case 'Invoiced': return `<button class="btn btn-s btn-sm" onclick="markOrderPaid('${o.id}')">Mark Paid</button>`;
+    case 'Paid': return `<button class="btn btn-s btn-sm" onclick="dispatchDirect('${o.id}')">Dispatch from My Stock</button>`;
+    case 'Dispatched': return o.route==='direct'
+      ? `<button class="btn btn-s btn-sm" onclick="markOrderDelivered('${o.id}')">Mark Delivered</button>`
+      : `<span style="font-size:10px;color:var(--tx2)">En route via ${o.supplierNameHint||'supplier'}</span>`;
+    default: return '';
+  }
 }
 function renderOrders(){
   const wrap = document.getElementById('ordersWrap');
@@ -529,40 +578,96 @@ function renderOrders(){
     S.orders.forEach(o=>{ (byShop[o.shopCode]=byShop[o.shopCode]||[]).push(o); });
     wrap.innerHTML = Object.entries(byShop).map(([code,list])=>`
       <div class="card">
-        <div class="sec-head" style="margin-bottom:6px"><div style="font-weight:800;font-size:13px">${list[0].shopName||code}</div>
-        <button class="btn btn-s btn-sm" onclick='openInvoiceBuilder(${JSON.stringify(code)})'>Create Invoice</button></div>
+        <div style="font-weight:800;font-size:13px;margin-bottom:6px">${list[0].shopName||code}</div>
         ${list.map(o=>`<div class="srow"><div><div style="font-size:12px;font-weight:600">${o.items.map(i=>i.name+' ×'+i.qty).join(', ')}</div>
           <div style="font-size:10px;color:var(--tx2)">${new Date(o.createdAt).toLocaleDateString()}</div></div>
-          <div style="text-align:right">${statusPill(o.status)}<div style="font-size:11px;margin-top:3px">KSh ${fmt(o.total)}</div></div></div>`).join('')}
+          <div style="text-align:right">${statusPill(o.status)}<div style="font-size:11px;margin-top:3px">KSh ${fmt(o.total)}</div>
+          <div style="margin-top:5px">${orderActionsHtml(o)}</div></div></div>`).join('')}
       </div>`).join('');
   } else {
     const agg = {};
-    S.orders.filter(o=>o.status==='Submitted').forEach(o=>o.items.forEach(i=>{
+    S.orders.filter(o=>o.status==='Paid').forEach(o=>o.items.forEach(i=>{
       agg[i.prodId] = agg[i.prodId] || {name:i.name, qty:0, byShop:[], orderIds:[]};
       agg[i.prodId].qty += i.qty;
       agg[i.prodId].byShop.push(`${i.qty}× ${o.shopName||o.shopCode}`);
       agg[i.prodId].orderIds.push(o.id);
     }));
     const rows = Object.entries(agg);
-    wrap.innerHTML = rows.length ? `<div class="card">${rows.map(([prodId,r])=>`
+    wrap.innerHTML = rows.length ? `<div class="card"><div style="font-size:10px;color:var(--tx2);margin-bottom:8px">Paid orders, grouped by product — ready to send to a supplier</div>${rows.map(([prodId,r])=>`
       <div class="srow"><div><div style="font-weight:700;font-size:12px">${r.name}</div>
       <div style="font-size:10px;color:var(--tx2)">${r.byShop.join(' · ')}</div></div>
       <div style="display:flex;align-items:center;gap:8px">
         <div style="font-weight:800;font-size:13px">${r.qty} units</div>
-        <button class="btn btn-s btn-sm" onclick='openAssignModal(${JSON.stringify(prodId)},${JSON.stringify(r.name)},${r.qty},${JSON.stringify(r.orderIds)})'>Assign</button>
+        <button class="btn btn-s btn-sm" onclick='openAssignModal(${JSON.stringify(prodId)},${JSON.stringify(r.name)},${r.qty},${JSON.stringify(r.orderIds)})'>Assign to Supplier</button>
       </div></div>`).join('')}</div>`
-      : '<div class="empty">Nothing pending combination.</div>';
+      : '<div class="empty">Nothing paid and waiting on a supplier yet.</div>';
   }
 }
 
-// ---- SUPPLIER ASSIGNMENTS ----
+// ---- REVIEW (accept some or all of what a shop asked for) ----
+function openReviewModal(orderId){
+  const o = S.orders.find(x=>x.id===orderId); if (!o) return;
+  S.reviewCtx = {orderId};
+  document.getElementById('reviewTitle').textContent = 'Review — '+(o.shopName||o.shopCode);
+  document.getElementById('reviewItemsWrap').innerHTML = o.items.map((it,i)=>`
+    <div class="srow"><label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+      <input type="checkbox" class="chk rv-chk" data-idx="${i}" checked>${it.name} (requested ${it.qty})</label>
+      <input class="inline" type="number" value="${it.qty}" id="rvq-${i}" style="width:64px"></div>`).join('');
+  openModal('reviewModal');
+}
+async function saveReview(){
+  const o = S.orders.find(x=>x.id===S.reviewCtx.orderId); if (!o) return;
+  const accepted = [];
+  o.items.forEach((it,i)=>{
+    const chk = document.querySelector(`.rv-chk[data-idx="${i}"]`);
+    const qty = parseFloat(document.getElementById('rvq-'+i).value)||0;
+    if (chk.checked && qty>0) accepted.push({...it, qty});
+  });
+  const total = accepted.reduce((a,i)=>a+i.price*i.qty,0);
+  const status = accepted.length ? 'Reviewed' : 'Declined';
+  await db.collection('orders').doc(o.id).update({items:accepted, total, status});
+  closeModal('reviewModal');
+  toast(accepted.length ? 'Order reviewed — ready to invoice' : 'Order declined');
+  loadOrders();
+}
+
+// ---- INVOICE → PAID → DISPATCH → DELIVERED (per order) ----
+async function sendInvoiceForOrder(orderId){
+  const o = S.orders.find(x=>x.id===orderId); if (!o) return;
+  const invRef = await db.collection('invoices').add({
+    shopCode:o.shopCode, shopName:o.shopName, items:o.items, total:o.total,
+    status:'sent', orderId:o.id, createdAt: Date.now()
+  });
+  await db.collection('orders').doc(o.id).update({status:'Invoiced', invoiceId:invRef.id});
+  toast('Invoice sent to '+(o.shopName||o.shopCode));
+  loadOrders();
+}
+async function markOrderPaid(orderId){
+  const o = S.orders.find(x=>x.id===orderId); if (!o) return;
+  await db.collection('orders').doc(o.id).update({status:'Paid'});
+  if (o.invoiceId) await db.collection('invoices').doc(o.invoiceId).update({status:'paid'});
+  toast('Marked paid');
+  loadOrders();
+}
+async function dispatchDirect(orderId){
+  await db.collection('orders').doc(orderId).update({status:'Dispatched', route:'direct'});
+  toast('Dispatched from your own stock');
+  loadOrders();
+}
+async function markOrderDelivered(orderId){
+  await db.collection('orders').doc(orderId).update({status:'Fulfilled'});
+  toast('Marked delivered ✓');
+  loadOrders();
+}
+
+// ---- SUPPLIER ASSIGNMENTS (spans multiple shops' Paid orders) ----
 async function loadAssignments(){
   const snap = await db.collection('assignments').orderBy('createdAt','desc').get();
   S.assignments = snap.docs.map(d=>({id:d.id, ...d.data()}));
   if (S.ordView==='assignments') renderOrders();
 }
 function renderAssignments(wrap){
-  if (!S.assignments.length){ wrap.innerHTML = '<div class="empty">No assignments yet — assign combined items to a supplier from the Combined view.</div>'; return; }
+  if (!S.assignments.length){ wrap.innerHTML = '<div class="empty">No assignments yet — assign Paid orders to a supplier from the Combined view.</div>'; return; }
   wrap.innerHTML = `<div class="card">${S.assignments.map(a=>`
     <div class="srow">
       <div><div style="font-weight:700;font-size:12px">${a.prodName}</div>
@@ -590,49 +695,23 @@ async function createAssignment(){
     supplierId, supplierName: sup.name, sourceOrderIds: S.assignCtx.orderIds,
     status: 'Assigned', paymentStatus: 'Pending', createdAt: Date.now()
   });
+  // This is the "next I send the product to supplier" step — the order
+  // moves to Dispatched right away (route: supplier); its finer progress
+  // (Confirmed/Dispatched/Delivered) lives on the assignment and is
+  // reflected back onto the order automatically as the supplier updates it.
+  if (S.assignCtx.orderIds.length){
+    const batch = db.batch();
+    S.assignCtx.orderIds.forEach(oid => batch.update(db.collection('orders').doc(oid), {status:'Dispatched', route:'supplier', supplierNameHint:sup.name}));
+    await batch.commit();
+  }
   closeModal('assignModal');
   toast('Assigned to '+sup.name);
   loadAssignments();
+  loadOrders();
 }
 async function toggleAssignmentPayment(id, current){
   await db.collection('assignments').doc(id).update({paymentStatus: current==='Paid' ? 'Pending' : 'Paid'});
   loadAssignments();
-}
-
-// ---- Invoicing ----
-function openInvoiceBuilder(shopCode){
-  const list = S.orders.filter(o=>o.shopCode===shopCode && o.status==='Submitted');
-  if (!list.length){ toast('No pending orders for this shop'); return; }
-  S.invoiceCtx = {shopCode, shopName: list[0].shopName, orders:list};
-  document.getElementById('invTitle').textContent = 'Invoice — '+(list[0].shopName||shopCode);
-  document.getElementById('invItemsWrap').innerHTML = list.flatMap(o=>o.items).map((it,i)=>`
-    <label class="srow" style="cursor:pointer"><span style="display:flex;align-items:center;gap:8px">
-      <input type="checkbox" class="chk inv-chk" data-price="${it.price}" data-qty="${it.qty}" checked onchange="updateInvoiceTotal()">
-      ${it.name} ×${it.qty}</span><span>KSh ${fmt(it.price*it.qty)}</span></label>`).join('');
-  updateInvoiceTotal();
-  openModal('invoiceModal');
-}
-function updateInvoiceTotal(){
-  const total = [...document.querySelectorAll('.inv-chk')].filter(c=>c.checked)
-    .reduce((a,c)=>a + parseFloat(c.dataset.price)*parseFloat(c.dataset.qty), 0);
-  document.getElementById('invTotal').textContent = 'KSh '+fmt(total);
-}
-async function sendInvoice(){
-  const checks = [...document.querySelectorAll('.inv-chk')];
-  const marked = checks.filter(c=>c.checked);
-  if (!marked.length){ toast('Mark at least one item'); return; }
-  const ctx = S.invoiceCtx;
-  const items = ctx.orders.flatMap(o=>o.items);
-  const chosen = marked.map((c,idx)=>items[checks.indexOf(c)]);
-  const total = chosen.reduce((a,i)=>a+i.price*i.qty,0);
-  await db.collection('invoices').add({
-    shopCode: ctx.shopCode, shopName: ctx.shopName, items: chosen, total,
-    status:'sent', createdAt: Date.now()
-  });
-  await Promise.all(ctx.orders.map(o=>db.collection('orders').doc(o.id).update({status:'Invoiced'})));
-  closeModal('invoiceModal');
-  toast('Invoice sent to '+ctx.shopName);
-  loadOrders();
 }
 
 // ---- PAYMENT ----
