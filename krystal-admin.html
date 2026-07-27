@@ -136,7 +136,9 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
       <div class="sb-item" data-p="stock" onclick="showPage('stock')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><line x1="12" y1="12" x2="12" y2="19"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Stock</div>
       <div class="sb-item" data-p="orders" onclick="showPage('orders')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Orders</div>
       <div class="sb-item" data-p="suppliers" onclick="showPage('suppliers')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="7" width="15" height="12"/><path d="M16 10h4l3 3v6h-7"/><circle cx="6.5" cy="19.5" r="2"/><circle cx="18.5" cy="19.5" r="2"/></svg>Suppliers</div>
-      <div class="sb-item" data-p="payment" onclick="showPage('payment')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Payment</div>
+      <div class="sb-item" data-p="requests" onclick="showPage('requests')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Stock Requests</div>
+      <div class="sb-item" data-p="delivery" onclick="showPage('delivery')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Delivery</div>
+      <div class="sb-item" data-p="payment" onclick="showPage('payment')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Payments</div>
       <div class="sb-item" data-p="settings" onclick="showPage('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</div>
     </nav>
     <div class="sb-bottom"><div class="sb-signout" onclick="doLogout()">Sign Out</div></div>
@@ -179,15 +181,24 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
     <div class="card" id="suppliersList"><div class="empty">Loading suppliers…</div></div>
   </div>
 
-  <!-- PAYMENT -->
+  <!-- STOCK REQUESTS -->
+  <div class="page" id="pg-requests">
+    <div class="sec-head"><div class="sec-title">Stock Requests</div></div>
+    <div style="font-size:11px;color:var(--tx2);margin-bottom:10px">A shop hit low stock and asked for a product — price it yourself or forward it to a supplier to confirm.</div>
+    <div class="card" id="requestsList"><div class="empty">Loading…</div></div>
+  </div>
+
+  <!-- DELIVERY -->
+  <div class="page" id="pg-delivery">
+    <div class="sec-head"><div class="sec-title">Delivery</div></div>
+    <div style="font-size:11px;color:var(--tx2);margin-bottom:10px">Live progress on everything assigned to a supplier.</div>
+    <div id="deliveryWrap"><div class="empty">Loading…</div></div>
+  </div>
+
+  <!-- PAYMENTS (ledger) -->
   <div class="page" id="pg-payment">
-    <div class="sec-head"><div class="sec-title">Payment Method</div></div>
-    <div class="card">
-      <div class="field"><label>Instructions shown to every shop</label>
-        <textarea id="payText" rows="4" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px;resize:vertical" placeholder="e.g. M-Pesa Paybill 400200, Account: your shop code"></textarea>
-      </div>
-      <button class="btn btn-p btn-full" onclick="savePaymentMethod()">Save</button>
-    </div>
+    <div class="sec-head"><div class="sec-title">Payments</div></div>
+    <div class="card" id="paymentsLedger"><div class="empty">Loading…</div></div>
   </div>
 
   <!-- SETTINGS -->
@@ -196,6 +207,17 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
     <div class="card">
       <div class="srow"><div>Signed in as</div><div id="setAdminEmail" style="color:var(--tx2);font-size:12px"></div></div>
       <div class="srow"><div>Project</div><div style="color:var(--tx2);font-size:12px">krystal-enterprise</div></div>
+    </div>
+    <div class="card">
+      <div class="field"><label>Payment method shown to every shop</label>
+        <textarea id="payText" rows="4" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px;resize:vertical" placeholder="e.g. M-Pesa Paybill 400200, Account: your shop code"></textarea>
+      </div>
+      <button class="btn btn-p btn-full" onclick="savePaymentMethod()">Save</button>
+    </div>
+    <div class="card">
+      <div class="card-title" style="font-size:10px;text-transform:uppercase;color:var(--tx2);margin-bottom:8px">Backup</div>
+      <div style="font-size:11px;color:var(--tx2);margin-bottom:10px">Download every shop, product, order, invoice, supplier, and assignment as one JSON file.</div>
+      <button class="btn btn-s btn-full" onclick="downloadBackup()">Download Backup</button>
     </div>
     <div class="card">
       <div class="card-title" style="font-size:10px;text-transform:uppercase;color:var(--tx2);margin-bottom:8px">Danger zone</div>
@@ -266,6 +288,22 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
   </div>
 </div>
 
+<!-- Price / forward a stock request -->
+<div class="overlay" id="reqModal">
+  <div class="sheet">
+    <div class="sheet-hdr"><div class="sheet-title" id="reqTitle">Respond to Request</div><button onclick="closeModal('reqModal')">✕</button></div>
+    <div class="stack">
+      <div class="field"><label>Price per unit (KSh)</label><input id="reqPrice" type="number"></div>
+      <button class="btn btn-p btn-full" onclick="priceRequestDirect()">Confirm Price Myself</button>
+      <div style="text-align:center;font-size:10px;color:var(--tx2);margin:2px 0">— or —</div>
+      <div class="field"><label>Forward to supplier for pricing</label>
+        <select id="reqSupplier" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px"></select>
+      </div>
+      <button class="btn btn-s btn-full" onclick="forwardRequest()">Forward to Supplier</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -284,7 +322,7 @@ firebase.initializeApp(NETWORK_CONFIG);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-const S = { shops:[], catalogue:[], orders:[], suppliers:[], assignments:[], ordView:'shop', invoiceCtx:null, assignCtx:null };
+const S = { shops:[], catalogue:[], orders:[], suppliers:[], assignments:[], requests:[], invoices:[], ordView:'shop', invoiceCtx:null, assignCtx:null };
 const fmt = n => Math.round(n||0).toLocaleString();
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
 function openModal(id){ document.getElementById(id).classList.add('show'); }
@@ -318,6 +356,7 @@ auth.onAuthStateChanged(async user=>{
   document.getElementById('app').style.display='block';
   document.getElementById('setAdminEmail').textContent = user.email;
   loadAll();
+  showPage('stock');
 });
 
 function showPage(id){
@@ -340,7 +379,7 @@ function closeSidebar(){
 }
 
 async function loadAll(){
-  await Promise.all([loadShops(), loadCatalogue(), loadOrders(), loadPaymentMethod(), loadSuppliers(), loadAssignments()]);
+  await Promise.all([loadShops(), loadCatalogue(), loadOrders(), loadPaymentMethod(), loadSuppliers(), loadAssignments(), loadRequests(), loadInvoices()]);
 }
 
 // ---- USERS ----
@@ -440,6 +479,52 @@ async function deleteSupplier(id){
   loadSuppliers();
 }
 
+// ---- STOCK REQUESTS (from a shop's Low Stock → Order tap) ----
+async function loadRequests(){
+  const snap = await db.collection('stockRequests').orderBy('createdAt','desc').get();
+  S.requests = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  renderRequests();
+}
+function renderRequests(){
+  const el = document.getElementById('requestsList');
+  const active = S.requests.filter(r => !['Ordered','Declined'].includes(r.status));
+  if (!active.length){ el.innerHTML = '<div class="empty">No open stock requests.</div>'; return; }
+  el.innerHTML = active.map(r=>`<div class="srow">
+    <div><div style="font-weight:700;font-size:12px">${r.productName} ×${r.qty}</div>
+    <div style="font-size:10px;color:var(--tx2)">${r.shopName||r.shopCode}${r.status==='Priced'?' · offered KSh '+fmt(r.proposedPrice):''}</div></div>
+    <div style="text-align:right">
+      ${r.status==='Priced' ? `<span class="pill pill-ac">Awaiting shop</span>`
+        : r.forwardedTo ? `<span class="pill pill-wa">Sent to ${r.forwardedToName}</span>`
+        : `<button class="btn btn-s btn-sm" onclick="openReqModal('${r.id}')">Respond</button>`}
+    </div></div>`).join('');
+}
+function openReqModal(id){
+  S.reqCtx = {id};
+  const r = S.requests.find(x=>x.id===id);
+  document.getElementById('reqTitle').textContent = 'Respond — '+r.productName+' ×'+r.qty;
+  document.getElementById('reqPrice').value = '';
+  const active = S.suppliers.filter(s=>s.status!=='pending');
+  document.getElementById('reqSupplier').innerHTML = '<option value="">Choose supplier…</option>' + active.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  openModal('reqModal');
+}
+async function priceRequestDirect(){
+  const price = parseFloat(document.getElementById('reqPrice').value)||0;
+  if (!price){ toast('Enter a price'); return; }
+  await db.collection('stockRequests').doc(S.reqCtx.id).update({status:'Priced', proposedPrice:price, pricedBy:'admin'});
+  closeModal('reqModal');
+  toast('Price sent to shop for approval');
+  loadRequests();
+}
+async function forwardRequest(){
+  const supplierId = document.getElementById('reqSupplier').value;
+  const sup = S.suppliers.find(s=>s.id===supplierId);
+  if (!supplierId){ toast('Pick a supplier'); return; }
+  await db.collection('stockRequests').doc(S.reqCtx.id).update({forwardedTo:supplierId, forwardedToName:sup.name});
+  closeModal('reqModal');
+  toast('Forwarded to '+sup.name);
+  loadRequests();
+}
+
 // ---- STOCK ----
 async function loadCatalogue(){
   const snap = await db.collection('catalogue').orderBy('createdAt','desc').get();
@@ -465,15 +550,23 @@ function renderStock(){
   document.getElementById('stockList').innerHTML = priced.length ? priced.map(p=>`
     <div class="srow">
       <div><div style="font-weight:700;font-size:12px">${p.name}</div>
-      <div style="font-size:10px;color:var(--tx2)">${p.category||'—'} · ${p.supplier||'—'}</div></div>
+      <div style="font-size:10px;color:var(--tx2)">${p.category||'—'} · ${p.supplier||'—'}</div>
+      ${p.supplierOfferPrice && p.supplierOfferPrice !== p.buyPrice ? `<div style="font-size:10px;color:var(--wa);margin-top:2px">Supplier offered KSh ${fmt(p.supplierOfferPrice)}</div>` : ''}
+      </div>
       <div style="text-align:right">
         <div style="font-size:11px;color:var(--tx2)">Buy KSh ${fmt(p.buyPrice)}</div>
         <div style="font-size:12px;font-weight:800;color:var(--ac)">Sell KSh ${fmt(p.sellPrice)}</div>
-        <div style="display:flex;gap:5px;margin-top:5px">
+        <div style="display:flex;gap:5px;margin-top:5px;justify-content:flex-end">
+          ${p.supplierOfferPrice && p.supplierOfferPrice !== p.buyPrice ? `<button class="btn btn-p btn-sm" onclick="acceptSupplierOffer('${p.id}',${p.supplierOfferPrice})">Accept Offer</button>` : ''}
           <button class="btn btn-s btn-sm" onclick='openEditProduct(${JSON.stringify(p.id)})'>Edit</button>
           <button class="btn btn-d btn-sm" onclick="deleteProduct('${p.id}')">Delete</button>
         </div>
       </div></div>`).join('') : '<div class="empty">No priced products yet.</div>';
+}
+async function acceptSupplierOffer(id, offerPrice){
+  await db.collection('catalogue').doc(id).update({buyPrice: offerPrice});
+  toast('Buying price updated to match supplier offer');
+  loadCatalogue();
 }
 function openNewProduct(){
   document.getElementById('addStockTitle').textContent = 'Add Product';
@@ -665,6 +758,7 @@ async function loadAssignments(){
   const snap = await db.collection('assignments').orderBy('createdAt','desc').get();
   S.assignments = snap.docs.map(d=>({id:d.id, ...d.data()}));
   if (S.ordView==='assignments') renderOrders();
+  renderAssignments(document.getElementById('deliveryWrap'));
 }
 function renderAssignments(wrap){
   if (!S.assignments.length){ wrap.innerHTML = '<div class="empty">No assignments yet — assign Paid orders to a supplier from the Combined view.</div>'; return; }
@@ -722,6 +816,44 @@ async function loadPaymentMethod(){
 async function savePaymentMethod(){
   await db.collection('settings').doc('network').set({paymentMethod: document.getElementById('payText').value.trim(), updatedAt: Date.now()}, {merge:true});
   toast('Payment method saved — shops will see this');
+}
+
+// ---- PAYMENTS LEDGER ----
+async function loadInvoices(){
+  const snap = await db.collection('invoices').orderBy('createdAt','desc').get();
+  S.invoices = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  renderPaymentsLedger();
+}
+function renderPaymentsLedger(){
+  const el = document.getElementById('paymentsLedger');
+  if (!S.invoices.length){ el.innerHTML = '<div class="empty">No invoices sent yet.</div>'; return; }
+  el.innerHTML = S.invoices.map(inv=>`<div class="srow">
+    <div><div style="font-weight:700;font-size:12px">${inv.shopName||inv.shopCode}</div>
+    <div style="font-size:10px;color:var(--tx2)">${inv.items.map(i=>i.name+' ×'+i.qty).join(', ')}</div>
+    <div style="font-size:10px;color:var(--tx2)">${new Date(inv.createdAt).toLocaleDateString()}</div></div>
+    <div style="text-align:right"><span class="pill ${inv.status==='paid'?'pill-ok':'pill-wa'}">${(inv.status||'sent').toUpperCase()}</span>
+    <div style="font-size:12px;font-weight:800;margin-top:4px">KSh ${fmt(inv.total)}</div></div></div>`).join('');
+}
+
+// ---- BACKUP ----
+async function downloadBackup(){
+  toast('Preparing backup…');
+  try {
+    const cols = ['shops','catalogue','orders','invoices','suppliers','assignments','stockRequests'];
+    const data = {};
+    for (const c of cols){
+      const snap = await db.collection(c).get();
+      data[c] = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    }
+    data.exportedAt = new Date().toISOString();
+    const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'krystal-network-backup-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast('Backup downloaded');
+  } catch(e) { toast('Backup failed: '+e.message); }
 }
 </script>
 </body>

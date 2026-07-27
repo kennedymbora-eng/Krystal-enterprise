@@ -76,6 +76,8 @@ button{cursor:pointer;border:none;background:none;}
 .pill-ac{background:rgba(99,102,241,.15);color:var(--ac3);}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--sf2);border:1px solid var(--bd);padding:10px 16px;border-radius:10px;font-size:12px;font-weight:600;z-index:1000;opacity:0;transition:opacity .2s;pointer-events:none;}
 .toast.show{opacity:1;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:900;align-items:flex-end;justify-content:center;}
+.overlay.show{display:flex;}
 </style>
 </head>
 <body>
@@ -135,6 +137,7 @@ button{cursor:pointer;border:none;background:none;}
       <div class="sb-item active" data-p="orders" onclick="showPage('orders')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Purchase Orders</div>
       <div class="sb-item" data-p="delivery" onclick="showPage('delivery')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Delivery</div>
       <div class="sb-item" data-p="payments" onclick="showPage('payments')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Payments</div>
+      <div class="sb-item" data-p="requests" onclick="showPage('requests')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Stock Requests</div>
       <div class="sb-item" data-p="products" onclick="showPage('products')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>My Products</div>
       <div class="sb-item" data-p="history" onclick="showPage('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/></svg>History</div>
     </nav>
@@ -159,6 +162,12 @@ button{cursor:pointer;border:none;background:none;}
     <div class="card" id="paymentsList"><div class="empty">Loading…</div></div>
   </div>
 
+  <!-- STOCK REQUESTS -->
+  <div class="page" id="pg-requests">
+    <div class="sec-head"><div class="sec-title">Stock Requests</div></div>
+    <div class="card" id="requestsList"><div class="empty">Loading…</div></div>
+  </div>
+
   <!-- MY PRODUCTS -->
   <div class="page" id="pg-products">
     <div class="sec-head"><div class="sec-title">My Products</div></div>
@@ -173,6 +182,14 @@ button{cursor:pointer;border:none;background:none;}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="overlay" id="reqModal">
+  <div class="card" style="width:100%;max-width:420px;border-radius:18px 18px 0 0;margin:0">
+    <div class="sec-head"><div class="sec-title" style="font-size:14px" id="reqTitle">Respond</div><button onclick="closeModal('reqModal')">✕</button></div>
+    <div class="field"><label>Your price per unit (KSh)</label><input id="reqPrice" type="number" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px"></div>
+    <button class="btn btn-p btn-full" style="margin-top:10px" onclick="respondToRequest()">Confirm Price & Availability</button>
+  </div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -190,9 +207,11 @@ firebase.initializeApp(NETWORK_CONFIG);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-const S = { supplierId:null, supplierName:'', assignments:[], catalogue:[] };
+const S = { supplierId:null, supplierName:'', assignments:[], catalogue:[], requests:[] };
 const fmt = n => Math.round(n||0).toLocaleString();
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 
 // ---- Auth / supplier gate ----
 function toggleAuthMode(signup){
@@ -273,7 +292,7 @@ function closeSidebar(){
 }
 
 async function loadAll(){
-  await Promise.all([loadAssignments(), loadMyProducts()]);
+  await Promise.all([loadAssignments(), loadMyProducts(), loadRequests()]);
 }
 
 // ---- ASSIGNMENTS (shared source for Orders / Delivery / Payments / History) ----
@@ -362,8 +381,53 @@ function renderProducts(){
   if (!S.catalogue.length){ el.innerHTML = '<div class="empty">No products linked to you yet — the network admin assigns these when pricing stock.</div>'; return; }
   el.innerHTML = S.catalogue.map(p=>`<div class="srow">
     <div><div style="font-weight:700;font-size:12px">${p.name}</div>
-    <div style="font-size:10px;color:var(--tx2)">${p.category||'—'}</div></div>
-    <div style="font-weight:800;font-size:13px;color:var(--ac)">KSh ${fmt(p.buyPrice)}</div></div>`).join('');
+    <div style="font-size:10px;color:var(--tx2)">${p.category||'—'}</div>
+    <div style="font-size:10px;color:var(--tx2);margin-top:2px">Admin currently pays: KSh ${fmt(p.buyPrice)}</div></div>
+    <div style="text-align:right">
+      <div style="font-weight:800;font-size:13px;color:var(--ac)">${p.supplierOfferPrice ? 'Your offer: KSh '+fmt(p.supplierOfferPrice) : 'No offer sent'}</div>
+      <button class="btn btn-s btn-sm" style="margin-top:5px" onclick="editMyPrice('${p.id}',${p.supplierOfferPrice||p.buyPrice||0})">${p.supplierOfferPrice?'Update Offer':'Send Offer'}</button>
+    </div></div>`).join('');
+}
+async function editMyPrice(id, current){
+  const val = prompt('Your price offer for this product (KSh) — the admin will review before it changes what they pay', current);
+  if (val===null) return;
+  const price = parseFloat(val)||0;
+  try {
+    await db.collection('catalogue').doc(id).update({supplierOfferPrice: price, offerUpdatedAt: Date.now()});
+    toast('Offer sent to admin');
+    loadMyProducts();
+  } catch(e) { toast('Could not send offer'); }
+}
+
+// ---- STOCK REQUESTS (forwarded by admin) ----
+async function loadRequests(){
+  const snap = await db.collection('stockRequests').where('forwardedTo','==',S.supplierId).get();
+  S.requests = snap.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>b.createdAt-a.createdAt);
+  renderRequests();
+}
+function renderRequests(){
+  const el = document.getElementById('requestsList');
+  const open = S.requests.filter(r=>r.status==='Requested');
+  if (!open.length){ el.innerHTML = '<div class="empty">No requests waiting on you.</div>'; return; }
+  el.innerHTML = open.map(r=>`<div class="srow">
+    <div><div style="font-weight:700;font-size:12px">${r.productName} ×${r.qty}</div>
+    <div style="font-size:10px;color:var(--tx2)">${r.shopName||r.shopCode}</div></div>
+    <button class="btn btn-s btn-sm" onclick="openReqModal('${r.id}')">Respond</button></div>`).join('');
+}
+function openReqModal(id){
+  S.reqCtx = {id};
+  const r = S.requests.find(x=>x.id===id);
+  document.getElementById('reqTitle').textContent = r.productName+' ×'+r.qty;
+  document.getElementById('reqPrice').value = '';
+  openModal('reqModal');
+}
+async function respondToRequest(){
+  const price = parseFloat(document.getElementById('reqPrice').value)||0;
+  if (!price){ toast('Enter a price'); return; }
+  await db.collection('stockRequests').doc(S.reqCtx.id).update({status:'Priced', proposedPrice:price, pricedBy: S.supplierId});
+  closeModal('reqModal');
+  toast('Price sent to shop for approval');
+  loadRequests();
 }
 </script>
 </body>
