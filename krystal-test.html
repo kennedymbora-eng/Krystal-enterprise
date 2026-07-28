@@ -2633,7 +2633,7 @@ function initPWA() {
   }
   if (location.protocol==='https:') {
     const name = S.shopDoc?.shopName||'Krystal';
-    const manifest = {name:name+' Manager',short_name:name,display:'standalone',orientation:'portrait',background_color:'#0f1117',theme_color:'#0f1117',start_url:'./',icons:[{src:new URL('shop-icon.png',location.href).href,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
+    const manifest = {name:name+' Manager',short_name:name,id:location.origin+'/',display:'standalone',orientation:'portrait',background_color:'#0f1117',theme_color:'#0f1117',start_url:location.origin+'/',scope:location.origin+'/',icons:[{src:new URL('shop-icon.png',location.href).href,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
     const blob = new Blob([JSON.stringify(manifest)],{type:'application/json'});
     document.getElementById('pwaManifest').href = URL.createObjectURL(blob);
   }
