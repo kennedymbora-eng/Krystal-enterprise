@@ -1,7 +1,7 @@
 {
   "name": "Krystal Network Supplier",
   "short_name": "Krystal Supplier",
-  "start_url": "./krystal-supplier.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f1117",
   "theme_color": "#10b981",
