@@ -1,0 +1,11 @@
+{
+  "name": "Krystal Network Admin",
+  "short_name": "Krystal Admin",
+  "start_url": "./krystal-admin.html",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#0f1117",
+  "icons": [
+    { "src": "admin-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

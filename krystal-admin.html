@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Krystal Network — Admin</title>
+<link rel="icon" href="admin-icon.png">
+<link rel="apple-touch-icon" href="admin-icon.png">
+<link rel="manifest" href="admin-manifest.json">
+<meta name="theme-color" content="#0f1117">
 <style>
 :root{
   --bg:#0f1117;--sf:#1a1d27;--sf2:#22263a;--bd:#2e3350;
@@ -106,7 +110,7 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
 
 <!-- LOGIN -->
 <div class="auth-screen" id="authScreen">
-  <div class="auth-brand"><div class="gem"></div><div class="auth-title">Krystal Network</div></div>
+  <div class="auth-brand"><img src="admin-icon.png" class="gem" style="transform:none;object-fit:cover"><div class="auth-title">Krystal Network</div></div>
   <div class="auth-sub">Admin console</div>
   <div class="auth-card">
     <div class="err" id="authErr"></div>
@@ -121,14 +125,14 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
   <div class="topbar">
     <div class="tb-left">
       <button class="hamburger" id="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
-      <div class="tb-brand"><div class="gem"></div>Krystal Network</div>
+      <div class="tb-brand"><img src="admin-icon.png" class="gem" style="transform:none;object-fit:cover">Krystal Network</div>
     </div>
     <button class="tb-logout" onclick="doLogout()">Sign out</button>
   </div>
 
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
   <div class="sidebar" id="sidebar">
-    <div class="sb-header"><div class="gem"></div>
+    <div class="sb-header"><img src="admin-icon.png" class="gem" style="transform:none;object-fit:cover">
       <div><div class="sb-brand-title">Krystal Network</div><div class="sb-brand-sub">Admin console</div></div>
     </div>
     <nav class="sb-nav">
@@ -139,6 +143,7 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
       <div class="sb-item" data-p="requests" onclick="showPage('requests')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Stock Requests</div>
       <div class="sb-item" data-p="delivery" onclick="showPage('delivery')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Delivery</div>
       <div class="sb-item" data-p="payment" onclick="showPage('payment')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Payments</div>
+      <div class="sb-item" data-p="share" onclick="showPage('share')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share Apps</div>
       <div class="sb-item" data-p="settings" onclick="showPage('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</div>
     </nav>
     <div class="sb-bottom"><div class="sb-signout" onclick="doLogout()">Sign Out</div></div>
@@ -199,6 +204,50 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
   <div class="page" id="pg-payment">
     <div class="sec-head"><div class="sec-title">Payments</div></div>
     <div class="card" id="paymentsLedger"><div class="empty">Loading…</div></div>
+  </div>
+
+  <!-- SHARE APPS -->
+  <div class="page" id="pg-share">
+    <div class="sec-head"><div class="sec-title">Share Apps</div></div>
+    <div style="font-size:11px;color:var(--tx2);margin-bottom:12px">Send these to shop owners and suppliers so they can sign up. Opening the link and tapping "Add to Home Screen" installs it like a real app — no app store needed.</div>
+
+    <div class="card">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
+        <img src="shop-icon.png" style="width:52px;height:52px;border-radius:12px;object-fit:cover">
+        <div><div style="font-weight:800;font-size:14px">Krystal — Shop App</div><div style="font-size:11px;color:var(--tx2)">Inventory, POS, and network ordering</div></div>
+      </div>
+      <div style="background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;font-size:11px;word-break:break-all;margin-bottom:10px" id="shopLinkText"></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <img id="shopQr" style="width:84px;height:84px;border-radius:8px;background:#fff;padding:4px">
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <button class="btn btn-p btn-sm" onclick="copyShareLink('shop')">Copy Link</button>
+          <a id="shopVisitLink" href="#" target="_blank" style="text-decoration:none"><button class="btn btn-s btn-sm btn-full">Open</button></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
+        <img src="supplier-icon.png" style="width:52px;height:52px;border-radius:12px;object-fit:cover">
+        <div><div style="font-weight:800;font-size:14px">Krystal Network — Supplier App</div><div style="font-size:11px;color:var(--tx2)">Purchase orders, delivery, and payments</div></div>
+      </div>
+      <div style="background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;font-size:11px;word-break:break-all;margin-bottom:10px" id="supplierLinkText"></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <img id="supplierQr" style="width:84px;height:84px;border-radius:8px;background:#fff;padding:4px">
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <button class="btn btn-p btn-sm" onclick="copyShareLink('supplier')">Copy Link</button>
+          <a id="supplierVisitLink" href="#" target="_blank" style="text-decoration:none"><button class="btn btn-s btn-sm btn-full">Open</button></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="font-size:10px;text-transform:uppercase;color:var(--tx2);margin-bottom:8px">Install instructions to pass along</div>
+      <div style="font-size:11px;color:var(--tx2);line-height:1.6">
+        <b style="color:var(--tx)">Android (Chrome):</b> open the link → tap ⋮ menu → "Add to Home screen".<br>
+        <b style="color:var(--tx)">iPhone (Safari):</b> open the link → tap Share → "Add to Home Screen".
+      </div>
+    </div>
   </div>
 
   <!-- SETTINGS -->
@@ -378,8 +427,23 @@ function closeSidebar(){
   document.getElementById('hamburger').classList.remove('open');
 }
 
+function initShareLinks(){
+  const shopUrl = window.location.origin + '/';
+  const supplierUrl = window.location.origin + '/krystal-supplier.html';
+  document.getElementById('shopLinkText').textContent = shopUrl;
+  document.getElementById('supplierLinkText').textContent = supplierUrl;
+  document.getElementById('shopVisitLink').href = shopUrl;
+  document.getElementById('supplierVisitLink').href = supplierUrl;
+  document.getElementById('shopQr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent(shopUrl);
+  document.getElementById('supplierQr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent(supplierUrl);
+}
+function copyShareLink(which){
+  const text = document.getElementById(which+'LinkText').textContent;
+  navigator.clipboard.writeText(text).then(()=>toast('Link copied')).catch(()=>toast('Could not copy — long-press to copy manually'));
+}
 async function loadAll(){
   await Promise.all([loadShops(), loadCatalogue(), loadOrders(), loadPaymentMethod(), loadSuppliers(), loadAssignments(), loadRequests(), loadInvoices()]);
+  initShareLinks();
 }
 
 // ---- USERS ----

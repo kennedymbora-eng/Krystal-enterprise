@@ -1,0 +1,11 @@
+{
+  "name": "Krystal",
+  "short_name": "Krystal",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#00d4aa",
+  "icons": [
+    { "src": "shop-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

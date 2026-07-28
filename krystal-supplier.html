@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Krystal Network — Supplier</title>
+<link rel="icon" href="supplier-icon.png">
+<link rel="apple-touch-icon" href="supplier-icon.png">
+<link rel="manifest" href="supplier-manifest.json">
+<meta name="theme-color" content="#10b981">
 <style>
 :root{
   --bg:#0f1117;--sf:#1a1d27;--sf2:#22263a;--bd:#2e3350;
@@ -84,7 +88,7 @@ button{cursor:pointer;border:none;background:none;}
 
 <!-- LOGIN / SIGNUP -->
 <div class="auth-screen" id="authScreen">
-  <div class="auth-brand"><div class="gem"></div><div class="auth-title">Krystal Network</div></div>
+  <div class="auth-brand"><img src="supplier-icon.png" class="gem" style="transform:none;object-fit:cover"><div class="auth-title">Krystal Network</div></div>
   <div class="auth-sub">Supplier console</div>
   <div class="auth-card">
     <div class="err" id="authErr"></div>
@@ -110,7 +114,7 @@ button{cursor:pointer;border:none;background:none;}
 
 <!-- PENDING APPROVAL -->
 <div class="auth-screen" id="pendingScreen" style="display:none">
-  <div class="auth-brand"><div class="gem"></div><div class="auth-title">Krystal Network</div></div>
+  <div class="auth-brand"><img src="supplier-icon.png" class="gem" style="transform:none;object-fit:cover"><div class="auth-title">Krystal Network</div></div>
   <div class="auth-card" style="text-align:center">
     <div style="font-size:15px;font-weight:800;margin-bottom:8px">Account pending approval</div>
     <div style="font-size:12px;color:var(--tx2);margin-bottom:16px">The network admin needs to approve your supplier account before you can see purchase orders. Check back soon.</div>
@@ -123,14 +127,14 @@ button{cursor:pointer;border:none;background:none;}
   <div class="topbar">
     <div class="tb-left">
       <button class="hamburger" id="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
-      <div class="tb-brand"><div class="gem"></div>Krystal Network</div>
+      <div class="tb-brand"><img src="supplier-icon.png" class="gem" style="transform:none;object-fit:cover">Krystal Network</div>
     </div>
     <button class="tb-logout" onclick="doLogout()">Sign out</button>
   </div>
 
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
   <div class="sidebar" id="sidebar">
-    <div class="sb-header"><div class="gem"></div>
+    <div class="sb-header"><img src="supplier-icon.png" class="gem" style="transform:none;object-fit:cover">
       <div><div class="sb-brand-title" id="sbSupplierName">Supplier</div><div class="sb-brand-sub">Krystal Network</div></div>
     </div>
     <nav class="sb-nav">
