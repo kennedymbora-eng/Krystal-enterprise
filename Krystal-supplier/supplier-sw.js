@@ -1,5 +1,5 @@
 const CACHE = 'krystal-supplier-v1';
-const ASSETS = ['./krystal-supplier.html'];
+const ASSETS = ['./index.html'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
