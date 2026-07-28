@@ -9,14 +9,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Krystal">
 <link rel="manifest" id="pwaManifest">
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="shop-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="shop-icon.png">
 <title>Krystal</title>
-<link rel="icon" href="shop-icon.png">
-<link rel="apple-touch-icon" href="shop-icon.png">
-<link rel="manifest" href="shop-manifest.json">
-<meta name="theme-color" content="#00d4aa">
 
 <!-- Open Graph / link previews (WhatsApp, Facebook, etc.) -->
 <!-- IMPORTANT: og:image and og:url must be absolute URLs once you have your
@@ -2638,7 +2633,7 @@ function initPWA() {
   }
   if (location.protocol==='https:') {
     const name = S.shopDoc?.shopName||'Krystal';
-    const manifest = {name:name+' Manager',short_name:name,display:'standalone',orientation:'portrait',background_color:'#0f1117',theme_color:'#0f1117',start_url:'./',icons:[{src:makeIcon(192,name.slice(0,2).toUpperCase()),sizes:'192x192',type:'image/png',purpose:'any maskable'}]};
+    const manifest = {name:name+' Manager',short_name:name,display:'standalone',orientation:'portrait',background_color:'#0f1117',theme_color:'#0f1117',start_url:'./',icons:[{src:new URL('shop-icon.png',location.href).href,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
     const blob = new Blob([JSON.stringify(manifest)],{type:'application/json'});
     document.getElementById('pwaManifest').href = URL.createObjectURL(blob);
   }
