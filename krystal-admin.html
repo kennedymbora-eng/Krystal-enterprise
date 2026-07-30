@@ -104,6 +104,27 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
 .sheet-title{font-size:15px;font-weight:800;}
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--sf2);border:1px solid var(--bd);padding:10px 16px;border-radius:10px;font-size:12px;font-weight:600;z-index:1000;opacity:0;transition:opacity .2s;pointer-events:none;}
 .toast.show{opacity:1;}
+
+/* ── PIN SCREENS ── */
+@keyframes pinShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-6px);}80%{transform:translateX(6px);}}
+.pin-shake{animation:pinShake .4s;}
+.pin-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:2600;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+.pin-screen.show{display:flex;}
+.pin-card{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:26px 20px;width:100%;max-width:320px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.3);}
+.pin-title{font-size:18px;font-weight:900;margin-bottom:4px;}
+.pin-sub{font-size:12px;color:var(--tx2);margin-bottom:18px;line-height:1.5;}
+.pin-dots{display:flex;justify-content:center;gap:14px;margin-bottom:22px;}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--bd);transition:background .15s,border-color .15s;}
+.pin-dot.filled{background:var(--ac);border-color:var(--ac);}
+.pin-err{color:var(--re);font-size:11px;min-height:16px;margin-bottom:8px;font-weight:600;}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.pin-keypad.disabled{opacity:.35;pointer-events:none;}
+.pin-key{height:58px;border-radius:50%;background:var(--sf2);border:1px solid var(--bd);color:var(--tx);font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.pin-key:active{background:var(--bd);}
+.pin-key.ghost{background:transparent;border:none;}
+.pin-forgot{margin-top:18px;font-size:12px;color:var(--tx2);}
+.pin-forgot span{color:var(--ac);font-weight:700;cursor:pointer;}
+
 </style>
 </head>
 <body>
@@ -119,7 +140,54 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
     <button class="btn btn-p btn-full" id="authBtn" onclick="doLogin()">Sign in</button>
   </div>
 </div>
+<!-- ═══════ PIN SETUP SCREEN ═══════ -->
+<div class="pin-screen" id="pinSetupScreen">
+  <div class="pin-card" id="pinSetupCard">
+    <div class="pin-title" id="pinSetupTitle">Create Your PIN</div>
+    <div class="pin-sub" id="pinSetupSub">Choose a 4-digit PIN to quickly unlock this app</div>
+    <div class="pin-dots" id="pinSetupDots"></div>
+    <div class="pin-err" id="pinSetupErr"></div>
+    <div class="pin-keypad" id="pinSetupKeypad">
+      <button class="pin-key" onclick="pinKeyPress('1')">1</button>
+      <button class="pin-key" onclick="pinKeyPress('2')">2</button>
+      <button class="pin-key" onclick="pinKeyPress('3')">3</button>
+      <button class="pin-key" onclick="pinKeyPress('4')">4</button>
+      <button class="pin-key" onclick="pinKeyPress('5')">5</button>
+      <button class="pin-key" onclick="pinKeyPress('6')">6</button>
+      <button class="pin-key" onclick="pinKeyPress('7')">7</button>
+      <button class="pin-key" onclick="pinKeyPress('8')">8</button>
+      <button class="pin-key" onclick="pinKeyPress('9')">9</button>
+      <button class="pin-key ghost"></button>
+      <button class="pin-key" onclick="pinKeyPress('0')">0</button>
+      <button class="pin-key" onclick="pinBackspace()">⌫</button>
+    </div>
+  </div>
+</div>
 
+<!-- ═══════ PIN LOCK SCREEN ═══════ -->
+<div class="pin-screen" id="pinLockScreen">
+  <div class="pin-card" id="pinLockCard">
+    <div class="pin-title" id="pinLockTitle">Enter Your PIN</div>
+    <div class="pin-sub" id="pinLockSub">Locked</div>
+    <div class="pin-dots" id="pinLockDots"></div>
+    <div class="pin-err" id="pinLockErr"></div>
+    <div class="pin-keypad" id="pinLockKeypad">
+      <button class="pin-key" onclick="pinKeyPress('1')">1</button>
+      <button class="pin-key" onclick="pinKeyPress('2')">2</button>
+      <button class="pin-key" onclick="pinKeyPress('3')">3</button>
+      <button class="pin-key" onclick="pinKeyPress('4')">4</button>
+      <button class="pin-key" onclick="pinKeyPress('5')">5</button>
+      <button class="pin-key" onclick="pinKeyPress('6')">6</button>
+      <button class="pin-key" onclick="pinKeyPress('7')">7</button>
+      <button class="pin-key" onclick="pinKeyPress('8')">8</button>
+      <button class="pin-key" onclick="pinKeyPress('9')">9</button>
+      <button class="pin-key ghost"></button>
+      <button class="pin-key" onclick="pinKeyPress('0')">0</button>
+      <button class="pin-key" onclick="pinBackspace()">⌫</button>
+    </div>
+    <div class="pin-forgot">Forgot your PIN? <span onclick="pinForgotSignOut()">Sign out instead</span></div>
+  </div>
+</div>
 <!-- APP -->
 <div class="app" id="app">
   <div class="topbar">
@@ -266,6 +334,7 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
     <div class="card">
       <div class="srow"><div>Signed in as</div><div id="setAdminEmail" style="color:var(--tx2);font-size:12px"></div></div>
       <div class="srow"><div>Project</div><div style="color:var(--tx2);font-size:12px">krystal-enterprise</div></div>
+      <div class="srow"><div>App PIN</div><button class="btn btn-s btn-sm" onclick="startChangePin()">Change PIN</button></div>
     </div>
     <div class="card">
       <div class="field"><label>Shop app URL</label>
@@ -416,16 +485,22 @@ async function doLogin(){
   }
   btn.disabled=false; btn.textContent='Sign in';
 }
-function doLogout(){ auth.signOut(); }
+function doLogout(){
+  document.querySelectorAll('.pin-screen').forEach(s=>s.classList.remove('show'));
+  _pinLockPurpose=null; _pinProceedCb=null; _pinIsChange=false; _pinUid=null; _pinCollection=null; _pinDocData=null;
+  auth.signOut();
+}
 auth.onAuthStateChanged(async user=>{
-  if (!user){ document.getElementById('authScreen').style.display='flex'; document.getElementById('app').style.display='none'; return; }
+  if (!user){ document.getElementById('authScreen').style.display='flex'; document.getElementById('app').style.display='none'; document.querySelectorAll('.pin-screen').forEach(s=>s.classList.remove('show')); return; }
   const adminSnap = await db.collection('admins').doc(user.uid).get();
   if (!adminSnap.exists){ return; } // onAuthStateChanged will fire again after signOut in doLogin's catch
   document.getElementById('authScreen').style.display='none';
-  document.getElementById('app').style.display='block';
-  document.getElementById('setAdminEmail').textContent = user.email;
-  loadAll();
-  showPage('stock');
+  gatePinThenProceed('admins', user.uid, adminSnap.data(), () => {
+    document.getElementById('app').style.display='block';
+    document.getElementById('setAdminEmail').textContent = user.email;
+    loadAll();
+    showPage('stock');
+  });
 });
 
 function showPage(id){
@@ -971,6 +1046,181 @@ if (location.protocol==='https:') {
   const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
   document.getElementById('pwaManifest').href = URL.createObjectURL(blob);
 }
+// ── PIN LOCK ──────────────────────────────────────────
+// Local unlock layer on top of Firebase Auth — never replaces the
+// email/password sign-in, just gates the already-signed-in session.
+// Only a salted SHA-256 hash is ever written to Firestore or stored
+// locally; the raw PIN never leaves the keypad handler.
+const PIN_LEN = 4, PIN_MAX_FAILS = 5, PIN_LOCKOUT_MS = 60000, PIN_INACTIVITY_MS = 5*60000, PIN_BACKGROUND_MS = 60000;
+let _pinBuf='', _pinSetupFirst=null, _pinIsChange=false, _pinLockPurpose=null, _pinProceedCb=null;
+let _pinCollection=null, _pinUid=null, _pinDocData=null;
+let _pinLastActivity=Date.now(), _pinHiddenAt=null;
+
+async function sha256Hex(str){ const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function genPinSalt(){ const a=new Uint8Array(16); crypto.getRandomValues(a); return Array.from(a).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function hashPin(pin,salt){ return sha256Hex(salt+':'+pin+':krystal-pin'); }
+function pinLocalKey(uid){ return 'kp_'+uid; }
+function pinFailKey(uid){ return 'kpf_'+uid; }
+function cachePinLocally(uid,hash,salt){ try{ localStorage.setItem(pinLocalKey(uid), JSON.stringify({hash,salt})); }catch(e){} }
+function getCachedPin(uid){ try{ return JSON.parse(localStorage.getItem(pinLocalKey(uid))); }catch(e){ return null; } }
+function getPinFailState(uid){ try{ return JSON.parse(localStorage.getItem(pinFailKey(uid)))||{count:0,lockUntil:0}; }catch(e){ return {count:0,lockUntil:0}; } }
+function setPinFailState(uid,state){ try{ localStorage.setItem(pinFailKey(uid), JSON.stringify(state)); }catch(e){} }
+
+// collection: 'admins' | 'suppliers' — Firestore collection this user's doc lives in (same krystal-enterprise project both apps already use).
+function gatePinThenProceed(collection, uid, docData, cb){
+  _pinCollection=collection; _pinUid=uid; _pinDocData=docData||{}; _pinProceedCb=cb;
+  if (!_pinDocData.pinHash){ openPinSetup(); return; }
+  const cached=getCachedPin(uid);
+  if (!cached || cached.hash!==_pinDocData.pinHash) cachePinLocally(uid, _pinDocData.pinHash, _pinDocData.pinSalt);
+  openPinLock('boot');
+}
+
+function renderPinDots(id,filled){ const el=document.getElementById(id); el.innerHTML=''; for(let i=0;i<PIN_LEN;i++){ const d=document.createElement('div'); d.className='pin-dot'+(i<filled?' filled':''); el.appendChild(d); } }
+
+function openPinSetup(){
+  document.querySelectorAll('.pin-screen').forEach(s=>s.classList.remove('show'));
+  _pinBuf=''; _pinSetupFirst=null;
+  document.getElementById('pinSetupTitle').textContent='Create Your PIN';
+  document.getElementById('pinSetupSub').textContent='Choose a 4-digit PIN to quickly unlock this app';
+  document.getElementById('pinSetupErr').textContent='';
+  renderPinDots('pinSetupDots',0);
+  document.getElementById('pinSetupScreen').classList.add('show');
+}
+function openPinLock(purpose,title,sub){
+  _pinLockPurpose=purpose||'boot';
+  document.querySelectorAll('.pin-screen').forEach(s=>s.classList.remove('show'));
+  _pinBuf='';
+  document.getElementById('pinLockTitle').textContent=title||'Enter Your PIN';
+  document.getElementById('pinLockSub').textContent=sub||'Locked';
+  document.getElementById('pinLockErr').textContent='';
+  renderPinDots('pinLockDots',0);
+  document.getElementById('pinLockScreen').classList.add('show');
+  updatePinLockUI();
+}
+function updatePinLockUI(){
+  const uid=_pinUid; if(!uid) return;
+  const fail=getPinFailState(uid);
+  const wrap=document.getElementById('pinLockKeypad'); const errEl=document.getElementById('pinLockErr');
+  if (fail.lockUntil && fail.lockUntil>Date.now()){
+    const secs=Math.ceil((fail.lockUntil-Date.now())/1000);
+    wrap.classList.add('disabled');
+    errEl.textContent=`Too many attempts — try again in ${secs}s`;
+    setTimeout(updatePinLockUI,1000);
+  } else {
+    wrap.classList.remove('disabled');
+    if (fail.lockUntil) setPinFailState(uid,{count:0,lockUntil:0});
+    if (errEl.textContent.startsWith('Too many attempts')) errEl.textContent='';
+  }
+}
+function activePinScreen(){ return document.getElementById('pinSetupScreen').classList.contains('show')?'setup':'lock'; }
+function pinKeyPress(digit){
+  const which=activePinScreen();
+  if (which==='lock'){
+    const fail=_pinUid?getPinFailState(_pinUid):{count:0,lockUntil:0};
+    if (fail.lockUntil && fail.lockUntil>Date.now()) return;
+  }
+  if (_pinBuf.length>=PIN_LEN) return;
+  _pinBuf+=digit;
+  renderPinDots(which==='setup'?'pinSetupDots':'pinLockDots', _pinBuf.length);
+  if (_pinBuf.length===PIN_LEN) setTimeout(which==='setup'?handlePinSetupEntry:handlePinLockEntry,150);
+}
+function pinBackspace(){
+  const which=activePinScreen();
+  _pinBuf=_pinBuf.slice(0,-1);
+  renderPinDots(which==='setup'?'pinSetupDots':'pinLockDots', _pinBuf.length);
+}
+function pinShakeEl(id){ const el=document.getElementById(id); if(!el) return; el.classList.remove('pin-shake'); void el.offsetWidth; el.classList.add('pin-shake'); }
+
+async function handlePinSetupEntry(){
+  const pin=_pinBuf; _pinBuf='';
+  if (!_pinSetupFirst){
+    _pinSetupFirst=pin;
+    document.getElementById('pinSetupTitle').textContent='Confirm Your PIN';
+    document.getElementById('pinSetupSub').textContent='Enter the same PIN again';
+    renderPinDots('pinSetupDots',0);
+    return;
+  }
+  if (pin!==_pinSetupFirst){
+    document.getElementById('pinSetupErr').textContent='PINs did not match — try again';
+    _pinSetupFirst=null;
+    document.getElementById('pinSetupTitle').textContent='Create Your PIN';
+    document.getElementById('pinSetupSub').textContent='Choose a 4-digit PIN to quickly unlock this app';
+    renderPinDots('pinSetupDots',0);
+    pinShakeEl('pinSetupCard');
+    return;
+  }
+  const uid=_pinUid;
+  const salt=genPinSalt();
+  const hash=await hashPin(pin,salt);
+  try{
+    await db.collection(_pinCollection).doc(uid).update({ pinHash:hash, pinSalt:salt, pinSetAt:Date.now() });
+  }catch(e){
+    document.getElementById('pinSetupErr').textContent='Could not save PIN — check your connection and try again';
+    _pinSetupFirst=null;
+    renderPinDots('pinSetupDots',0);
+    return;
+  }
+  _pinDocData.pinHash=hash; _pinDocData.pinSalt=salt;
+  cachePinLocally(uid,hash,salt);
+  document.getElementById('pinSetupScreen').classList.remove('show');
+  const wasChange=_pinIsChange; _pinIsChange=false;
+  const cb=_pinProceedCb; if (!wasChange) _pinProceedCb=null;
+  if (cb) cb();
+  toast(wasChange?'PIN updated':'PIN created');
+}
+
+async function handlePinLockEntry(){
+  const pin=_pinBuf; _pinBuf='';
+  const uid=_pinUid;
+  let cached=getCachedPin(uid);
+  if (!cached){ cachePinLocally(uid,_pinDocData.pinHash,_pinDocData.pinSalt); cached=getCachedPin(uid); }
+  const salt=cached?.salt||_pinDocData.pinSalt;
+  const expected=cached?.hash||_pinDocData.pinHash;
+  const hash=await hashPin(pin,salt);
+  if (hash===expected){
+    setPinFailState(uid,{count:0,lockUntil:0});
+    document.getElementById('pinLockScreen').classList.remove('show');
+    _pinLastActivity=Date.now();
+    const purpose=_pinLockPurpose; _pinLockPurpose=null;
+    if (purpose==='boot'){
+      const cb=_pinProceedCb; _pinProceedCb=null;
+      if (cb) cb();
+    } else if (purpose==='change-verify'){
+      openPinSetup();
+    }
+  } else {
+    const fail=getPinFailState(uid);
+    fail.count=(fail.count||0)+1;
+    if (fail.count>=PIN_MAX_FAILS){ fail.lockUntil=Date.now()+PIN_LOCKOUT_MS; fail.count=0; }
+    setPinFailState(uid,fail);
+    document.getElementById('pinLockErr').textContent = fail.lockUntil>Date.now() ? 'Too many attempts — locked for 60s' : 'Incorrect PIN';
+    renderPinDots('pinLockDots',0);
+    pinShakeEl('pinLockCard');
+    updatePinLockUI();
+  }
+}
+function pinForgotSignOut(){ document.getElementById('pinLockScreen').classList.remove('show'); doLogout(); }
+function startChangePin(){
+  if (!_pinDocData || !_pinDocData.pinHash){ openPinSetup(); return; }
+  _pinIsChange=true;
+  openPinLock('change-verify','Enter Current PIN','Confirm your current PIN to change it');
+}
+function triggerRelock(){
+  if (!_pinUid) return;
+  if (document.getElementById('app').style.display==='none') return; // not signed into the app yet
+  if (document.querySelector('.pin-screen.show')) return;
+  openPinLock('relock','Enter Your PIN','Locked');
+}
+function initPinActivityWatch(){
+  ['click','keydown','touchstart','mousemove','scroll'].forEach(evt=>window.addEventListener(evt,()=>{_pinLastActivity=Date.now();},{passive:true}));
+  setInterval(()=>{ if (Date.now()-_pinLastActivity>PIN_INACTIVITY_MS) triggerRelock(); },15000);
+  document.addEventListener('visibilitychange',()=>{
+    if (document.hidden){ _pinHiddenAt=Date.now(); }
+    else if (_pinHiddenAt){ const away=Date.now()-_pinHiddenAt; _pinHiddenAt=null; if (away>PIN_BACKGROUND_MS) triggerRelock(); }
+  });
+}
+initPinActivityWatch();
+
 if ('serviceWorker' in navigator && location.protocol==='https:') {
   navigator.serviceWorker.register('./admin-sw.js').catch(e=>console.warn('SW:', e.message));
 }
