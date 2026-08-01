@@ -228,6 +228,10 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
     <div class="sec-head"><div class="sec-title">Network Stock</div>
       <button class="btn btn-s btn-sm" onclick="openNewProduct()">+ Add Product</button>
     </div>
+    <div class="card" style="margin-bottom:8px" id="trendsWrap">
+      <div class="card-title" style="font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:8px;color:var(--tx2)">Demand Trends — top movers</div>
+      <div id="trendsList"></div>
+    </div>
     <div class="card" style="margin-bottom:8px;background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.25)" id="pendingWrap">
       <div class="card-title" style="color:var(--wa);font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:8px">Awaiting your price</div>
       <div id="pendingList"></div>
@@ -709,6 +713,7 @@ async function loadCatalogue(){
   renderStock();
 }
 function renderStock(){
+  renderTrends();
   const pending = S.catalogue.filter(p=>p.status==='pending');
   const priced = S.catalogue.filter(p=>p.status!=='pending');
   document.getElementById('pendingWrap').style.display = pending.length ? 'block' : 'none';
@@ -737,6 +742,22 @@ function renderStock(){
           <button class="btn btn-d btn-sm" onclick="deleteProduct('${p.id}')">Delete</button>
         </div>
       </div></div>`).join('') : '<div class="empty">No priced products yet.</div>';
+}
+function renderTrends(){
+  const ranked = S.catalogue
+    .filter(p => (p.unitsOrdered||0) + (p.unitsImported||0) > 0)
+    .sort((a,b) => ((b.unitsOrdered||0)+(b.unitsImported||0)) - ((a.unitsOrdered||0)+(a.unitsImported||0)))
+    .slice(0, 8);
+  document.getElementById('trendsWrap').style.display = ranked.length ? 'block' : 'none';
+  document.getElementById('trendsList').innerHTML = ranked.map(p => `
+    <div class="srow">
+      <div><div style="font-weight:700;font-size:12px">${p.name}</div>
+      <div style="font-size:10px;color:var(--tx2)">${p.timesImported||0} shop${p.timesImported===1?'':'s'} stocking it</div></div>
+      <div style="text-align:right;font-size:11px;color:var(--tx2)">
+        ${p.unitsOrdered ? `${fmt(p.unitsOrdered)} units ordered` : ''}
+        ${p.unitsImported ? `<div>${fmt(p.unitsImported)} units imported</div>` : ''}
+      </div>
+    </div>`).join('');
 }
 async function acceptSupplierOffer(id, offerPrice){
   await db.collection('catalogue').doc(id).update({buyPrice: offerPrice});
