@@ -2406,8 +2406,12 @@ async function ensureNetworkIdentity() {
     if (!shopSnap.exists) {
       // Brand new shop on the network side — create it (only needs to be
       // signed in), then bind this uid to it.
-      await shopRef.set({...profile, status:'active', createdAt: Date.now()});
-      await ndb.collection('shopUsers').doc(uid).set({ shopCode: S.shopCode, role: 'shop', updatedAt: Date.now() }, {merge:true});
+      try {
+        await shopRef.set({...profile, status:'active', createdAt: Date.now()});
+      } catch(e) { e.message = '[shops create] '+e.message; throw e; }
+      try {
+        await ndb.collection('shopUsers').doc(uid).set({ shopCode: S.shopCode, role: 'shop', updatedAt: Date.now() }, {merge:true});
+      } catch(e) { e.message = '[shopUsers create, new shop] '+e.message; throw e; }
     } else {
       // Shop already exists on the network — bind this uid FIRST. Binding
       // only requires the shop to exist (not ownership), so it always
@@ -2415,10 +2419,14 @@ async function ensureNetworkIdentity() {
       // lets that refresh pass its isShopUid() check (a NEW anonymous
       // session — new device, cleared storage, reinstalled app — starts
       // unbound every time, so this order matters).
-      await ndb.collection('shopUsers').doc(uid).set({ shopCode: S.shopCode, role: 'shop', updatedAt: Date.now() }, {merge:true});
-      await shopRef.set(profile, {merge:true}); // keep profile fresh without touching status
+      try {
+        await ndb.collection('shopUsers').doc(uid).set({ shopCode: S.shopCode, role: 'shop', updatedAt: Date.now() }, {merge:true});
+      } catch(e) { e.message = '[shopUsers create, existing shop] '+e.message; throw e; }
+      try {
+        await shopRef.set(profile, {merge:true}); // keep profile fresh without touching status
+      } catch(e) { e.message = '[shops update] '+e.message; throw e; }
     }
-  } catch(e) { console.warn('Network identity sync failed:', e.code || e.message); toast('Network sign-in failed: '+(e.code||e.message)); throw e; }
+  } catch(e) { console.warn('Network identity sync failed:', e.code, e.message); toast('Network sign-in failed: '+(e.code||'')+' '+e.message); throw e; }
 }
 async function loadCatalogue(force) {
   if (S.catalogue.length && !force) return;
