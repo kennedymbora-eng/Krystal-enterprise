@@ -1407,6 +1407,12 @@ async function doCreateShop() {
     });
     await withTimeout(batch.commit(), 20000, 'Timed out setting up your shop — check your connection and try again');
 
+    // Drop any stale anonymous network identity this device might be
+    // carrying from a previously created/joined shop, so the new shop
+    // gets its own fresh uid instead of trying to reassign an old one
+    // (which the rules correctly refuse — one device identity per shop).
+    if (nauth.currentUser) await nauth.signOut().catch(()=>{});
+
     // No demo/test inventory is seeded — every new shop starts empty.
     // Owners add their own stock, then use "Sync All My Stock" on the
     // Order Stock page to send it to the network catalogue, where the
