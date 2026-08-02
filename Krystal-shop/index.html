@@ -1010,17 +1010,6 @@ if (typeof firebase === 'undefined') {
 // ── CONSTANTS ─────────────────────────────────────────
 const SUPER_ADMIN_EMAIL = 'kennedymbora@gmail.com';
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDnJNf3ea4Gz8JpocC2959qxgH2xU78PDA",
-  authDomain: "electropro-efdaa.firebaseapp.com",
-  projectId: "electropro-efdaa",
-  storageBucket: "electropro-efdaa.firebasestorage.app",
-  messagingSenderId: "866414823376",
-  appId: "1:866414823376:web:329b07501ada20d6dfdbd5"
-};
-// Krystal Network (KSN) test project — separate Firebase app instance so
-// this shop's own data (electropro-efdaa) never mixes with the shared
-// network catalogue/orders (krystal-enterprise).
-const NETWORK_CONFIG = {
   apiKey: "AIzaSyAmLQTWmrdpCzOdeHf1v8aXZ0sROLYdMTE",
   authDomain: "krystal-enterprise.firebaseapp.com",
   projectId: "krystal-enterprise",
@@ -1059,13 +1048,6 @@ firebase.initializeApp(FIREBASE_CONFIG);
 const db   = firebase.firestore();
 const auth = firebase.auth();
 try { db.enablePersistence({ synchronizeTabs: true }); } catch(e) {}
-
-// Named second app instance — talks to the separate krystal-enterprise
-// (Krystal Network) project for the shared catalogue + orders, without
-// touching this shop's own auth/session on the primary app above.
-firebase.initializeApp(NETWORK_CONFIG, 'network');
-const ndb   = firebase.app('network').firestore();
-const nauth = firebase.app('network').auth(); // separate auth session, scoped to krystal-enterprise only
 
 // ── LOGO TAP (triple-tap to access admin) ─────────────
 let _tapCount = 0, _tapTimer = null;
@@ -1195,7 +1177,7 @@ async function bootUser(user) {
       updateSidebarUser(S.userDoc);
       startListeners();
       showPage('sales');
-      ensureNetworkIdentity().catch(e => console.warn('Network identity sync skipped:', e.code || e.message)); // fire-and-forget — don't block app load on a second project
+      ensureNetworkIdentity().catch(e => console.warn('Network identity sync skipped:', e.code || e.message)); // fire-and-forget — don't block app load on this
     });
 
   } catch(e) {
@@ -1432,7 +1414,7 @@ async function doCreateShop() {
     // carrying from a previously created/joined shop, so the new shop
     // gets its own fresh uid instead of trying to reassign an old one
     // (which the rules correctly refuse — one device identity per shop).
-    if (nauth.currentUser) await nauth.signOut().catch(()=>{});
+    if (auth.currentUser) await auth.signOut().catch(()=>{});
 
     // No demo/test inventory is seeded — every new shop starts empty.
     // Owners add their own stock, then use "Sync All My Stock" on the
@@ -1933,15 +1915,15 @@ async function syncAllStockToNetwork() {
   btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Syncing…';
   try {
     await ensureNetworkIdentity(); // no-op if already bound; closes the race with the fire-and-forget call at boot
-    const existingSnap = await ndb.collection('catalogue').where('addedBy','==',S.shopCode).get();
+    const existingSnap = await db.collection('catalogue').where('addedBy','==',S.shopCode).get();
     const existingNames = new Set(existingSnap.docs.map(d => d.data().name));
     const toAdd = S.items.filter(it => !existingNames.has(it.name));
-    let batch = ndb.batch(), count = 0, total = 0;
+    let batch = db.batch(), count = 0, total = 0;
     for (const it of toAdd) {
-      const ref = ndb.collection('catalogue').doc();
+      const ref = db.collection('catalogue').doc();
       batch.set(ref, {name:it.name, category:it.cat, supplier:'', buyPrice:0, sellPrice:0, status:'pending', source:'shop', addedBy:S.shopCode, shopName: S.shopDoc?.shopName || S.shopCode, createdAt:Date.now()});
       count++; total++;
-      if (count===450) { await batch.commit(); batch = ndb.batch(); count=0; }
+      if (count===450) { await batch.commit(); batch = db.batch(); count=0; }
     }
     if (count>0) await batch.commit();
     toast(total ? `Sent ${total} item${total===1?'':'s'} for pricing` : 'Everything is already listed');
@@ -2010,10 +1992,10 @@ async function saveItem() {
 async function autoListOnNetwork(item) {
   try {
     await ensureNetworkIdentity(); // no-op if already bound; closes the race with the fire-and-forget call at boot
-    const existing = await ndb.collection('catalogue')
+    const existing = await db.collection('catalogue')
       .where('addedBy','==',S.shopCode).where('name','==',item.name).limit(1).get();
     if (!existing.empty) return 'exists';
-    await ndb.collection('catalogue').add({
+    await db.collection('catalogue').add({
       name: item.name, category: item.cat, supplier: '',
       buyPrice: 0, sellPrice: 0, status: 'pending', source: 'shop',
       addedBy: S.shopCode, shopName: S.shopDoc?.shopName || S.shopCode, createdAt: Date.now()
@@ -2090,7 +2072,7 @@ async function saveImport() {
     }
     // Best-effort demand-trend bump on the shared catalogue doc — never
     // blocks the import itself if this fails for any reason.
-    ndb.collection('catalogue').doc(S.importCatalogueId).update({
+    db.collection('catalogue').doc(S.importCatalogueId).update({
       timesImported: firebase.firestore.FieldValue.increment(1),
       unitsImported: firebase.firestore.FieldValue.increment(qty)
     }).catch(e => console.warn('Demand counter skipped:', e.code || e.message));
@@ -2428,19 +2410,19 @@ function renderMonthly() {
 // ── ORDER STOCK (Krystal Network) ─────────────────────
 // The shop app never had its own identity on krystal-enterprise — it just
 // wrote there and the rules trusted whatever shopCode the client sent.
-// Fix: sign in anonymously to THIS project only (nauth, separate from the
-// shop's real email/password session on the primary project), then bind
-// that anonymous uid to this shop's code in shopUsers/{uid}. The rules
-// then check request.auth.uid -> shopUsers -> shopCode instead of taking
-// the client's word for it. One anon identity persists per browser/device
-// (Firebase caches it), so this only runs the sign-in once per install.
+// Fix: ensure there's a signed-in identity (the shop's own email/password
+// session, already established by this point — falls back to anonymous
+// sign-in only if somehow not yet signed in), then bind that uid to this
+// shop's code in shopUsers/{uid}. The rules then check
+// request.auth.uid -> shopUsers -> shopCode instead of taking the client's
+// word for it.
 async function ensureNetworkIdentity() {
   if (!S.shopCode || S.role === 'superadmin') return;
   try {
-    if (!nauth.currentUser) await nauth.signInAnonymously();
-    const uid = nauth.currentUser.uid;
+    if (!auth.currentUser) await auth.signInAnonymously();
+    const uid = auth.currentUser.uid;
 
-    const shopRef = ndb.collection('shops').doc(S.shopCode);
+    const shopRef = db.collection('shops').doc(S.shopCode);
     const shopSnap = await shopRef.get();
     const profile = {
       shopCode: S.shopCode,
@@ -2458,7 +2440,7 @@ async function ensureNetworkIdentity() {
       // Brand new shop on the network side — create it (only needs to be
       // signed in), then bind this uid to it.
       await shopRef.set({...profile, status:'active', createdAt: Date.now()});
-      await ndb.collection('shopUsers').doc(uid).set({ shopCode: S.shopCode, role: 'shop', updatedAt: Date.now() }, {merge:true});
+      await db.collection('shopUsers').doc(uid).set({ shopCode: S.shopCode, role: 'shop', updatedAt: Date.now() }, {merge:true});
     } else {
       // Shop already exists on the network — bind this uid FIRST. Binding
       // only requires the shop to exist (not ownership), so it always
@@ -2466,7 +2448,7 @@ async function ensureNetworkIdentity() {
       // lets that refresh pass its isShopUid() check (a NEW anonymous
       // session — new device, cleared storage, reinstalled app — starts
       // unbound every time, so this order matters).
-      await ndb.collection('shopUsers').doc(uid).set({ shopCode: S.shopCode, role: 'shop', updatedAt: Date.now() }, {merge:true});
+      await db.collection('shopUsers').doc(uid).set({ shopCode: S.shopCode, role: 'shop', updatedAt: Date.now() }, {merge:true});
       await shopRef.set(profile, {merge:true}); // keep profile fresh without touching status
     }
   } catch(e) { console.warn('Network identity sync skipped:', e.code || e.message); }
@@ -2474,7 +2456,7 @@ async function ensureNetworkIdentity() {
 async function loadCatalogue(force) {
   if (S.catalogue.length && !force) return;
   try {
-    const snap = await ndb.collection('catalogue').where('status','==','priced').get();
+    const snap = await db.collection('catalogue').where('status','==','priced').get();
     S.catalogue = snap.docs.map(d => ({id:d.id, ...d.data()}));
   } catch(e) { toast('Could not load network catalogue'); }
 }
@@ -2514,7 +2496,7 @@ async function renderOrderStock() {
 async function loadMyListings() {
   const el = document.getElementById('osMyListings');
   try {
-    const snap = await ndb.collection('catalogue').where('addedBy','==',S.shopCode).get();
+    const snap = await db.collection('catalogue').where('addedBy','==',S.shopCode).get();
     const list = snap.docs.map(d => ({id:d.id, ...d.data()}));
     if (!list.length) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">You haven\'t listed any products yet</div></div>'; return; }
     el.innerHTML = list.map(p => `<div class="srow">
@@ -2533,7 +2515,7 @@ async function editMyListing(id, currentName, currentCat) {
   const cat = await customPrompt('Category', {title:'Edit Listing', value:currentCat});
   if (cat===null) return;
   try {
-    await ndb.collection('catalogue').doc(id).update({name: name.trim(), category: cat.trim()});
+    await db.collection('catalogue').doc(id).update({name: name.trim(), category: cat.trim()});
     toast('Listing updated');
     loadMyListings();
   } catch(e) { toast('Could not update — it may already be priced'); }
@@ -2542,7 +2524,7 @@ async function deleteMyListing(id) {
   const ok = await customConfirm('The admin will no longer see it to price.', {title:'Remove this listing?', danger:true, confirmLabel:'Remove'});
   if (!ok) return;
   try {
-    await ndb.collection('catalogue').doc(id).delete();
+    await db.collection('catalogue').doc(id).delete();
     toast('Listing removed');
     loadMyListings();
   } catch(e) { toast('Could not delete — it may already be priced'); }
@@ -2550,7 +2532,7 @@ async function deleteMyListing(id) {
 async function loadMyInvoices() {
   const el = document.getElementById('osInvoices');
   try {
-    const snap = await ndb.collection('invoices').where('shopCode','==',S.shopCode).orderBy('createdAt','desc').limit(15).get();
+    const snap = await db.collection('invoices').where('shopCode','==',S.shopCode).orderBy('createdAt','desc').limit(15).get();
     const invs = snap.docs.map(d => d.data());
     if (!invs.length) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">No invoices yet</div></div>'; return; }
     const pillCls = {sent:'wa', paid:'gr'};
@@ -2572,7 +2554,7 @@ function stepperHtml(status) {
 async function loadMyOrders() {
   const el = document.getElementById('osMyOrders');
   try {
-    const snap = await ndb.collection('orders').where('shopCode','==',S.shopCode).orderBy('createdAt','desc').limit(15).get();
+    const snap = await db.collection('orders').where('shopCode','==',S.shopCode).orderBy('createdAt','desc').limit(15).get();
     const orders = snap.docs.map(d => ({id:d.id, ...d.data()}));
     if (!orders.length) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">No orders submitted yet</div></div>'; return; }
     const outstanding = orders.filter(o => !['Fulfilled','Declined'].includes(o.status)).reduce((a,o)=>a+(o.total||0),0);
@@ -2603,7 +2585,7 @@ async function loadMyOrders() {
 }
 async function requestDelivery(orderId) {
   try {
-    await ndb.collection('orders').doc(orderId).update({deliveryRequested: true, deliveryRequestedAt: Date.now()});
+    await db.collection('orders').doc(orderId).update({deliveryRequested: true, deliveryRequestedAt: Date.now()});
     toast('Delivery requested — admin will arrange it');
     loadMyOrders();
   } catch(e) { toast('Could not send request'); }
@@ -2611,7 +2593,7 @@ async function requestDelivery(orderId) {
 async function loadNetworkPaymentMethod() {
   const el = document.getElementById('osPayment');
   try {
-    const snap = await ndb.collection('settings').doc('network').get();
+    const snap = await db.collection('settings').doc('network').get();
     const text = snap.exists ? (snap.data().paymentMethod||'') : '';
     el.textContent = text || 'Not set yet — check back once the network admin sets a payment method.';
   } catch(e) { el.textContent = 'Could not load payment method.'; }
@@ -2636,7 +2618,7 @@ async function requestLowStock(name, qty) {
   if (!q){ toast('Enter a quantity'); return; }
   try {
     await ensureNetworkIdentity(); // no-op if already bound; closes the race with the fire-and-forget call at boot
-    await ndb.collection('stockRequests').add({
+    await db.collection('stockRequests').add({
       shopCode: S.shopCode, shopName: S.shopDoc?.shopName || S.shopCode,
       productName: name, qty: q, status: 'Requested', createdAt: Date.now()
     });
@@ -2647,7 +2629,7 @@ async function requestLowStock(name, qty) {
 async function loadMyStockRequests() {
   const el = document.getElementById('osStockRequests');
   try {
-    const snap = await ndb.collection('stockRequests').where('shopCode','==',S.shopCode).orderBy('createdAt','desc').limit(10).get();
+    const snap = await db.collection('stockRequests').where('shopCode','==',S.shopCode).orderBy('createdAt','desc').limit(10).get();
     const list = snap.docs.map(d => ({id:d.id, ...d.data()}));
     const active = list.filter(r => !['Ordered','Declined'].includes(r.status));
     if (!active.length) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">No open requests</div></div>'; return; }
@@ -2662,14 +2644,14 @@ async function loadMyStockRequests() {
 }
 async function approveStockRequest(id) {
   try {
-    const snap = await ndb.collection('stockRequests').doc(id).get();
+    const snap = await db.collection('stockRequests').doc(id).get();
     const r = snap.data();
-    const orderRef = await ndb.collection('orders').add({
+    const orderRef = await db.collection('orders').add({
       shopCode: r.shopCode, shopName: r.shopName,
       items: [{prodId: 'req-'+id, name: r.productName, price: r.proposedPrice, qty: r.qty}],
       total: r.proposedPrice * r.qty, status: 'Confirmed', createdAt: Date.now()
     });
-    await ndb.collection('stockRequests').doc(id).update({status:'Ordered', orderId: orderRef.id});
+    await db.collection('stockRequests').doc(id).update({status:'Ordered', orderId: orderRef.id});
     toast('Approved — now on its way through invoicing');
     loadMyStockRequests();
     loadMyOrders();
@@ -2742,7 +2724,7 @@ async function submitNetworkOrder() {
   if (!S.netCart.length) { toast('Cart is empty'); return; }
   try {
     await ensureNetworkIdentity(); // no-op if already bound; closes the race with the fire-and-forget call at boot
-    await ndb.collection('orders').add({
+    await db.collection('orders').add({
       shopCode: S.shopCode,
       shopName: S.shopDoc?.shopName || S.shopCode,
       items: S.netCart.map(c => ({prodId:c.prodId, name:c.name, price:c.price, qty:c.qty})),
@@ -2753,7 +2735,7 @@ async function submitNetworkOrder() {
     // Best-effort demand-trend bump per product — never blocks order
     // submission if a particular counter update fails.
     S.netCart.forEach(c => {
-      ndb.collection('catalogue').doc(c.prodId).update({
+      db.collection('catalogue').doc(c.prodId).update({
         unitsOrdered: firebase.firestore.FieldValue.increment(c.qty)
       }).catch(e => console.warn('Demand counter skipped:', e.code || e.message));
     });
