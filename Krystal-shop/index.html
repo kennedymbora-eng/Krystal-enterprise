@@ -1128,16 +1128,23 @@ async function bootUser(user) {
     const shopCode  = userShopSnap.data().shopCode;
     const savedRole = userShopSnap.data().role || 'cashier';
 
-    // Step 2: Check if shop is paused
-    const registrySnap = await db.collection('shopRegistry').doc(shopCode).get();
+    // Steps 2-4 only depend on shopCode from step 1, not on each other —
+    // run them together instead of one round trip at a time. On a slow
+    // connection this turns 4 sequential requests into 2 (step 1, then
+    // this batch), which is most of where a slow login was going.
+    showLoading('Loading your shop…');
+    const [registrySnap, userDocSnap, shopInfoSnap] = await Promise.all([
+      db.collection('shopRegistry').doc(shopCode).get(),
+      db.collection('shops').doc(shopCode).collection('users').doc(user.uid).get(),
+      db.collection('shops').doc(shopCode).collection('info').doc('config').get()
+    ]);
+
     if (registrySnap.exists && registrySnap.data().status === 'paused') {
       clearTimeout(bootTimeout);
       showPausedScreen(registrySnap.data().pauseMessage || 'Your account has been paused. Contact us to reactivate.');
       return;
     }
 
-    // Step 3: Load user's profile doc from their shop
-    const userDocSnap = await db.collection('shops').doc(shopCode).collection('users').doc(user.uid).get();
     if (!userDocSnap.exists) {
       clearTimeout(bootTimeout);
       showAuth('authLogin');
@@ -1157,9 +1164,6 @@ async function bootUser(user) {
       db.collection('userShops').doc(user.uid).update({ role: S.role }).catch(()=>{});
     }
 
-    // Step 4: Load shop config
-    showLoading('Almost ready…');
-    const shopInfoSnap = await db.collection('shops').doc(shopCode).collection('info').doc('config').get();
     S.shopDoc = shopInfoSnap.exists ? shopInfoSnap.data() : {};
 
     clearTimeout(bootTimeout);
