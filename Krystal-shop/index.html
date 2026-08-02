@@ -882,6 +882,23 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
   </div>
 </div>
 
+<!-- Styled replacement for the browser's native prompt() -->
+<div class="overlay" id="promptModal">
+  <div class="sheet confirm-sheet">
+    <div class="sheet-handle"></div>
+    <div class="confirm-icon" id="promptIcon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+    </div>
+    <div class="confirm-title" id="promptTitle">Enter a value</div>
+    <div class="confirm-msg" id="promptMsg"></div>
+    <input type="text" id="promptInput" style="width:100%;margin-top:12px;padding:11px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx1);font-size:15px;font-family:inherit" onkeydown="if(event.key==='Enter')_promptResolve(true)">
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-s btn-full" onclick="_promptResolve(false)">Cancel</button>
+      <button class="btn btn-p btn-full" id="promptBtn" onclick="_promptResolve(true)">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- Cart -->
 <div class="overlay" id="cartModal">
   <div class="sheet">
@@ -2086,6 +2103,7 @@ async function saveImport() {
 // Promise-based replacement for the browser's native confirm() — usage:
 // if (!(await customConfirm('Delete this item?'))) return;
 let _confirmResolver = null;
+let _promptResolver = null;
 const ICO_WARN = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
 const ICO_TRASH = '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>';
 function customConfirm(message, opts={}) {
@@ -2105,6 +2123,29 @@ function customConfirm(message, opts={}) {
 function _confirmResolve(val) {
   closeModal('confirmModal');
   if (_confirmResolver) { const r = _confirmResolver; _confirmResolver = null; r(val); }
+}
+
+// Promise-based replacement for the browser's native prompt() — usage:
+// const val = await customPrompt('How many units?', {title:'Restock', value:'2', inputType:'number'});
+// Resolves to the entered string, or null if cancelled.
+function customPrompt(message, opts={}) {
+  return new Promise(resolve => {
+    _promptResolver = resolve;
+    document.getElementById('promptTitle').textContent = opts.title || 'Enter a value';
+    document.getElementById('promptMsg').textContent = message;
+    const input = document.getElementById('promptInput');
+    input.type = opts.inputType || 'text';
+    input.value = opts.value != null ? opts.value : '';
+    input.placeholder = opts.placeholder || '';
+    document.getElementById('promptBtn').textContent = opts.confirmLabel || 'OK';
+    openModal('promptModal');
+    setTimeout(() => { input.focus(); input.select(); }, 50);
+  });
+}
+function _promptResolve(ok) {
+  const val = document.getElementById('promptInput').value;
+  closeModal('promptModal');
+  if (_promptResolver) { const r = _promptResolver; _promptResolver = null; r(ok ? val : null); }
 }
 
 // ── BARCODE SCANNER ──────────────────────────────────
@@ -2416,12 +2457,8 @@ async function ensureNetworkIdentity() {
     if (!shopSnap.exists) {
       // Brand new shop on the network side — create it (only needs to be
       // signed in), then bind this uid to it.
-      try {
-        await shopRef.set({...profile, status:'active', createdAt: Date.now()});
-      } catch(e) { e.message = '[shops create] '+e.message; throw e; }
-      try {
-        await ndb.collection('shopUsers').doc(uid).set({ shopCode: S.shopCode, role: 'shop', updatedAt: Date.now() }, {merge:true});
-      } catch(e) { e.message = '[shopUsers create, new shop] '+e.message; throw e; }
+      await shopRef.set({...profile, status:'active', createdAt: Date.now()});
+      await ndb.collection('shopUsers').doc(uid).set({ shopCode: S.shopCode, role: 'shop', updatedAt: Date.now() }, {merge:true});
     } else {
       // Shop already exists on the network — bind this uid FIRST. Binding
       // only requires the shop to exist (not ownership), so it always
@@ -2429,14 +2466,10 @@ async function ensureNetworkIdentity() {
       // lets that refresh pass its isShopUid() check (a NEW anonymous
       // session — new device, cleared storage, reinstalled app — starts
       // unbound every time, so this order matters).
-      try {
-        await ndb.collection('shopUsers').doc(uid).set({ shopCode: S.shopCode, role: 'shop', updatedAt: Date.now() }, {merge:true});
-      } catch(e) { e.message = '[shopUsers create, existing shop] '+e.message; throw e; }
-      try {
-        await shopRef.set(profile, {merge:true}); // keep profile fresh without touching status
-      } catch(e) { e.message = '[shops update] '+e.message; throw e; }
+      await ndb.collection('shopUsers').doc(uid).set({ shopCode: S.shopCode, role: 'shop', updatedAt: Date.now() }, {merge:true});
+      await shopRef.set(profile, {merge:true}); // keep profile fresh without touching status
     }
-  } catch(e) { console.warn('Network identity sync failed:', e.code, e.message); toast('Network sign-in failed: '+(e.code||'')+' '+e.message); throw e; }
+  } catch(e) { console.warn('Network identity sync skipped:', e.code || e.message); }
 }
 async function loadCatalogue(force) {
   if (S.catalogue.length && !force) return;
@@ -2495,9 +2528,9 @@ async function loadMyListings() {
   } catch(e) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">Could not load your listings</div></div>'; }
 }
 async function editMyListing(id, currentName, currentCat) {
-  const name = prompt('Product name', currentName);
+  const name = await customPrompt('Product name', {title:'Edit Listing', value:currentName});
   if (name===null) return;
-  const cat = prompt('Category', currentCat);
+  const cat = await customPrompt('Category', {title:'Edit Listing', value:currentCat});
   if (cat===null) return;
   try {
     await ndb.collection('catalogue').doc(id).update({name: name.trim(), category: cat.trim()});
@@ -2506,7 +2539,8 @@ async function editMyListing(id, currentName, currentCat) {
   } catch(e) { toast('Could not update — it may already be priced'); }
 }
 async function deleteMyListing(id) {
-  if (!confirm('Remove this listing? The admin will no longer see it to price.')) return;
+  const ok = await customConfirm('The admin will no longer see it to price.', {title:'Remove this listing?', danger:true, confirmLabel:'Remove'});
+  if (!ok) return;
   try {
     await ndb.collection('catalogue').doc(id).delete();
     toast('Listing removed');
@@ -2595,7 +2629,8 @@ async function reorderFromNetwork(itemId, suggestQty) {
   openModal('netCartModal');
 }
 async function requestLowStock(name, qty) {
-  const finalQty = prompt('How many "'+name+'" do you want to request?', qty);
+  const finalQty = await customPrompt('How many units of "'+name+'" do you want to request?',
+    {title:'Request Stock', value:qty, inputType:'number', confirmLabel:'Request'});
   if (finalQty===null) return;
   const q = parseInt(finalQty)||0;
   if (!q){ toast('Enter a quantity'); return; }
