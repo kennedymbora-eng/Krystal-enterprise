@@ -103,6 +103,15 @@ button{cursor:pointer;border:none;background:none;}
 .pin-forgot{margin-top:18px;font-size:12px;color:var(--tx2);}
 .pin-forgot span{color:var(--ac);font-weight:700;cursor:pointer;}
 
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.stat-card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:14px;}
+.stat-val{font-size:22px;font-weight:800;}
+.stat-label{font-size:11px;color:var(--tx2);margin-top:2px;}
+.sb-badge{margin-left:auto;background:var(--ac);color:#06110d;font-size:10px;font-weight:800;border-radius:20px;padding:2px 7px;min-width:18px;text-align:center;display:none;}
+.sb-badge.show{display:inline-block;}
+.search-box{width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;margin-bottom:10px;color:var(--tx);font-size:13px;}
+.search-box:focus{outline:none;border-color:var(--ac);}
+
 </style>
 </head>
 <body>
@@ -206,12 +215,14 @@ button{cursor:pointer;border:none;background:none;}
       <div><div class="sb-brand-title" id="sbSupplierName">Supplier</div><div class="sb-brand-sub">Krystal Network</div></div>
     </div>
     <nav class="sb-nav">
-      <div class="sb-item active" data-p="orders" onclick="showPage('orders')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Purchase Orders</div>
+      <div class="sb-item active" data-p="dashboard" onclick="showPage('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</div>
+      <div class="sb-item" data-p="orders" onclick="showPage('orders')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Purchase Orders<span class="sb-badge" id="badgeOrders"></span></div>
       <div class="sb-item" data-p="delivery" onclick="showPage('delivery')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Delivery</div>
       <div class="sb-item" data-p="payments" onclick="showPage('payments')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Payments</div>
-      <div class="sb-item" data-p="requests" onclick="showPage('requests')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Stock Requests</div>
+      <div class="sb-item" data-p="requests" onclick="showPage('requests')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Stock Requests<span class="sb-badge" id="badgeRequests"></span></div>
       <div class="sb-item" data-p="products" onclick="showPage('products')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>My Products</div>
       <div class="sb-item" data-p="history" onclick="showPage('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/></svg>History</div>
+      <div class="sb-item" data-p="profile" onclick="showPage('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Business Profile</div>
     </nav>
     <div class="sb-bottom">
       <div class="sb-item" style="border-left:none" onclick="startChangePin()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Change PIN</div>
@@ -219,8 +230,23 @@ button{cursor:pointer;border:none;background:none;}
     </div>
   </div>
 
+  <!-- DASHBOARD -->
+  <div class="page active" id="pg-dashboard">
+    <div class="sec-head"><div class="sec-title">Dashboard</div></div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" id="statProducts">–</div><div class="stat-label">Linked Products</div></div>
+      <div class="stat-card"><div class="stat-val" id="statPending">–</div><div class="stat-label">Awaiting Admin</div></div>
+      <div class="stat-card"><div class="stat-val" id="statActive">–</div><div class="stat-label">Active Orders</div></div>
+      <div class="stat-card"><div class="stat-val" id="statCompleted">–</div><div class="stat-label">Completed Orders</div></div>
+    </div>
+    <div class="card">
+      <div class="sec-title" style="font-size:13px;margin-bottom:8px">Needs Your Attention</div>
+      <div id="dashAttention"><div class="empty">Loading…</div></div>
+    </div>
+  </div>
+
   <!-- PURCHASE ORDERS (Assigned — needs confirmation) -->
-  <div class="page active" id="pg-orders">
+  <div class="page" id="pg-orders">
     <div class="sec-head"><div class="sec-title">Purchase Orders</div></div>
     <div class="card" id="ordersList"><div class="empty">Loading…</div></div>
   </div>
@@ -248,6 +274,7 @@ button{cursor:pointer;border:none;background:none;}
     <div class="sec-head"><div class="sec-title">My Products</div>
       <button class="btn btn-s btn-sm" onclick="openModal('suggestModal')">+ Suggest Product</button>
     </div>
+    <input class="search-box" id="productSearch" placeholder="Search your products by name or category…" oninput="renderProducts()">
     <div class="card" id="productsList"><div class="empty">Loading…</div></div>
   </div>
 
@@ -255,6 +282,18 @@ button{cursor:pointer;border:none;background:none;}
   <div class="page" id="pg-history">
     <div class="sec-head"><div class="sec-title">Order History</div></div>
     <div class="card" id="historyList"><div class="empty">Loading…</div></div>
+  </div>
+
+  <!-- BUSINESS PROFILE -->
+  <div class="page" id="pg-profile">
+    <div class="sec-head"><div class="sec-title">Business Profile</div></div>
+    <div class="card">
+      <div class="field"><label>Business name</label><input id="pfName" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px"></div>
+      <div class="field"><label>Contact person</label><input id="pfContact" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px"></div>
+      <div class="field"><label>Phone</label><input id="pfPhone" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px"></div>
+      <div class="field"><label>Email</label><input id="pfEmail" disabled style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px;opacity:.6"></div>
+      <button class="btn btn-p btn-full" onclick="saveProfile()">Save Changes</button>
+    </div>
   </div>
 </div>
 
@@ -295,7 +334,7 @@ firebase.initializeApp(NETWORK_CONFIG);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-const S = { supplierId:null, supplierName:'', assignments:[], catalogue:[], requests:[] };
+const S = { supplierId:null, supplierName:'', assignments:[], catalogue:[], requests:[], profile:null };
 const fmt = n => Math.round(n||0).toLocaleString();
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
 function openModal(id){ document.getElementById(id).classList.add('show'); }
@@ -359,10 +398,15 @@ auth.onAuthStateChanged(async user=>{
   }
   S.supplierId = user.uid;
   S.supplierName = supSnap.data().name || user.email;
+  S.profile = supSnap.data();
   authEl.style.display='none'; pendingEl.style.display='none';
   gatePinThenProceed('suppliers', user.uid, supSnap.data(), () => {
     appEl.style.display='block';
     document.getElementById('sbSupplierName').textContent = S.supplierName;
+    document.getElementById('pfName').value = S.profile.name||'';
+    document.getElementById('pfContact').value = S.profile.contact||'';
+    document.getElementById('pfPhone').value = S.profile.phone||'';
+    document.getElementById('pfEmail').value = S.profile.email||user.email||'';
     loadAll();
   });
 });
@@ -388,6 +432,45 @@ function closeSidebar(){
 
 async function loadAll(){
   await Promise.all([loadAssignments(), loadMyProducts(), loadRequests()]);
+  renderDashboard();
+}
+
+// ---- DASHBOARD ----
+function renderDashboard(){
+  const approved = S.catalogue.filter(p=>p.status==='approved').length;
+  const pending = S.catalogue.filter(p=>p.status==='pending').length;
+  const active = S.assignments.filter(a=>a.status==='Assigned'||a.status==='Confirmed'||a.status==='Dispatched').length;
+  const completed = S.assignments.filter(a=>a.status==='Delivered').length;
+  document.getElementById('statProducts').textContent = S.catalogue.length;
+  document.getElementById('statPending').textContent = pending;
+  document.getElementById('statActive').textContent = active;
+  document.getElementById('statCompleted').textContent = completed;
+
+  const openOrders = S.assignments.filter(a=>a.status==='Assigned').length;
+  const openRequests = S.requests.filter(r=>r.status==='Requested').length;
+  const items = [];
+  if (openOrders) items.push(`<div class="srow"><div>New purchase order${openOrders>1?'s':''} to confirm</div><span class="pill pill-wa">${openOrders}</span></div>`);
+  if (openRequests) items.push(`<div class="srow"><div>Stock request${openRequests>1?'s':''} waiting on your price</div><span class="pill pill-wa">${openRequests}</span></div>`);
+  if (pending) items.push(`<div class="srow"><div>Product${pending>1?'s':''} pending admin approval</div><span class="pill pill-ac">${pending}</span></div>`);
+  document.getElementById('dashAttention').innerHTML = items.length ? items.join('') : '<div class="empty">You\'re all caught up.</div>';
+
+  const ob = document.getElementById('badgeOrders'), rb = document.getElementById('badgeRequests');
+  ob.textContent = openOrders; ob.classList.toggle('show', openOrders>0);
+  rb.textContent = openRequests; rb.classList.toggle('show', openRequests>0);
+}
+
+// ---- BUSINESS PROFILE ----
+async function saveProfile(){
+  const name = document.getElementById('pfName').value.trim();
+  const contact = document.getElementById('pfContact').value.trim();
+  const phone = document.getElementById('pfPhone').value.trim();
+  if (!name){ toast('Business name is required'); return; }
+  try{
+    await db.collection('suppliers').doc(S.supplierId).update({name, contact, phone});
+    S.supplierName = name;
+    document.getElementById('sbSupplierName').textContent = name;
+    toast('Profile updated');
+  }catch(e){ toast('Could not save profile'); }
 }
 
 // ---- ASSIGNMENTS (shared source for Orders / Delivery / Payments / History) ----
@@ -474,7 +557,10 @@ async function loadMyProducts(){
 function renderProducts(){
   const el = document.getElementById('productsList');
   if (!S.catalogue.length){ el.innerHTML = '<div class="empty">No products linked to you yet — the network admin assigns these when pricing stock.</div>'; return; }
-  el.innerHTML = S.catalogue.map(p=>`<div class="srow">
+  const q = (document.getElementById('productSearch')?.value||'').trim().toLowerCase();
+  const list = q ? S.catalogue.filter(p=>(p.name||'').toLowerCase().includes(q) || (p.category||'').toLowerCase().includes(q)) : S.catalogue;
+  if (!list.length){ el.innerHTML = '<div class="empty">No products match your search.</div>'; return; }
+  el.innerHTML = list.map(p=>`<div class="srow">
     <div><div style="font-weight:700;font-size:12px">${p.name}</div>
     <div style="font-size:10px;color:var(--tx2)">${p.category||'—'}</div>
     <div style="font-size:10px;color:var(--tx2);margin-top:2px">Admin currently pays: KSh ${fmt(p.buyPrice)}</div></div>
