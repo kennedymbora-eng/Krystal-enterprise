@@ -591,6 +591,14 @@ function renderUsers(){
 }
 async function toggleShopStatus(id, pause){
   await db.collection('shops').doc(id).update({status: pause?'paused':'active'});
+  // shopRegistry is what Krystal Manager (the Shop app) actually checks
+  // at login to block a paused account — keep both in sync. Use merge
+  // in case a shop hasn't touched the network side yet and this doc is
+  // still being created for the first time.
+  const registryUpdate = pause
+    ? {status:'paused', pauseMessage: prompt('Message to show the shop owner:', 'Your account has been paused. Contact us to reactivate.') || 'Your account has been paused. Contact us to reactivate.'}
+    : {status:'active', pauseMessage:''};
+  await db.collection('shopRegistry').doc(id).set(registryUpdate, {merge:true});
   toast(pause?'Shop paused':'Shop resumed');
   loadShops();
 }
