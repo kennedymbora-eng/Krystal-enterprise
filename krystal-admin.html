@@ -52,6 +52,12 @@ button{cursor:pointer;border:none;background:none;}
 .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
 .tb-brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;}
 .tb-brand .gem{width:18px;height:18px;border-radius:5px;}
+.sync-pill{display:flex;align-items:center;gap:5px;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--tx2);}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--tx2);}
+.sync-dot.online{background:var(--gr);}
+.sync-dot.syncing{background:var(--wa);animation:pulse 1s infinite;}
+.sync-dot.offline{background:var(--re);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;backdrop-filter:blur(2px);}
 .sidebar-overlay.show{display:block;}
@@ -195,7 +201,13 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
       <button class="hamburger" id="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
       <div class="tb-brand"><img src="admin-icon.png" class="gem" style="transform:none;object-fit:cover">Krystal Network</div>
     </div>
-    <button class="tb-logout" onclick="doLogout()">Sign out</button>
+    <div class="tb-right" style="display:flex;align-items:center;gap:10px">
+      <div class="sync-pill" id="syncPill">
+        <span class="sync-dot" id="syncDot"></span>
+        <span id="syncLabel">Synced</span>
+      </div>
+      <button class="tb-logout" onclick="doLogout()">Sign out</button>
+    </div>
   </div>
 
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
@@ -226,7 +238,6 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
   <!-- STOCK -->
   <div class="page" id="pg-stock">
     <div class="sec-head"><div class="sec-title">Network Stock</div>
-      <button class="btn btn-s btn-sm" onclick="openImportCatalogue()">⬆ Import Backup</button>
       <button class="btn btn-s btn-sm" onclick="openNewProduct()">+ Add Product</button>
     </div>
     <div class="card" style="margin-bottom:8px" id="trendsWrap">
@@ -359,12 +370,79 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
     </div>
     <div class="card">
       <div class="card-title" style="font-size:10px;text-transform:uppercase;color:var(--tx2);margin-bottom:8px">Backup</div>
-      <div style="font-size:11px;color:var(--tx2);margin-bottom:10px">Download every shop, product, order, invoice, supplier, and assignment as one JSON file.</div>
-      <button class="btn btn-s btn-full" onclick="downloadBackup()">Download Backup</button>
+      <div style="font-size:11px;color:var(--tx2);margin-bottom:10px">Download every shop, product, order, invoice, supplier, and assignment as one JSON file — or restore/merge one back in.</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-s btn-full" onclick="downloadBackup()">Download Backup</button>
+        <button class="btn btn-s btn-full" onclick="openImportCatalogue()">Import Backup</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="font-size:10px;text-transform:uppercase;color:var(--tx2);margin-bottom:8px">App version</div>
+      <div class="srow"><div>Current version</div><div id="setAppVersion" style="color:var(--tx2);font-size:12px">v1.0.0</div></div>
+      <button class="btn btn-s btn-full" onclick="checkForUpdates()" id="updateCheckBtn">Check for Updates</button>
     </div>
     <div class="card">
       <div class="card-title" style="font-size:10px;text-transform:uppercase;color:var(--tx2);margin-bottom:8px">Danger zone</div>
       <button class="btn btn-d btn-full" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+</div>
+
+<!-- Possible Duplicate Product Modal -->
+<div class="overlay" id="dupModal">
+  <div class="sheet">
+    <div class="sheet-hdr"><div class="sheet-title">Possible Duplicate</div><button onclick="closeModal('dupModal')">✕</button></div>
+    <div style="font-size:11px;color:var(--tx2);margin-bottom:12px">This looks similar to a product already in the catalogue:</div>
+    <div class="card" style="margin-bottom:8px">
+      <div style="font-size:10px;color:var(--tx2);text-transform:uppercase;margin-bottom:4px">Existing product</div>
+      <div id="dupExistingName" style="font-weight:700;font-size:13px"></div>
+      <div id="dupExistingPrice" style="font-size:11px;color:var(--tx2);margin-top:2px"></div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:10px;color:var(--tx2);text-transform:uppercase;margin-bottom:4px">What you entered</div>
+      <div id="dupNewName" style="font-weight:700;font-size:13px"></div>
+      <div id="dupNewPrice" style="font-size:11px;color:var(--tx2);margin-top:2px"></div>
+    </div>
+    <div class="stack">
+      <button class="btn btn-p btn-full" onclick="dupMerge()">Merge (keep existing, fill gaps)</button>
+      <button class="btn btn-s btn-full" onclick="dupUpdateExisting()">Update Existing (overwrite with new)</button>
+      <button class="btn btn-s btn-full" onclick="dupCreateNew()">Create New Product Anyway</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pause Shop Confirmation Modal -->
+<div class="overlay" id="pauseShopModal">
+  <div class="sheet">
+    <div class="sheet-hdr"><div class="sheet-title">Pause Shop</div><button onclick="closeModal('pauseShopModal')">✕</button></div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="srow"><div>Shop</div><div id="pauseModalShopName" style="font-weight:700;font-size:12px"></div></div>
+      <div class="srow"><div>Code</div><div id="pauseModalShopCode" style="color:var(--tx2);font-size:12px"></div></div>
+    </div>
+    <div class="field" style="margin-bottom:10px">
+      <label>Reason for pausing (optional — shown to the shop owner)</label>
+      <textarea id="pauseModalReason" rows="3" placeholder="e.g. Your subscription has expired. Contact us to reactivate." style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px;resize:vertical"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-start;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:10px;margin-bottom:14px">
+      <span style="color:var(--wa);font-size:16px;line-height:1">⚠</span>
+      <span style="font-size:11px;color:var(--tx2)">The shop will immediately lose access to Krystal Manager until you resume it. Staff will see a paused screen with the reason above.</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-s btn-full" onclick="closeModal('pauseShopModal')">Cancel</button>
+      <button class="btn btn-d btn-full" id="pauseConfirmBtn" onclick="confirmPauseShop()">Pause Shop</button>
+    </div>
+  </div>
+</div>
+
+<!-- Update Available Modal -->
+<div class="overlay" id="updateModal">
+  <div class="sheet">
+    <div class="sheet-hdr"><div class="sheet-title" id="updateModalTitle">Update Available</div><button onclick="closeModal('updateModal')">✕</button></div>
+    <div style="font-size:12px;color:var(--tx2);margin-bottom:6px" id="updateVersionLine"></div>
+    <div style="font-size:12px;white-space:pre-wrap;max-height:240px;overflow-y:auto;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:12px" id="updateNotes"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-s btn-full" onclick="closeModal('updateModal')">Later</button>
+      <a class="btn btn-p btn-full" id="updateDownloadBtn" href="#" target="_blank" style="text-align:center;text-decoration:none">Download</a>
     </div>
   </div>
 </div>
@@ -454,6 +532,11 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
 <div class="overlay" id="reqModal">
   <div class="sheet">
     <div class="sheet-hdr"><div class="sheet-title" id="reqTitle">Respond to Request</div><button onclick="closeModal('reqModal')">✕</button></div>
+    <div id="reqMatchHint" style="display:none;font-size:11px;color:var(--gr);background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:8px;padding:8px;margin-bottom:10px"></div>
+    <div id="reqSupplierReview" style="display:none;font-size:11px;color:var(--tx2);background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px;margin-bottom:10px">
+      <div id="reqSupplierPriceLine" style="font-weight:700;color:var(--tx);margin-bottom:2px"></div>
+      Review and adjust below, then confirm to send this price to the shop.
+    </div>
     <div class="stack">
       <div class="field"><label>Price per unit (KSh)</label><input id="reqPrice" type="number"></div>
       <button class="btn btn-p btn-full" onclick="priceRequestDirect()">Confirm Price Myself</button>
@@ -483,12 +566,63 @@ const NETWORK_CONFIG = {
 firebase.initializeApp(NETWORK_CONFIG);
 const db = firebase.firestore();
 const auth = firebase.auth();
+// Keep the admin signed in across app restarts — only the PIN gate (not
+// email/password) should stand between reopening the app and the
+// dashboard. This is the default for firebase.auth() in most environments,
+// but set it explicitly so app startup is never slowed by a login screen
+// on a fresh webview/browser profile.
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+// Offline-first: cache reads/writes locally and sync automatically once
+// back online. synchronizeTabs lets multiple open tabs share one cache.
+try { db.enablePersistence({ synchronizeTabs: true }); } catch(e) {}
 
 const S = { shops:[], catalogue:[], orders:[], suppliers:[], assignments:[], requests:[], invoices:[], ordView:'shop', invoiceCtx:null, assignCtx:null };
 const fmt = n => Math.round(n||0).toLocaleString();
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
 function openModal(id){ document.getElementById(id).classList.add('show'); }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+// ---- Update checker ----
+// TODO: point this at your real GitHub repo (owner/name) and keep
+// CURRENT_VERSION in sync with each release's tag (e.g. "v1.2.0").
+const UPDATE_REPO = { owner: 'YOUR_GITHUB_USERNAME', name: 'YOUR_REPO_NAME' };
+const CURRENT_VERSION = 'v1.0.0';
+document.getElementById('setAppVersion') && (document.getElementById('setAppVersion').textContent = CURRENT_VERSION);
+function compareVersions(a, b){
+  // Strips a leading "v" and compares dot-separated numeric parts.
+  const pa = a.replace(/^v/i,'').split('.').map(n=>parseInt(n,10)||0);
+  const pb = b.replace(/^v/i,'').split('.').map(n=>parseInt(n,10)||0);
+  for (let i=0;i<Math.max(pa.length,pb.length);i++){
+    const x=pa[i]||0, y=pb[i]||0;
+    if (x!==y) return x-y;
+  }
+  return 0;
+}
+async function checkForUpdates(){
+  const btn = document.getElementById('updateCheckBtn');
+  btn.disabled = true; btn.textContent = 'Checking…';
+  try {
+    if (UPDATE_REPO.owner === 'YOUR_GITHUB_USERNAME') {
+      toast('Set UPDATE_REPO in the code first — see the TODO comment');
+      return;
+    }
+    const res = await fetch(`https://api.github.com/repos/${UPDATE_REPO.owner}/${UPDATE_REPO.name}/releases/latest`);
+    if (!res.ok) throw new Error('Could not reach the update server');
+    const rel = await res.json();
+    if (compareVersions(rel.tag_name, CURRENT_VERSION) > 0){
+      document.getElementById('updateVersionLine').textContent = `${CURRENT_VERSION} → ${rel.tag_name}`;
+      document.getElementById('updateNotes').textContent = rel.body || 'No release notes provided.';
+      document.getElementById('updateDownloadBtn').href = (rel.assets && rel.assets[0]?.browser_download_url) || rel.html_url;
+      openModal('updateModal');
+    } else {
+      toast("You're using the latest version.");
+    }
+  } catch(e) {
+    toast('Update check failed: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Check for Updates';
+  }
+}
 
 // ---- Auth / admin gate ----
 async function doLogin(){
@@ -579,9 +713,26 @@ function copyShareLink(which){
   navigator.clipboard.writeText(text).then(()=>toast('Link copied')).catch(()=>toast('Could not copy — long-press to copy manually'));
 }
 async function loadAll(){
-  await Promise.all([loadShops(), loadCatalogue(), loadOrders(), loadPaymentMethod(), loadSuppliers(), loadAssignments(), loadRequests(), loadInvoices()]);
-  initShareLinks();
+  updateSyncStatus('syncing');
+  try {
+    await Promise.all([loadShops(), loadCatalogue(), loadOrders(), loadPaymentMethod(), loadSuppliers(), loadAssignments(), loadRequests(), loadInvoices()]);
+    initShareLinks();
+    updateSyncStatus(navigator.onLine ? 'synced' : 'offline');
+  } catch(e) {
+    updateSyncStatus(navigator.onLine ? 'synced' : 'offline'); // Firestore's own offline cache already served whatever it had
+  }
 }
+function updateSyncStatus(state){
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  if (!dot) return;
+  const map = { online:['online','Online'], synced:['online','Synced'], syncing:['syncing','Syncing…'], offline:['offline','Offline'] };
+  const [cls,text] = map[state] || map.synced;
+  dot.className = 'sync-dot ' + cls;
+  label.textContent = text;
+}
+window.addEventListener('online', ()=>{ updateSyncStatus('syncing'); loadAll(); });
+window.addEventListener('offline', ()=>updateSyncStatus('offline'));
 
 // ---- USERS ----
 async function loadShops(){
@@ -604,22 +755,45 @@ function renderUsers(){
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
         <span class="pill ${paused?'pill-wa':'pill-ok'}">${paused?'Paused':'Active'}</span>
-        <button class="btn btn-s btn-sm" onclick="toggleShopStatus('${s.id}',${!paused})">${paused?'Resume':'Pause'}</button>
+        <button class="btn btn-s btn-sm" onclick="${paused ? `toggleShopStatus('${s.id}',false)` : `openPauseModal('${s.id}')`}">${paused?'Resume':'Pause'}</button>
         <button class="btn btn-d btn-sm" onclick="deleteShop('${s.id}')">Delete</button>
       </div></div>`;
   }).join('');
 }
-async function toggleShopStatus(id, pause){
+function openPauseModal(id){
+  const s = S.shops.find(x=>x.id===id);
+  if (!s) return;
+  S.pauseCtx = { id };
+  document.getElementById('pauseModalShopName').textContent = s.shopName || s.shopCode;
+  document.getElementById('pauseModalShopCode').textContent = s.shopCode;
+  document.getElementById('pauseModalReason').value = '';
+  openModal('pauseShopModal');
+}
+async function confirmPauseShop(){
+  const { id } = S.pauseCtx || {};
+  if (!id) return;
+  const reason = document.getElementById('pauseModalReason').value.trim();
+  const btn = document.getElementById('pauseConfirmBtn');
+  btn.disabled = true; btn.textContent = 'Pausing…';
+  try {
+    await toggleShopStatus(id, true, reason);
+    closeModal('pauseShopModal');
+    toast('Shop has been paused successfully.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Pause Shop';
+  }
+}
+async function toggleShopStatus(id, pause, reason){
   await db.collection('shops').doc(id).update({status: pause?'paused':'active'});
   // shopRegistry is what Krystal Manager (the Shop app) actually checks
   // at login to block a paused account — keep both in sync. Use merge
   // in case a shop hasn't touched the network side yet and this doc is
   // still being created for the first time.
   const registryUpdate = pause
-    ? {status:'paused', pauseMessage: prompt('Message to show the shop owner:', 'Your account has been paused. Contact us to reactivate.') || 'Your account has been paused. Contact us to reactivate.'}
+    ? {status:'paused', pauseMessage: reason || 'Your account has been paused. Contact us to reactivate.'}
     : {status:'active', pauseMessage:''};
   await db.collection('shopRegistry').doc(id).set(registryUpdate, {merge:true});
-  toast(pause?'Shop paused':'Shop resumed');
+  if (!pause) toast('Shop resumed');
   loadShops();
 }
 async function deleteShop(id){
@@ -703,9 +877,33 @@ function renderRequests(){
     <div style="font-size:10px;color:var(--tx2)">${r.shopName||r.shopCode}${r.status==='Priced'?' · offered KSh '+fmt(r.proposedPrice):''}</div></div>
     <div style="text-align:right">
       ${r.status==='Priced' ? `<span class="pill pill-ac">Awaiting shop</span>`
-        : r.forwardedTo ? `<span class="pill pill-wa">Sent to ${r.forwardedToName}</span>`
+        : r.status==='SupplierPriced' ? `<button class="btn btn-p btn-sm" onclick="openReqModal('${r.id}')">Review supplier price</button>`
+        : r.status==='Forwarded' ? `<span class="pill pill-wa">Sent to ${r.forwardedToName}</span>`
         : `<button class="btn btn-s btn-sm" onclick="openReqModal('${r.id}')">Respond</button>`}
     </div></div>`).join('');
+}
+function normalizeProductName(name){
+  return (name||'').toLowerCase().replace(/[^a-z0-9\s]/g,'').split(/\s+/).filter(Boolean);
+}
+// Descriptor words that commonly stand in for each other on the same
+// physical part (a "screen" and an "LCD" listing are usually the same
+// product) — ignored when computing the core brand/model match.
+const DESCRIPTOR_SYNONYMS = ['screen','lcd','display','digitizer','glass','folder'];
+function coreTokens(name){
+  return normalizeProductName(name).filter(w => !DESCRIPTOR_SYNONYMS.includes(w));
+}
+function findCatalogueMatch(name){
+  const core = coreTokens(name);
+  if (!core.length) return null;
+  let best = null, bestScore = 0;
+  S.catalogue.forEach(p=>{
+    const pCore = coreTokens(p.name);
+    if (!pCore.length) return;
+    const overlap = core.filter(w=>pCore.includes(w)).length;
+    const score = overlap / Math.max(core.length, pCore.length);
+    if (score > bestScore){ bestScore = score; best = p; }
+  });
+  return bestScore >= 0.6 ? best : null;
 }
 function openReqModal(id){
   S.reqCtx = {id};
@@ -714,6 +912,28 @@ function openReqModal(id){
   document.getElementById('reqPrice').value = '';
   const active = S.suppliers.filter(s=>s.status!=='pending');
   document.getElementById('reqSupplier').innerHTML = '<option value="">Choose supplier…</option>' + active.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+
+  // Smarter stock requests: auto-fill from a matching catalogue product.
+  const matchEl = document.getElementById('reqMatchHint');
+  const match = findCatalogueMatch(r.productName);
+  if (match){
+    document.getElementById('reqPrice').value = match.buyPrice || '';
+    matchEl.style.display = 'block';
+    matchEl.textContent = `Matched existing product "${match.name}" — buy price KSh ${fmt(match.buyPrice)} auto-filled.`;
+  } else {
+    matchEl.style.display = 'none';
+  }
+
+  // Supplier-priced requests need admin review before the shop sees them.
+  const reviewRow = document.getElementById('reqSupplierReview');
+  if (r.status === 'SupplierPriced'){
+    reviewRow.style.display = 'block';
+    document.getElementById('reqSupplierPriceLine').textContent =
+      `${r.forwardedToName || 'Supplier'} priced this at KSh ${fmt(r.proposedPrice)}`;
+    document.getElementById('reqPrice').value = r.proposedPrice || '';
+  } else {
+    reviewRow.style.display = 'none';
+  }
   openModal('reqModal');
 }
 async function priceRequestDirect(){
@@ -728,7 +948,7 @@ async function forwardRequest(){
   const supplierId = document.getElementById('reqSupplier').value;
   const sup = S.suppliers.find(s=>s.id===supplierId);
   if (!supplierId){ toast('Pick a supplier'); return; }
-  await db.collection('stockRequests').doc(S.reqCtx.id).update({forwardedTo:supplierId, forwardedToName:sup.name});
+  await db.collection('stockRequests').doc(S.reqCtx.id).update({status:'Forwarded', forwardedTo:supplierId, forwardedToName:sup.name});
   closeModal('reqModal');
   toast('Forwarded to '+sup.name);
   loadRequests();
@@ -829,6 +1049,18 @@ async function addProduct(){
     buyPrice: parseFloat(document.getElementById('npBuy').value)||0,
     sellPrice: sell, status:'priced'
   };
+  // Smart duplicate detection — only when creating a brand-new product,
+  // not when editing an existing one.
+  if (!editId) {
+    const match = findCatalogueMatch(name);
+    if (match) {
+      openDuplicateModal(match, data);
+      return;
+    }
+  }
+  await commitProduct(editId, data);
+}
+async function commitProduct(editId, data){
   if (editId) await db.collection('catalogue').doc(editId).update(data);
   else await db.collection('catalogue').add({...data, addedBy:'admin', createdAt: Date.now()});
   closeModal('addStockModal');
@@ -837,6 +1069,40 @@ async function addProduct(){
   ['npName','npCat','npBuy','npSell'].forEach(id=>document.getElementById(id).value='');
   toast(editId ? 'Product updated' : 'Product added');
   loadCatalogue();
+}
+function openDuplicateModal(match, newData){
+  S.dupCtx = { match, newData };
+  document.getElementById('dupExistingName').textContent = match.name;
+  document.getElementById('dupExistingPrice').textContent = `Buy KSh ${fmt(match.buyPrice)} · Sell KSh ${fmt(match.sellPrice)}`;
+  document.getElementById('dupNewName').textContent = newData.name;
+  document.getElementById('dupNewPrice').textContent = `Buy KSh ${fmt(newData.buyPrice)} · Sell KSh ${fmt(newData.sellPrice)}`;
+  openModal('dupModal');
+}
+async function dupUpdateExisting(){
+  const { match, newData } = S.dupCtx;
+  closeModal('dupModal'); closeModal('addStockModal');
+  await commitProduct(match.id, newData);
+}
+async function dupMerge(){
+  // Non-destructive merge: fill in only what the existing product is
+  // missing, keep its existing values where it already has them.
+  const { match, newData } = S.dupCtx;
+  const merged = {
+    name: match.name,
+    category: match.category || newData.category,
+    buyPrice: match.buyPrice || newData.buyPrice,
+    sellPrice: match.sellPrice || newData.sellPrice,
+    supplierId: match.supplierId || newData.supplierId,
+    supplier: match.supplier || newData.supplier,
+    status: 'priced'
+  };
+  closeModal('dupModal'); closeModal('addStockModal');
+  await commitProduct(match.id, merged);
+}
+async function dupCreateNew(){
+  const { newData } = S.dupCtx;
+  closeModal('dupModal');
+  await commitProduct('', newData);
 }
 
 // ---- IMPORT CATALOGUE FROM BACKUP ----
