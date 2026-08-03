@@ -432,45 +432,6 @@ function closeSidebar(){
 
 async function loadAll(){
   await Promise.all([loadAssignments(), loadMyProducts(), loadRequests()]);
-  renderDashboard();
-}
-
-// ---- DASHBOARD ----
-function renderDashboard(){
-  const approved = S.catalogue.filter(p=>p.status==='approved').length;
-  const pending = S.catalogue.filter(p=>p.status==='pending').length;
-  const active = S.assignments.filter(a=>a.status==='Assigned'||a.status==='Confirmed'||a.status==='Dispatched').length;
-  const completed = S.assignments.filter(a=>a.status==='Delivered').length;
-  document.getElementById('statProducts').textContent = S.catalogue.length;
-  document.getElementById('statPending').textContent = pending;
-  document.getElementById('statActive').textContent = active;
-  document.getElementById('statCompleted').textContent = completed;
-
-  const openOrders = S.assignments.filter(a=>a.status==='Assigned').length;
-  const openRequests = S.requests.filter(r=>r.status==='Requested').length;
-  const items = [];
-  if (openOrders) items.push(`<div class="srow"><div>New purchase order${openOrders>1?'s':''} to confirm</div><span class="pill pill-wa">${openOrders}</span></div>`);
-  if (openRequests) items.push(`<div class="srow"><div>Stock request${openRequests>1?'s':''} waiting on your price</div><span class="pill pill-wa">${openRequests}</span></div>`);
-  if (pending) items.push(`<div class="srow"><div>Product${pending>1?'s':''} pending admin approval</div><span class="pill pill-ac">${pending}</span></div>`);
-  document.getElementById('dashAttention').innerHTML = items.length ? items.join('') : '<div class="empty">You\'re all caught up.</div>';
-
-  const ob = document.getElementById('badgeOrders'), rb = document.getElementById('badgeRequests');
-  ob.textContent = openOrders; ob.classList.toggle('show', openOrders>0);
-  rb.textContent = openRequests; rb.classList.toggle('show', openRequests>0);
-}
-
-// ---- BUSINESS PROFILE ----
-async function saveProfile(){
-  const name = document.getElementById('pfName').value.trim();
-  const contact = document.getElementById('pfContact').value.trim();
-  const phone = document.getElementById('pfPhone').value.trim();
-  if (!name){ toast('Business name is required'); return; }
-  try{
-    await db.collection('suppliers').doc(S.supplierId).update({name, contact, phone});
-    S.supplierName = name;
-    document.getElementById('sbSupplierName').textContent = name;
-    toast('Profile updated');
-  }catch(e){ toast('Could not save profile'); }
 }
 
 // ---- ASSIGNMENTS (shared source for Orders / Delivery / Payments / History) ----
@@ -478,6 +439,7 @@ async function loadAssignments(){
   const snap = await db.collection('assignments').where('supplierId','==',S.supplierId).orderBy('createdAt','desc').get();
   S.assignments = snap.docs.map(d=>({id:d.id, ...d.data()}));
   renderOrders(); renderDelivery(); renderPayments(); renderHistory();
+  renderDashboard();
 }
 function rowHtml(a, actionsHtml){
   return `<div class="srow">
@@ -553,6 +515,7 @@ async function loadMyProducts(){
   const snap = await db.collection('catalogue').where('supplierId','==',S.supplierId).get();
   S.catalogue = snap.docs.map(d=>({id:d.id, ...d.data()}));
   renderProducts();
+  renderDashboard();
 }
 function renderProducts(){
   const el = document.getElementById('productsList');
@@ -601,10 +564,49 @@ async function loadRequests(){
   const snap = await db.collection('stockRequests').where('forwardedTo','==',S.supplierId).get();
   S.requests = snap.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>b.createdAt-a.createdAt);
   renderRequests();
+  renderDashboard();
+}
+
+// ---- DASHBOARD ----
+function renderDashboard(){
+  const approved = S.catalogue.filter(p=>p.status==='approved').length;
+  const pending = S.catalogue.filter(p=>p.status==='pending').length;
+  const active = S.assignments.filter(a=>a.status==='Assigned'||a.status==='Confirmed'||a.status==='Dispatched').length;
+  const completed = S.assignments.filter(a=>a.status==='Delivered').length;
+  document.getElementById('statProducts').textContent = S.catalogue.length;
+  document.getElementById('statPending').textContent = pending;
+  document.getElementById('statActive').textContent = active;
+  document.getElementById('statCompleted').textContent = completed;
+
+  const openOrders = S.assignments.filter(a=>a.status==='Assigned').length;
+  const openRequests = S.requests.filter(r=>r.status==='Forwarded').length;
+  const items = [];
+  if (openOrders) items.push(`<div class="srow"><div>New purchase order${openOrders>1?'s':''} to confirm</div><span class="pill pill-wa">${openOrders}</span></div>`);
+  if (openRequests) items.push(`<div class="srow"><div>Stock request${openRequests>1?'s':''} waiting on your price</div><span class="pill pill-wa">${openRequests}</span></div>`);
+  if (pending) items.push(`<div class="srow"><div>Product${pending>1?'s':''} pending admin approval</div><span class="pill pill-ac">${pending}</span></div>`);
+  document.getElementById('dashAttention').innerHTML = items.length ? items.join('') : '<div class="empty">You\'re all caught up.</div>';
+
+  const ob = document.getElementById('badgeOrders'), rb = document.getElementById('badgeRequests');
+  ob.textContent = openOrders; ob.classList.toggle('show', openOrders>0);
+  rb.textContent = openRequests; rb.classList.toggle('show', openRequests>0);
+}
+
+// ---- BUSINESS PROFILE ----
+async function saveProfile(){
+  const name = document.getElementById('pfName').value.trim();
+  const contact = document.getElementById('pfContact').value.trim();
+  const phone = document.getElementById('pfPhone').value.trim();
+  if (!name){ toast('Business name is required'); return; }
+  try{
+    await db.collection('suppliers').doc(S.supplierId).update({name, contact, phone});
+    S.supplierName = name;
+    document.getElementById('sbSupplierName').textContent = name;
+    toast('Profile updated');
+  }catch(e){ toast('Could not save profile'); }
 }
 function renderRequests(){
   const el = document.getElementById('requestsList');
-  const open = S.requests.filter(r=>r.status==='Requested');
+  const open = S.requests.filter(r=>r.status==='Forwarded');
   if (!open.length){ el.innerHTML = '<div class="empty">No requests waiting on you.</div>'; return; }
   el.innerHTML = open.map(r=>`<div class="srow">
     <div><div style="font-weight:700;font-size:12px">${r.productName} ×${r.qty}</div>
@@ -621,9 +623,11 @@ function openReqModal(id){
 async function respondToRequest(){
   const price = parseFloat(document.getElementById('reqPrice').value)||0;
   if (!price){ toast('Enter a price'); return; }
-  await db.collection('stockRequests').doc(S.reqCtx.id).update({status:'Priced', proposedPrice:price, pricedBy: S.supplierId});
+  // Goes to the admin for review first — not straight to the shop.
+  // The admin can adjust this price before it's ever shown to the shop.
+  await db.collection('stockRequests').doc(S.reqCtx.id).update({status:'SupplierPriced', proposedPrice:price, pricedBy: S.supplierId});
   closeModal('reqModal');
-  toast('Price sent to shop for approval');
+  toast('Price sent to admin for review');
   loadRequests();
 }
 if (location.protocol==='https:') {
