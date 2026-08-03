@@ -94,6 +94,17 @@ button{cursor:pointer;border:none;background:none;}
 .pill-wa{background:rgba(245,158,11,.15);color:var(--wa);}
 .pill-re{background:rgba(239,68,68,.15);color:var(--re);}
 .pill-ac{background:rgba(99,102,241,.15);color:var(--ac3);}
+.search-wrap{position:relative;flex:1;}
+.search-wrap input{width:100%;padding-left:32px;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding-top:10px;padding-bottom:10px;padding-right:12px;}
+.search-wrap input:focus{outline:none;border-color:var(--ac);}
+.search-ico{position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none;}
+.cat-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
+.cat-pill{padding:4px 11px;border-radius:20px;border:1px solid var(--bd);background:none;color:var(--tx2);cursor:pointer;font-size:11px;font-weight:600;transition:all .12s;}
+.cat-pill.active{background:var(--ac);color:#071a15;border-color:var(--ac);}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:14px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{text-align:left;padding:9px 10px;color:var(--tx2);font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--bd);font-weight:700;white-space:nowrap;background:var(--sf);}
+td{padding:10px;border-bottom:1px solid var(--bd);vertical-align:middle;}
 
 input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);border-radius:7px;padding:6px 8px;font-size:12px;width:78px;}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
@@ -248,7 +259,12 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
       <div class="card-title" style="color:var(--wa);font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:8px">Awaiting your price</div>
       <div id="pendingList"></div>
     </div>
-    <div class="card" id="stockList"><div class="empty">Loading catalogue…</div></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+      <div class="search-wrap"><span class="search-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+        <input type="text" id="stockQ" placeholder="Search products…" oninput="renderStockTable()"></div>
+    </div>
+    <div class="cat-row" id="stockCats"></div>
+    <div class="card" style="padding:0"><div class="tbl-wrap"><table><thead><tr><th>Item</th><th>Cat</th><th>Supplier</th><th>Buy</th><th>Sell</th><th>Margin</th><th></th></tr></thead><tbody id="stockTbody"></tbody></table></div></div>
   </div>
 
   <!-- ORDERS -->
@@ -265,7 +281,10 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
   <!-- SUPPLIERS -->
   <div class="page" id="pg-suppliers">
     <div class="sec-head"><div class="sec-title">Suppliers</div>
-      <button class="btn btn-s btn-sm" onclick="openModal('addSupplierModal')">+ Add Supplier</button>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-p btn-sm" onclick="openDirectOrderModal()">+ Order Stock</button>
+        <button class="btn btn-s btn-sm" onclick="openModal('addSupplierModal')">+ Add Supplier</button>
+      </div>
     </div>
     <div class="card" id="suppliersList"><div class="empty">Loading suppliers…</div></div>
   </div>
@@ -528,6 +547,24 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
   </div>
 </div>
 
+<!-- Direct Order to Supplier (not tied to any shop order) -->
+<div class="overlay" id="directOrderModal">
+  <div class="sheet">
+    <div class="sheet-hdr"><div class="sheet-title">Order from Supplier</div><button onclick="closeModal('directOrderModal')">✕</button></div>
+    <div style="font-size:11px;color:var(--tx2);margin-bottom:10px">Restock directly with a supplier — independent of any shop order.</div>
+    <div class="stack">
+      <div class="field"><label>Product</label>
+        <select id="doProduct" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px"></select>
+      </div>
+      <div class="field"><label>Supplier</label>
+        <select id="doSupplier" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px"></select>
+      </div>
+      <div class="field"><label>Quantity</label><input id="doQty" type="number" min="1"></div>
+      <button class="btn btn-p btn-full" onclick="submitDirectOrder()">Place Order</button>
+    </div>
+  </div>
+</div>
+
 <!-- Price / forward a stock request -->
 <div class="overlay" id="reqModal">
   <div class="sheet">
@@ -576,7 +613,7 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 // back online. synchronizeTabs lets multiple open tabs share one cache.
 try { db.enablePersistence({ synchronizeTabs: true }); } catch(e) {}
 
-const S = { shops:[], catalogue:[], orders:[], suppliers:[], assignments:[], requests:[], invoices:[], ordView:'shop', invoiceCtx:null, assignCtx:null };
+const S = { shops:[], catalogue:[], orders:[], suppliers:[], assignments:[], requests:[], invoices:[], ordView:'shop', invoiceCtx:null, assignCtx:null, stockCat:'All' };
 const fmt = n => Math.round(n||0).toLocaleString();
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
 function openModal(id){ document.getElementById(id).classList.add('show'); }
@@ -975,21 +1012,47 @@ function renderStock(){
       <button class="btn btn-p btn-sm" onclick='openEditProduct(${JSON.stringify(p.id)})'>Review & Price</button>
       </div>`;
   }).join('');
-  document.getElementById('stockList').innerHTML = priced.length ? priced.map(p=>`
-    <div class="srow">
-      <div><div style="font-weight:700;font-size:12px">${p.name}</div>
-      <div style="font-size:10px;color:var(--tx2)">${p.category||'—'} · ${p.supplier||'—'}</div>
-      ${p.supplierOfferPrice && p.supplierOfferPrice !== p.buyPrice ? `<div style="font-size:10px;color:var(--wa);margin-top:2px">Supplier offered KSh ${fmt(p.supplierOfferPrice)}</div>` : ''}
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:11px;color:var(--tx2)">Buy KSh ${fmt(p.buyPrice)}</div>
-        <div style="font-size:12px;font-weight:800;color:var(--ac)">Sell KSh ${fmt(p.sellPrice)}</div>
-        <div style="display:flex;gap:5px;margin-top:5px;justify-content:flex-end">
-          ${p.supplierOfferPrice && p.supplierOfferPrice !== p.buyPrice ? `<button class="btn btn-p btn-sm" onclick="acceptSupplierOffer('${p.id}',${p.supplierOfferPrice})">Accept Offer</button>` : ''}
-          <button class="btn btn-s btn-sm" onclick='openEditProduct(${JSON.stringify(p.id)})'>Edit</button>
-          <button class="btn btn-d btn-sm" onclick="deleteProduct('${p.id}')">Delete</button>
-        </div>
-      </div></div>`).join('') : '<div class="empty">No priced products yet.</div>';
+  renderStockTable();
+}
+function stockCatList(){
+  return [...new Set(S.catalogue.filter(p=>p.status!=='pending').map(p=>p.category).filter(Boolean))].sort();
+}
+function renderStockCatPills(){
+  const el = document.getElementById('stockCats');
+  const all = ['All', ...stockCatList()];
+  el.innerHTML = all.map(c=>`<button class="cat-pill${S.stockCat===c?' active':''}">${c}</button>`).join('');
+  el.querySelectorAll('.cat-pill').forEach((b,i)=> b.onclick = () => { S.stockCat = all[i]; renderStockTable(); });
+}
+function renderStockTable(){
+  renderStockCatPills();
+  const q = (document.getElementById('stockQ')?.value||'').trim().toLowerCase();
+  const priced = S.catalogue.filter(p=>p.status!=='pending');
+  const list = priced.filter(p =>
+    (S.stockCat==='All' || p.category===S.stockCat) &&
+    (!q || p.name.toLowerCase().includes(q) || (p.supplier||'').toLowerCase().includes(q))
+  );
+  const tb = document.getElementById('stockTbody');
+  if (!priced.length){ tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--tx2);padding:24px">No priced products yet.</td></tr>'; return; }
+  if (!list.length){ tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--tx2);padding:24px">No products match your search.</td></tr>'; return; }
+  tb.innerHTML = list.map(p=>{
+    const margin = (p.sellPrice||0) - (p.buyPrice||0);
+    const offerNote = p.supplierOfferPrice && p.supplierOfferPrice !== p.buyPrice
+      ? `<div style="font-size:10px;color:var(--wa);margin-top:2px">Offered KSh ${fmt(p.supplierOfferPrice)}</div>` : '';
+    return `<tr>
+      <td style="font-weight:700">${p.name}${offerNote}</td>
+      <td>${p.category?`<span class="pill pill-ac">${p.category}</span>`:'—'}</td>
+      <td style="color:var(--tx2)">${p.supplier||'—'}</td>
+      <td>KSh ${fmt(p.buyPrice)}</td>
+      <td style="font-weight:800">KSh ${fmt(p.sellPrice)}</td>
+      <td style="color:${margin>=0?'var(--gr)':'var(--re)'}">${margin>=0?'+':''}${fmt(margin)}</td>
+      <td><div style="display:flex;gap:4px;flex-wrap:wrap">
+        ${p.supplierOfferPrice && p.supplierOfferPrice !== p.buyPrice ? `<button class="btn btn-p btn-sm" onclick="acceptSupplierOffer('${p.id}',${p.supplierOfferPrice})">Accept</button>` : ''}
+        <button class="btn btn-s btn-sm" onclick='openEditProduct(${JSON.stringify(p.id)})'>Edit</button>
+        <button class="btn btn-p btn-sm" onclick='openDirectOrderModal(${JSON.stringify(p.id)})'>Order</button>
+        <button class="btn btn-d btn-sm" onclick="deleteProduct('${p.id}')">Del</button>
+      </div></td>
+    </tr>`;
+  }).join('');
 }
 function renderTrends(){
   const ranked = S.catalogue
@@ -1317,11 +1380,11 @@ async function loadAssignments(){
   renderAssignments(document.getElementById('deliveryWrap'));
 }
 function renderAssignments(wrap){
-  if (!S.assignments.length){ wrap.innerHTML = '<div class="empty">No assignments yet — assign Paid orders to a supplier from the Combined view.</div>'; return; }
+  if (!S.assignments.length){ wrap.innerHTML = '<div class="empty">No assignments yet — assign Paid orders to a supplier from the Combined view, or place a direct order from Suppliers.</div>'; return; }
   wrap.innerHTML = `<div class="card">${S.assignments.map(a=>`
     <div class="srow">
       <div><div style="font-weight:700;font-size:12px">${a.prodName}</div>
-      <div style="font-size:10px;color:var(--tx2)">${a.qty} units · ${a.supplierName}</div></div>
+      <div style="font-size:10px;color:var(--tx2)">${a.qty} units · ${a.supplierName}${!a.sourceOrderIds || !a.sourceOrderIds.length ? ' · <span style="color:var(--ac3)">Direct order</span>' : ''}</div></div>
       <div style="text-align:right">
         ${assignStatusPill(a.status)}
         <div style="margin-top:4px">
@@ -1361,6 +1424,37 @@ async function createAssignment(){
 }
 async function toggleAssignmentPayment(id, current){
   await db.collection('assignments').doc(id).update({paymentStatus: current==='Paid' ? 'Pending' : 'Paid'});
+  loadAssignments();
+}
+
+// ---- DIRECT ORDER TO SUPPLIER (restock — not tied to any shop order) ----
+function openDirectOrderModal(prodId){
+  const priced = S.catalogue.filter(p=>p.status!=='pending');
+  document.getElementById('doProduct').innerHTML = priced.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  const active = S.suppliers.filter(s=>s.status!=='pending');
+  document.getElementById('doSupplier').innerHTML = '<option value="">Choose supplier…</option>' + active.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  document.getElementById('doQty').value = '';
+  if (prodId){
+    document.getElementById('doProduct').value = prodId;
+    const p = S.catalogue.find(x=>x.id===prodId);
+    if (p && p.supplierId) document.getElementById('doSupplier').value = p.supplierId;
+  }
+  openModal('directOrderModal');
+}
+async function submitDirectOrder(){
+  const prodId = document.getElementById('doProduct').value;
+  const supplierId = document.getElementById('doSupplier').value;
+  const qty = parseFloat(document.getElementById('doQty').value)||0;
+  const p = S.catalogue.find(x=>x.id===prodId);
+  const sup = S.suppliers.find(s=>s.id===supplierId);
+  if (!p || !sup || !qty){ toast('Pick a product, supplier and quantity'); return; }
+  await db.collection('assignments').add({
+    prodId: p.id, prodName: p.name, qty,
+    supplierId, supplierName: sup.name, sourceOrderIds: [],
+    status: 'Assigned', paymentStatus: 'Pending', createdAt: Date.now()
+  });
+  closeModal('directOrderModal');
+  toast('Order placed with '+sup.name);
   loadAssignments();
 }
 
