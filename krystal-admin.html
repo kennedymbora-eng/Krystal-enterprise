@@ -226,6 +226,7 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
   <!-- STOCK -->
   <div class="page" id="pg-stock">
     <div class="sec-head"><div class="sec-title">Network Stock</div>
+      <button class="btn btn-s btn-sm" onclick="openImportCatalogue()">⬆ Import Backup</button>
       <button class="btn btn-s btn-sm" onclick="openNewProduct()">+ Add Product</button>
     </div>
     <div class="card" style="margin-bottom:8px" id="trendsWrap">
@@ -364,6 +365,25 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
     <div class="card">
       <div class="card-title" style="font-size:10px;text-transform:uppercase;color:var(--tx2);margin-bottom:8px">Danger zone</div>
       <button class="btn btn-d btn-full" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Catalogue Backup Modal -->
+<div class="overlay" id="importCatalogueModal">
+  <div class="sheet">
+    <div class="sheet-hdr"><div class="sheet-title">Import Catalogue from Backup</div><button onclick="closeModal('importCatalogueModal')">✕</button></div>
+    <div style="font-size:11px;color:var(--tx2);margin-bottom:10px">
+      Upload a network backup JSON (or paste its <code>catalogue</code> array below). Existing items with the same ID are overwritten; new IDs are added.
+    </div>
+    <div class="stack">
+      <div class="field"><label>Backup file</label><input type="file" id="icFile" accept="application/json" onchange="handleImportFile(event)"></div>
+      <div class="field"><label>...or paste JSON</label><textarea id="icPaste" rows="6" placeholder='{"catalogue":[...]}  or  [{"id":"...","name":"..."}]' style="font-family:monospace;font-size:11px"></textarea></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2)">
+        <input type="checkbox" id="icAdminOnly" checked> Only import admin-added items (skip shop/supplier suggestions)
+      </label>
+      <div id="icPreview" style="font-size:11px;color:var(--tx2)"></div>
+      <button class="btn btn-p btn-full" onclick="runImportCatalogue()">Import</button>
     </div>
   </div>
 </div>
@@ -817,6 +837,79 @@ async function addProduct(){
   ['npName','npCat','npBuy','npSell'].forEach(id=>document.getElementById(id).value='');
   toast(editId ? 'Product updated' : 'Product added');
   loadCatalogue();
+}
+
+// ---- IMPORT CATALOGUE FROM BACKUP ----
+let _icParsed = [];
+function openImportCatalogue(){
+  _icParsed = [];
+  document.getElementById('icFile').value = '';
+  document.getElementById('icPaste').value = '';
+  document.getElementById('icAdminOnly').checked = true;
+  document.getElementById('icPreview').textContent = '';
+  openModal('importCatalogueModal');
+}
+function handleImportFile(event){
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    document.getElementById('icPaste').value = reader.result;
+    previewImportCatalogue();
+  };
+  reader.onerror = () => toast('Could not read that file');
+  reader.readAsText(file);
+}
+document.getElementById('icPaste')?.addEventListener('input', previewImportCatalogue);
+function extractCatalogueArray(raw){
+  let parsed;
+  try { parsed = JSON.parse(raw); }
+  catch(e) { return null; }
+  if (Array.isArray(parsed)) return parsed;
+  if (parsed && Array.isArray(parsed.catalogue)) return parsed.catalogue;
+  return null;
+}
+function previewImportCatalogue(){
+  const raw = document.getElementById('icPaste').value.trim();
+  const preview = document.getElementById('icPreview');
+  if (!raw){ preview.textContent=''; _icParsed=[]; return; }
+  const arr = extractCatalogueArray(raw);
+  if (!arr){ preview.textContent = 'Could not find a catalogue array in that JSON.'; preview.style.color='var(--re)'; _icParsed=[]; return; }
+  _icParsed = arr;
+  const adminOnly = document.getElementById('icAdminOnly').checked;
+  const toImport = adminOnly ? arr.filter(p=>p.addedBy==='admin') : arr;
+  preview.style.color='var(--tx2)';
+  preview.textContent = `Found ${arr.length} item(s) in file — ${toImport.length} will be imported${adminOnly?' (admin-added only)':''}.`;
+}
+document.getElementById('icAdminOnly')?.addEventListener('change', previewImportCatalogue);
+async function runImportCatalogue(){
+  const raw = document.getElementById('icPaste').value.trim();
+  const arr = extractCatalogueArray(raw);
+  if (!arr || !arr.length){ toast('No valid catalogue items to import'); return; }
+  const adminOnly = document.getElementById('icAdminOnly').checked;
+  const toImport = arr.filter(p => p.id && p.name && (!adminOnly || p.addedBy==='admin'));
+  if (!toImport.length){ toast('Nothing matched the current filter'); return; }
+
+  // Firestore batches cap at 500 writes — chunk defensively even though
+  // a catalogue import is unlikely to ever hit that in one go.
+  const CHUNK = 400;
+  let imported = 0;
+  try {
+    for (let i=0; i<toImport.length; i+=CHUNK){
+      const batch = db.batch();
+      toImport.slice(i, i+CHUNK).forEach(item => {
+        const { id, ...data } = item;
+        batch.set(db.collection('catalogue').doc(id), { ...data, id }, { merge:true });
+      });
+      await batch.commit();
+      imported += Math.min(CHUNK, toImport.length - i);
+    }
+    toast(`Imported ${imported} product(s)`);
+    closeModal('importCatalogueModal');
+    loadCatalogue();
+  } catch(e) {
+    toast('Import failed: ' + (e.message||e.code));
+  }
 }
 
 // ---- ORDERS ----
