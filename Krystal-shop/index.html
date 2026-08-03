@@ -792,17 +792,6 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
       <div style="text-align:center;padding:8px 0 20px;color:var(--tx2);font-size:11px">Krystal v3.0 · Made in Kenya 🇰🇪</div>
     </div>
 
-    <!-- ADMIN (super-admin only, hidden) -->
-    <div id="pg-admin" class="page">
-      <div class="sec-head"><div class="sec-title">⚡ Admin Panel</div></div>
-      <div class="card" style="margin-bottom:14px;border-color:var(--wa)">
-        <div style="font-size:11px;color:var(--wa);font-weight:700;margin-bottom:4px">Super Admin — Kennedy Mbora</div>
-        <div style="font-size:11px;color:var(--tx2)">All shops connected to this Firebase project. You can pause/resume any shop.</div>
-      </div>
-      <div class="sec-head"><div class="sec-title" style="font-size:13px">Active Shops</div><button class="btn btn-s btn-sm" onclick="loadAdminShops()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refresh</button></div>
-      <div id="adminShopList"><div class="empty"><div style="font-size:12px">Tap Refresh to load shops</div></div></div>
-    </div>
-
   </div><!-- /page-wrap -->
   </div><!-- /scroll -->
 
@@ -952,15 +941,6 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
 </div>
 
 <!-- Admin: Pause Shop -->
-<div class="overlay" id="pauseShopModal">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-hdr"><div class="sheet-title">Pause Shop</div><button class="sheet-close" onclick="closeModal('pauseShopModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-    <div id="pauseShopName" style="font-weight:700;margin-bottom:10px;font-size:14px"></div>
-    <div class="fg" style="margin-bottom:12px"><label>Message to show the shop owner</label><textarea id="pause-msg" rows="3" placeholder="Your subscription has expired. Contact us to reactivate."></textarea></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-s" onclick="closeModal('pauseShopModal')">Cancel</button><button class="btn btn-d" onclick="confirmPauseShop()">Pause Shop</button></div>
-  </div>
-</div>
 
 <!-- Install banner -->
 <div class="install-banner" id="installBanner">
@@ -1008,7 +988,10 @@ if (typeof firebase === 'undefined') {
 }
 
 // ── CONSTANTS ─────────────────────────────────────────
-const SUPER_ADMIN_EMAIL = 'kennedymbora@gmail.com';
+// Super admin no longer lives here — all admin capability moved to the
+// dedicated Admin app (krystal-admin.html), gated by the admins/{uid}
+// Firestore collection. This app treats every account as owner/cashier
+// only.
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAmLQTWmrdpCzOdeHf1v8aXZ0sROLYdMTE",
   authDomain: "krystal-enterprise.firebaseapp.com",
@@ -1033,7 +1016,7 @@ const S = {
   userDoc:null,   // Firestore user profile doc
   shopCode:'',
   shopDoc:null,   // Firestore shop info doc
-  role:'cashier', // 'owner' | 'cashier' | 'superadmin'
+  role:'cashier', // 'owner' | 'cashier'
   unsubs:[],      // Firestore listener unsubscribers
   localPrefs:{    // Stored in localStorage, not Firestore
     light:false, accent:'#00d4aa',
@@ -1057,10 +1040,7 @@ function handleLogoTap() {
   _tapTimer = setTimeout(() => { _tapCount = 0; }, 600);
   if (_tapCount >= 3) {
     _tapCount = 0;
-    if (S.role === 'superadmin') {
-      showPage('admin');
-      closeSidebar();
-    }
+    // Admin access lives in the separate Admin app now — nothing to do here.
   }
 }
 
@@ -1093,22 +1073,6 @@ async function bootUser(user) {
     }
   }, 6000);
   try {
-    // Super admin — bypass all shop logic
-    if (user.email === SUPER_ADMIN_EMAIL) {
-      S.role = 'superadmin';
-      S.shopCode = 'ADMIN';
-      applyLocalPrefs();
-      clearTimeout(bootTimeout);
-      showApp();
-      buildSidebar();
-      updateSidebarUser({ name: 'Kennedy Mbora', role: 'superadmin', email: user.email });
-      document.getElementById('sbShopName').textContent = 'Admin Panel';
-      document.getElementById('sbShopLocation').textContent = 'Super Admin';
-      document.getElementById('syncPill').style.display = 'none';
-      showPage('admin');
-      return;
-    }
-
     // Step 1: Look up which shop this user belongs to
     showLoading('Finding your shop…');
     const userShopSnap = await db.collection('userShops').doc(user.uid).get();
@@ -1213,6 +1177,7 @@ async function acceptInvite(inviteId, invite, user, name) {
   batch.set(db.collection('userShops').doc(user.uid), { shopCode, role, updatedAt: Date.now() });
   batch.update(db.collection('invites').doc(inviteId), { status: 'accepted' });
   await batch.commit();
+  toast('Joined the shop — set up your PIN to continue');
   await bootUser(user);
 }
 
@@ -1410,12 +1375,6 @@ async function doCreateShop() {
     });
     await withTimeout(batch.commit(), 20000, 'Timed out setting up your shop — check your connection and try again');
 
-    // Drop any stale anonymous network identity this device might be
-    // carrying from a previously created/joined shop, so the new shop
-    // gets its own fresh uid instead of trying to reassign an old one
-    // (which the rules correctly refuse — one device identity per shop).
-    if (auth.currentUser) await auth.signOut().catch(()=>{});
-
     // No demo/test inventory is seeded — every new shop starts empty.
     // Owners add their own stock, then use "Sync All My Stock" on the
     // Order Stock page to send it to the network catalogue, where the
@@ -1423,6 +1382,7 @@ async function doCreateShop() {
 
     // All writes done — now safe to boot the user
     _creatingShop = false;
+    toast('Shop created — set up your PIN to continue');
     await bootUser(user);
 
   } catch(e) {
@@ -1760,11 +1720,9 @@ function teardownListeners() {
 // ── NAVIGATION ────────────────────────────────────────
 const OWNER_PAGES  = ['dashboard','stock','sales','reports','orderstock','staff','settings'];
 const CASHIER_PAGES = ['dashboard','sales'];
-const ADMIN_PAGES  = ['admin','settings'];
 
 function showPage(id) {
-  const allowed = S.role === 'superadmin' ? ADMIN_PAGES :
-                  S.role === 'owner'      ? OWNER_PAGES : CASHIER_PAGES;
+  const allowed = S.role === 'owner' ? OWNER_PAGES : CASHIER_PAGES;
   if (!allowed.includes(id)) id = allowed[0];
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('pg-' + id)?.classList.add('active');
@@ -1777,16 +1735,12 @@ function showPage(id) {
     sales:() => { renderPOS(); renderHist(); },
     reports:renderReports,
     orderstock:renderOrderStock,
-    staff:renderStaff, settings:renderSettings,
-    admin:loadAdminShops})[id]?.();
+    staff:renderStaff, settings:renderSettings})[id]?.();
 }
 
 function buildSidebar() {
   const nav = document.getElementById('sbNav');
-  const pages = S.role === 'superadmin' ? [
-    {page:'admin',   icon:svgAdmin(),   label:'Admin Dashboard'},
-    {page:'settings',icon:svgSettings(),label:'Settings'},
-  ] : S.role === 'owner' ? [
+  const pages = S.role === 'owner' ? [
     {page:'dashboard', icon:svgDash(),      label:'Dashboard'},
     {page:'stock',     icon:svgStock(),     label:'Inventory'},
     {page:'sales',     icon:svgSales(),     label:'Sales / POS'},
@@ -1809,8 +1763,7 @@ function updateSidebarUser(userDoc) {
   const name = userDoc.name || userDoc.email || '?';
   document.getElementById('sbAv').textContent = name.charAt(0).toUpperCase();
   document.getElementById('sbUname').textContent = name;
-  document.getElementById('sbUrole').textContent = userDoc.role === 'superadmin' ? 'Super Admin' :
-    userDoc.role === 'owner' ? 'Owner' : 'Cashier';
+  document.getElementById('sbUrole').textContent = userDoc.role === 'owner' ? 'Owner' : 'Cashier';
 }
 
 function toggleSidebar() {
@@ -2417,7 +2370,7 @@ function renderMonthly() {
 // request.auth.uid -> shopUsers -> shopCode instead of taking the client's
 // word for it.
 async function ensureNetworkIdentity() {
-  if (!S.shopCode || S.role === 'superadmin') return;
+  if (!S.shopCode) return;
   try {
     if (!auth.currentUser) await auth.signInAnonymously();
     const uid = auth.currentUser.uid;
@@ -2840,7 +2793,7 @@ function renderSettings() {
   document.getElementById('s-dead').value = p.deadDays||30;
   document.querySelectorAll('.cdot').forEach(d=>d.classList.toggle('active',d.style.background===p.accent));
   document.getElementById('settingsEmail').textContent = S.user?.email||'—';
-  document.getElementById('settingsRole').textContent = S.role==='superadmin'?'Super Admin':S.role==='owner'?'Owner':'Cashier';
+  document.getElementById('settingsRole').textContent = S.role==='owner'?'Owner':'Cashier';
   document.getElementById('settingsShopCode').textContent = S.shopCode||'—';
   updateOfflineStatus();
 }
@@ -2936,67 +2889,15 @@ function shareApp() {
   }
 }
 
-// ── ADMIN PANEL (super-admin only) ───────────────────
-let _pausingShopCode = '';
-async function loadAdminShops() {
-  if (S.role !== 'superadmin') return;
-  const el = document.getElementById('adminShopList');
-  el.innerHTML = '<div style="color:var(--tx2);font-size:12px">Loading…</div>';
-  try {
-    const snap = await db.collection('shopRegistry').orderBy('createdAt','desc').get();
-    if (snap.empty) { el.innerHTML='<div class="empty"><div>No shops registered yet</div></div>'; return; }
-    el.innerHTML = snap.docs.map(d => {
-      const sh = d.data();
-      const paused = sh.status === 'paused';
-      return `<div class="admin-shop-card">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-          <div>
-            <div class="admin-shop-name">${sh.shopName||sh.shopCode}</div>
-            <div class="admin-shop-meta">${sh.ownerEmail} · Code: ${sh.shopCode}</div>
-            <div class="admin-shop-meta">${new Date(sh.createdAt||0).toLocaleDateString('en-GB')}</div>
-          </div>
-          <span class="status-badge ${paused?'status-paused':'status-active'}">${paused?'Paused':'Active'}</span>
-        </div>
-        <div style="display:flex;gap:7px">
-          ${paused
-            ? `<button class="btn btn-p btn-sm btn-full" onclick="resumeShop('${sh.shopCode}')">Resume Shop</button>`
-            : `<button class="btn btn-w btn-sm btn-full" onclick="openPauseShop('${sh.shopCode}','${(sh.shopName||'').replace(/'/g,'')}')">Pause Shop</button>`}
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    el.innerHTML = `<div style="color:var(--re);font-size:12px">Error: ${e.message}</div>`;
-  }
-}
-
-function openPauseShop(code, name) {
-  _pausingShopCode = code;
-  document.getElementById('pauseShopName').textContent = name || code;
-  document.getElementById('pause-msg').value = 'Your subscription has expired. Please contact us to reactivate your account.';
-  openModal('pauseShopModal');
-}
-
-async function confirmPauseShop() {
-  const msg = document.getElementById('pause-msg').value.trim() || 'Your account has been paused. Contact us to reactivate.';
-  await db.collection('shopRegistry').doc(_pausingShopCode).update({ status:'paused', pauseMessage:msg });
-  closeModal('pauseShopModal');
-  toast('Shop paused');
-  loadAdminShops();
-}
-
-async function resumeShop(code) {
-  if (!(await customConfirm('This shop will become accessible to its staff again.', {title:'Resume this shop?'}))) return;
-  await db.collection('shopRegistry').doc(code).update({ status:'active', pauseMessage:'' });
-  toast('Shop resumed');
-  loadAdminShops();
-}
+// Pausing/resuming shops is now handled entirely by the Admin app
+// (krystal-admin.html), gated by admins/{uid} — not by a hardcoded email
+// or client-side role in this file.
 
 // ── CLOUD STATUS ─────────────────────────────────────
 function updateCloudStatus(state) {
   const pill  = document.getElementById('syncPill');
   const dot   = document.getElementById('syncDot');
   const label = document.getElementById('syncLabel');
-  if (S.role === 'superadmin') { if(pill) pill.style.display='none'; return; }
   if (pill) pill.style.display = 'flex';
   const map = {online:['online','Synced'],syncing:['syncing','Syncing…'],offline:['offline','Offline']};
   const [cls,text] = map[state]||map.offline;
@@ -3016,7 +2917,7 @@ function refreshPage() {
   const active = document.querySelector('.page.active');
   if (!active) return;
   const id = active.id.replace('pg-','');
-  ({dashboard:renderDash,stock:renderStock,sales:()=>{renderPOS();renderHist();},reports:renderReports,staff:renderStaff,settings:renderSettings,admin:loadAdminShops})[id]?.();
+  ({dashboard:renderDash,stock:renderStock,sales:()=>{renderPOS();renderHist();},reports:renderReports,staff:renderStaff,settings:renderSettings})[id]?.();
 }
 function genShopCode(shopName) {
   const chars='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
