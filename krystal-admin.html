@@ -823,6 +823,12 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
   </div>
 </div>
 
+<div class="install-banner" id="updateBanner">
+  <div style="flex:1"><div style="font-size:13px;font-weight:700">Update Available</div><div style="font-size:10px;color:var(--tx2)" id="updateBannerSub">A newer version is ready</div></div>
+  <button class="btn btn-s btn-sm" onclick="dismissUpdateBanner()">Later</button>
+  <button class="btn btn-p btn-sm" onclick="viewUpdateFromBanner()">View</button>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -872,30 +878,59 @@ function compareVersions(a, b){
   }
   return 0;
 }
-async function checkForUpdates(){
+let _pendingUpdate = null; // holds the release info while the banner is showing
+
+async function checkForUpdates(silent){
   const btn = document.getElementById('updateCheckBtn');
-  btn.disabled = true; btn.textContent = 'Checking…';
+  if (!silent && btn){ btn.disabled = true; btn.textContent = 'Checking…'; }
   try {
     if (UPDATE_REPO.owner === 'YOUR_GITHUB_USERNAME') {
-      toast('Set UPDATE_REPO in the code first — see the TODO comment');
+      if (!silent) toast('Set UPDATE_REPO in the code first — see the TODO comment');
       return;
     }
     const res = await fetch(`https://api.github.com/repos/${UPDATE_REPO.owner}/${UPDATE_REPO.name}/releases/latest`);
     if (!res.ok) throw new Error('Could not reach the update server');
     const rel = await res.json();
     if (compareVersions(rel.tag_name, CURRENT_VERSION) > 0){
+      _pendingUpdate = rel;
       document.getElementById('updateVersionLine').textContent = `${CURRENT_VERSION} → ${rel.tag_name}`;
       document.getElementById('updateNotes').textContent = rel.body || 'No release notes provided.';
       document.getElementById('updateDownloadBtn').href = (rel.assets && rel.assets[0]?.browser_download_url) || rel.html_url;
-      openModal('updateModal');
-    } else {
+      if (silent) showUpdateBanner(rel.tag_name); else openModal('updateModal');
+    } else if (!silent) {
       toast("You're using the latest version.");
     }
+    localStorage.setItem('lastUpdateCheck', String(Date.now()));
   } catch(e) {
-    toast('Update check failed: ' + e.message);
+    if (!silent) toast('Update check failed: ' + e.message);
   } finally {
-    btn.disabled = false; btn.textContent = 'Check for Updates';
+    if (!silent && btn){ btn.disabled = false; btn.textContent = 'Check for Updates'; }
   }
+}
+
+// ---- Auto update: silent background checks + non-intrusive banner ----
+function showUpdateBanner(tag){
+  document.getElementById('updateBannerSub').textContent = tag ? `Version ${tag} is ready` : 'A newer version is ready';
+  document.getElementById('updateBanner').classList.add('show');
+}
+function dismissUpdateBanner(){
+  document.getElementById('updateBanner').classList.remove('show');
+}
+function viewUpdateFromBanner(){
+  dismissUpdateBanner();
+  if (_pendingUpdate) openModal('updateModal'); else checkForUpdates(false);
+}
+const AUTO_UPDATE_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
+function initAutoUpdateChecks(){
+  const last = parseInt(localStorage.getItem('lastUpdateCheck') || '0', 10);
+  const dueNow = Date.now() - last > AUTO_UPDATE_INTERVAL;
+  setTimeout(() => checkForUpdates(true), dueNow ? 3000 : Math.max(3000, AUTO_UPDATE_INTERVAL - (Date.now() - last)));
+  setInterval(() => checkForUpdates(true), AUTO_UPDATE_INTERVAL);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    const l = parseInt(localStorage.getItem('lastUpdateCheck') || '0', 10);
+    if (Date.now() - l > AUTO_UPDATE_INTERVAL) checkForUpdates(true);
+  });
 }
 
 // ---- Auth / admin gate ----
@@ -932,6 +967,7 @@ auth.onAuthStateChanged(async user=>{
     document.getElementById('setAdminEmail').textContent = user.email;
     loadAll();
     showPage('stock');
+    initAutoUpdateChecks();
   });
 });
 
