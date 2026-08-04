@@ -634,8 +634,8 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
     </div>
     <div class="card">
       <div class="card-title" style="font-size:10px;text-transform:uppercase;color:var(--tx2);margin-bottom:8px">App version</div>
-      <div class="srow"><div>Current version</div><div id="setAppVersion" style="color:var(--tx2);font-size:12px">v1.0.0</div></div>
-      <button class="btn btn-s btn-full" onclick="checkForUpdates()" id="updateCheckBtn">Check for Updates</button>
+      <div class="srow"><div>Updates</div><div style="color:var(--tx2);font-size:12px">Applied automatically</div></div>
+      <button class="btn btn-s btn-full" onclick="checkForUpdates()" id="updateCheckBtn">Check Now</button>
     </div>
     <div class="card">
       <div class="card-title" style="font-size:10px;text-transform:uppercase;color:var(--tx2);margin-bottom:8px">Danger zone</div>
@@ -686,19 +686,6 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
     <div style="display:flex;gap:8px">
       <button class="btn btn-s btn-full" onclick="closeModal('pauseShopModal')">Cancel</button>
       <button class="btn btn-d btn-full" id="pauseConfirmBtn" onclick="confirmPauseShop()">Pause Shop</button>
-    </div>
-  </div>
-</div>
-
-<!-- Update Available Modal -->
-<div class="overlay" id="updateModal">
-  <div class="sheet">
-    <div class="sheet-hdr"><div class="sheet-title" id="updateModalTitle">Update Available</div><button onclick="closeModal('updateModal')">✕</button></div>
-    <div style="font-size:12px;color:var(--tx2);margin-bottom:6px" id="updateVersionLine"></div>
-    <div style="font-size:12px;white-space:pre-wrap;max-height:240px;overflow-y:auto;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:12px" id="updateNotes"></div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-s btn-full" onclick="closeModal('updateModal')">Later</button>
-      <a class="btn btn-p btn-full" id="updateDownloadBtn" href="#" target="_blank" style="text-align:center;text-decoration:none">Download</a>
     </div>
   </div>
 </div>
@@ -862,75 +849,60 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
 function openModal(id){ document.getElementById(id).classList.add('show'); }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 
-// ---- Update checker ----
-// TODO: point this at your real GitHub repo (owner/name) and keep
-// CURRENT_VERSION in sync with each release's tag (e.g. "v1.2.0").
-const UPDATE_REPO = { owner: 'YOUR_GITHUB_USERNAME', name: 'YOUR_REPO_NAME' };
-const CURRENT_VERSION = 'v1.0.0';
-document.getElementById('setAppVersion') && (document.getElementById('setAppVersion').textContent = CURRENT_VERSION);
-function compareVersions(a, b){
-  // Strips a leading "v" and compares dot-separated numeric parts.
-  const pa = a.replace(/^v/i,'').split('.').map(n=>parseInt(n,10)||0);
-  const pb = b.replace(/^v/i,'').split('.').map(n=>parseInt(n,10)||0);
-  for (let i=0;i<Math.max(pa.length,pb.length);i++){
-    const x=pa[i]||0, y=pb[i]||0;
-    if (x!==y) return x-y;
-  }
-  return 0;
-}
-let _pendingUpdate = null; // holds the release info while the banner is showing
+// ---- Auto-update: watches the service worker for a fresh deploy and ----
+// ---- applies it automatically — no version numbers or GitHub API needed. ----
+let _swReg = null;
+let _reloadedForUpdate = false;
 
-async function checkForUpdates(silent){
-  const btn = document.getElementById('updateCheckBtn');
-  if (!silent && btn){ btn.disabled = true; btn.textContent = 'Checking…'; }
-  try {
-    if (UPDATE_REPO.owner === 'YOUR_GITHUB_USERNAME') {
-      if (!silent) toast('Set UPDATE_REPO in the code first — see the TODO comment');
-      return;
-    }
-    const res = await fetch(`https://api.github.com/repos/${UPDATE_REPO.owner}/${UPDATE_REPO.name}/releases/latest`);
-    if (!res.ok) throw new Error('Could not reach the update server');
-    const rel = await res.json();
-    if (compareVersions(rel.tag_name, CURRENT_VERSION) > 0){
-      _pendingUpdate = rel;
-      document.getElementById('updateVersionLine').textContent = `${CURRENT_VERSION} → ${rel.tag_name}`;
-      document.getElementById('updateNotes').textContent = rel.body || 'No release notes provided.';
-      document.getElementById('updateDownloadBtn').href = (rel.assets && rel.assets[0]?.browser_download_url) || rel.html_url;
-      if (silent) showUpdateBanner(rel.tag_name); else openModal('updateModal');
-    } else if (!silent) {
-      toast("You're using the latest version.");
-    }
-    localStorage.setItem('lastUpdateCheck', String(Date.now()));
-  } catch(e) {
-    if (!silent) toast('Update check failed: ' + e.message);
-  } finally {
-    if (!silent && btn){ btn.disabled = false; btn.textContent = 'Check for Updates'; }
-  }
-}
-
-// ---- Auto update: silent background checks + non-intrusive banner ----
-function showUpdateBanner(tag){
-  document.getElementById('updateBannerSub').textContent = tag ? `Version ${tag} is ready` : 'A newer version is ready';
+function showUpdateBanner(){
+  document.getElementById('updateBannerSub').textContent = 'A newer version is ready';
   document.getElementById('updateBanner').classList.add('show');
 }
 function dismissUpdateBanner(){
   document.getElementById('updateBanner').classList.remove('show');
 }
-function viewUpdateFromBanner(){
-  dismissUpdateBanner();
-  if (_pendingUpdate) openModal('updateModal'); else checkForUpdates(false);
+function applyUpdateNow(){
+  if (_swReg && _swReg.waiting){
+    _swReg.waiting.postMessage('SKIP_WAITING');
+  } else {
+    location.reload();
+  }
 }
-const AUTO_UPDATE_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
-function initAutoUpdateChecks(){
-  const last = parseInt(localStorage.getItem('lastUpdateCheck') || '0', 10);
-  const dueNow = Date.now() - last > AUTO_UPDATE_INTERVAL;
-  setTimeout(() => checkForUpdates(true), dueNow ? 3000 : Math.max(3000, AUTO_UPDATE_INTERVAL - (Date.now() - last)));
-  setInterval(() => checkForUpdates(true), AUTO_UPDATE_INTERVAL);
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState !== 'visible') return;
-    const l = parseInt(localStorage.getItem('lastUpdateCheck') || '0', 10);
-    if (Date.now() - l > AUTO_UPDATE_INTERVAL) checkForUpdates(true);
+function viewUpdateFromBanner(){
+  applyUpdateNow();
+}
+
+function watchForUpdates(reg){
+  _swReg = reg;
+  if (reg.waiting) showUpdateBanner(); // a new version was already waiting when this tab opened
+  reg.addEventListener('updatefound', () => {
+    const sw = reg.installing;
+    if (!sw) return;
+    sw.addEventListener('statechange', () => {
+      if (sw.state === 'installed' && navigator.serviceWorker.controller){
+        showUpdateBanner();
+        applyUpdateNow(); // tell it to activate straight away, no click needed
+      }
+    });
   });
+  // Ask the browser to re-check admin-sw.js against what's on GitHub Pages
+  setInterval(() => reg.update(), 60 * 1000); // every minute
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update(); });
+  window.addEventListener('online', () => reg.update());
+}
+// Once the new service worker takes control, reload so the fresh files load
+navigator.serviceWorker && navigator.serviceWorker.addEventListener('controllerchange', () => {
+  if (_reloadedForUpdate) return;
+  _reloadedForUpdate = true;
+  location.reload();
+});
+
+function checkForUpdates(silent){
+  if (_swReg){
+    _swReg.update().then(() => { if (!silent) toast('Checked — updates apply automatically when found.'); });
+  } else if (!silent) {
+    toast('Update checking is not available right now.');
+  }
 }
 
 // ---- Auth / admin gate ----
@@ -967,7 +939,6 @@ auth.onAuthStateChanged(async user=>{
     document.getElementById('setAdminEmail').textContent = user.email;
     loadAll();
     showPage('stock');
-    initAutoUpdateChecks();
   });
 });
 
@@ -1977,7 +1948,9 @@ function initPinActivityWatch(){
 initPinActivityWatch();
 
 if ('serviceWorker' in navigator && location.protocol==='https:') {
-  navigator.serviceWorker.register('./admin-sw.js').catch(e=>console.warn('SW:', e.message));
+  navigator.serviceWorker.register('./admin-sw.js')
+    .then(watchForUpdates)
+    .catch(e=>console.warn('SW:', e.message));
 }
 </script>
 </body>
