@@ -468,8 +468,6 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
       <div class="sb-item" data-p="stock" onclick="showPage('stock')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><line x1="12" y1="12" x2="12" y2="19"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Stock</div>
       <div class="sb-item" data-p="orders" onclick="showPage('orders')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Orders</div>
       <div class="sb-item" data-p="suppliers" onclick="showPage('suppliers')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="7" width="15" height="12"/><path d="M16 10h4l3 3v6h-7"/><circle cx="6.5" cy="19.5" r="2"/><circle cx="18.5" cy="19.5" r="2"/></svg>Suppliers</div>
-      <div class="sb-item" data-p="requests" onclick="showPage('requests')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Stock Requests</div>
-      <div class="sb-item" data-p="delivery" onclick="showPage('delivery')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Delivery</div>
       <div class="sb-item" data-p="payment" onclick="showPage('payment')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Payments</div>
       <div class="sb-item" data-p="share" onclick="showPage('share')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share Apps</div>
       <div class="sb-item" data-p="settings" onclick="showPage('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</div>
@@ -508,9 +506,8 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
   <div class="page" id="pg-orders">
     <div class="sec-head"><div class="sec-title">Orders</div></div>
     <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-      <button class="btn btn-s btn-sm active" id="ordViewBy" onclick="setOrdView('shop')">By Shop</button>
+      <button class="btn btn-s btn-sm active" id="ordViewBy" onclick="setOrdView('shop')">Orders</button>
       <button class="btn btn-s btn-sm" id="ordViewCombined" onclick="setOrdView('combined')">Combined</button>
-      <button class="btn btn-s btn-sm" id="ordViewAssign" onclick="setOrdView('assignments')">Assignments</button>
     </div>
     <div id="ordersWrap"><div class="empty">Loading orders…</div></div>
   </div>
@@ -518,26 +515,9 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
   <!-- SUPPLIERS -->
   <div class="page" id="pg-suppliers">
     <div class="sec-head"><div class="sec-title">Suppliers</div>
-      <div style="display:flex;gap:6px">
-        <button class="btn btn-p btn-sm" onclick="openDirectOrderModal()">+ Order Stock</button>
-        <button class="btn btn-s btn-sm" onclick="openModal('addSupplierModal')">+ Add Supplier</button>
-      </div>
+      <button class="btn btn-s btn-sm" onclick="openModal('addSupplierModal')">+ Add Supplier</button>
     </div>
     <div class="card" id="suppliersList"><div class="empty">Loading suppliers…</div></div>
-  </div>
-
-  <!-- STOCK REQUESTS -->
-  <div class="page" id="pg-requests">
-    <div class="sec-head"><div class="sec-title">Stock Requests</div></div>
-    <div style="font-size:11px;color:var(--tx2);margin-bottom:10px">A shop hit low stock and asked for a product — price it yourself or forward it to a supplier to confirm.</div>
-    <div class="card" id="requestsList"><div class="empty">Loading…</div></div>
-  </div>
-
-  <!-- DELIVERY -->
-  <div class="page" id="pg-delivery">
-    <div class="sec-head"><div class="sec-title">Delivery</div></div>
-    <div style="font-size:11px;color:var(--tx2);margin-bottom:10px">Live progress on everything assigned to a supplier.</div>
-    <div id="deliveryWrap"><div class="empty">Loading…</div></div>
   </div>
 
   <!-- PAYMENTS (ledger) -->
@@ -729,16 +709,6 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
   </div>
 </div>
 
-<!-- Review order modal -->
-<div class="overlay" id="reviewModal">
-  <div class="sheet">
-    <div class="sheet-hdr"><div class="sheet-title" id="reviewTitle">Confirm Order</div><button onclick="closeModal('reviewModal')">✕</button></div>
-    <div style="font-size:11px;color:var(--tx2);margin-bottom:10px">Uncheck or adjust quantity for anything you can't fulfill — the rest goes to invoice.</div>
-    <div id="reviewItemsWrap" class="stack" style="margin-bottom:10px"></div>
-    <button class="btn btn-p btn-full" onclick="saveReview()">Save Review</button>
-  </div>
-</div>
-
 <!-- Add Supplier Modal -->
 <div class="overlay" id="addSupplierModal">
   <div class="sheet">
@@ -757,70 +727,12 @@ input.inline,select.inline{background:var(--sf2);border:1px solid var(--bd);bord
   </div>
 </div>
 
-<!-- Assign to Supplier Modal -->
-<div class="overlay" id="assignModal">
+<!-- Order Receipt -->
+<div class="overlay" id="orderReceiptModal">
   <div class="sheet">
-    <div class="sheet-hdr"><div class="sheet-title" id="assignTitle">Assign Product</div><button onclick="closeModal('assignModal')">✕</button></div>
-    <div class="stack">
-      <div class="field"><label>Supplier</label>
-        <select id="assignSupplier" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px"></select>
-      </div>
-      <div class="field"><label>Quantity</label><input id="assignQty" type="number"></div>
-      <button class="btn btn-p btn-full" onclick="createAssignment()">Assign</button>
-    </div>
-  </div>
-</div>
-
-<!-- Direct Order to Supplier (not tied to any shop order) -->
-<div class="overlay" id="directOrderModal">
-  <div class="sheet">
-    <div class="sheet-hdr"><div class="sheet-title">Order from Supplier</div><button onclick="closeModal('directOrderModal')">✕</button></div>
-    <div style="font-size:11px;color:var(--tx2);margin-bottom:10px">Restock directly with a supplier — independent of any shop order.</div>
-    <div class="field"><label>Supplier</label>
-      <select id="doSupplier" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px"></select>
-    </div>
-    <div style="display:flex;gap:6px;align-items:flex-end;margin-bottom:6px">
-      <div class="field" style="flex:2;margin-bottom:0"><label>Product</label>
-        <select id="doProduct" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px"></select>
-      </div>
-      <div class="field" style="flex:1;margin-bottom:0"><label>Qty</label><input id="doQty" type="number" min="1"></div>
-      <button class="btn btn-s btn-sm" style="flex-shrink:0" onclick="addSupCart()">Add</button>
-    </div>
-    <div class="cart-body" id="supCartBody"></div>
-    <div class="cart-ftr" style="padding:11px 0 0;border-top:1px solid var(--bd)">
-      <div class="cart-total-row"><span>Total</span><span id="supCartTotal">KSh 0</span></div>
-      <div style="display:flex;gap:7px"><button class="btn btn-d btn-sm" onclick="clearSupCart()">Clear</button><button class="btn btn-p btn-full" onclick="submitDirectOrder()">Place Order</button></div>
-    </div>
-  </div>
-</div>
-
-<!-- Purchase Order Receipt -->
-<div class="overlay" id="poReceiptModal">
-  <div class="sheet">
-    <div class="sheet-hdr"><div class="sheet-title">Receipt</div><button onclick="closeModal('poReceiptModal')">✕</button></div>
-    <div id="poReceiptBody"></div>
-    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end"><button class="btn btn-s" onclick="closeModal('poReceiptModal')">Close</button><button class="btn btn-p" onclick="window.print()">Print</button></div>
-  </div>
-</div>
-
-<!-- Price / forward a stock request -->
-<div class="overlay" id="reqModal">
-  <div class="sheet">
-    <div class="sheet-hdr"><div class="sheet-title" id="reqTitle">Respond to Request</div><button onclick="closeModal('reqModal')">✕</button></div>
-    <div id="reqMatchHint" style="display:none;font-size:11px;color:var(--gr);background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:8px;padding:8px;margin-bottom:10px"></div>
-    <div id="reqSupplierReview" style="display:none;font-size:11px;color:var(--tx2);background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px;margin-bottom:10px">
-      <div id="reqSupplierPriceLine" style="font-weight:700;color:var(--tx);margin-bottom:2px"></div>
-      Review and adjust below, then confirm to send this price to the shop.
-    </div>
-    <div class="stack">
-      <div class="field"><label>Price per unit (KSh)</label><input id="reqPrice" type="number"></div>
-      <button class="btn btn-p btn-full" onclick="priceRequestDirect()">Confirm Price Myself</button>
-      <div style="text-align:center;font-size:10px;color:var(--tx2);margin:2px 0">— or —</div>
-      <div class="field"><label>Forward to supplier for pricing</label>
-        <select id="reqSupplier" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px"></select>
-      </div>
-      <button class="btn btn-s btn-full" onclick="forwardRequest()">Forward to Supplier</button>
-    </div>
+    <div class="sheet-hdr"><div class="sheet-title">Receipt</div><button onclick="closeModal('orderReceiptModal')">✕</button></div>
+    <div id="orderReceiptBody"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end"><button class="btn btn-s" onclick="closeModal('orderReceiptModal')">Close</button><button class="btn btn-p" onclick="window.print()">Print</button></div>
   </div>
 </div>
 
@@ -857,7 +769,7 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 // back online. synchronizeTabs lets multiple open tabs share one cache.
 try { db.enablePersistence({ synchronizeTabs: true }); } catch(e) {}
 
-const S = { shops:[], catalogue:[], orders:[], suppliers:[], assignments:[], requests:[], invoices:[], supCart:[], ordView:'shop', invoiceCtx:null, assignCtx:null, stockCat:'All' };
+const S = { shops:[], catalogue:[], orders:[], suppliers:[], ordView:'shop', stockCat:'All' };
 const fmt = n => Math.round(n||0).toLocaleString();
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
 function openModal(id){ document.getElementById(id).classList.add('show'); }
@@ -1010,7 +922,9 @@ function copyShareLink(which){
 async function loadAll(){
   updateSyncStatus('syncing');
   try {
-    await Promise.all([loadShops(), loadCatalogue(), loadOrders(), loadPaymentMethod(), loadSuppliers(), loadAssignments(), loadRequests(), loadInvoices()]);
+    await Promise.all([loadShops(), loadCatalogue(), loadOrders(), loadPaymentMethod(), loadSuppliers()]);
+    renderOrders(); // combined-by-supplier view needs catalogue+suppliers, which may have loaded after orders did
+    renderPaymentsLedger();
     initShareLinks();
     updateSyncStatus(navigator.onLine ? 'synced' : 'offline');
   } catch(e) {
@@ -1157,26 +1071,7 @@ async function deleteSupplier(id){
   loadSuppliers();
 }
 
-// ---- STOCK REQUESTS (from a shop's Low Stock → Order tap) ----
-async function loadRequests(){
-  const snap = await db.collection('stockRequests').orderBy('createdAt','desc').get();
-  S.requests = snap.docs.map(d=>({id:d.id, ...d.data()}));
-  renderRequests();
-}
-function renderRequests(){
-  const el = document.getElementById('requestsList');
-  const active = S.requests.filter(r => !['Ordered','Declined'].includes(r.status));
-  if (!active.length){ el.innerHTML = '<div class="empty">No open stock requests.</div>'; return; }
-  el.innerHTML = active.map(r=>`<div class="srow">
-    <div><div style="font-weight:700;font-size:12px">${r.productName} ×${r.qty}</div>
-    <div style="font-size:10px;color:var(--tx2)">${r.shopName||r.shopCode}${r.status==='Priced'?' · offered KSh '+fmt(r.proposedPrice):''}</div></div>
-    <div style="text-align:right">
-      ${r.status==='Priced' ? `<span class="pill pill-ac">Awaiting shop</span>`
-        : r.status==='SupplierPriced' ? `<button class="btn btn-p btn-sm" onclick="openReqModal('${r.id}')">Review supplier price</button>`
-        : r.status==='Forwarded' ? `<span class="pill pill-wa">Sent to ${r.forwardedToName}</span>`
-        : `<button class="btn btn-s btn-sm" onclick="openReqModal('${r.id}')">Respond</button>`}
-    </div></div>`).join('');
-}
+// ---- STOCK ----
 function normalizeProductName(name){
   return (name||'').toLowerCase().replace(/[^a-z0-9\s]/g,'').split(/\s+/).filter(Boolean);
 }
@@ -1200,56 +1095,6 @@ function findCatalogueMatch(name){
   });
   return bestScore >= 0.6 ? best : null;
 }
-function openReqModal(id){
-  S.reqCtx = {id};
-  const r = S.requests.find(x=>x.id===id);
-  document.getElementById('reqTitle').textContent = 'Respond — '+r.productName+' ×'+r.qty;
-  document.getElementById('reqPrice').value = '';
-  const active = S.suppliers.filter(s=>s.status!=='pending');
-  document.getElementById('reqSupplier').innerHTML = '<option value="">Choose supplier…</option>' + active.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-
-  // Smarter stock requests: auto-fill from a matching catalogue product.
-  const matchEl = document.getElementById('reqMatchHint');
-  const match = findCatalogueMatch(r.productName);
-  if (match){
-    document.getElementById('reqPrice').value = match.buyPrice || '';
-    matchEl.style.display = 'block';
-    matchEl.textContent = `Matched existing product "${match.name}" — buy price KSh ${fmt(match.buyPrice)} auto-filled.`;
-  } else {
-    matchEl.style.display = 'none';
-  }
-
-  // Supplier-priced requests need admin review before the shop sees them.
-  const reviewRow = document.getElementById('reqSupplierReview');
-  if (r.status === 'SupplierPriced'){
-    reviewRow.style.display = 'block';
-    document.getElementById('reqSupplierPriceLine').textContent =
-      `${r.forwardedToName || 'Supplier'} priced this at KSh ${fmt(r.proposedPrice)}`;
-    document.getElementById('reqPrice').value = r.proposedPrice || '';
-  } else {
-    reviewRow.style.display = 'none';
-  }
-  openModal('reqModal');
-}
-async function priceRequestDirect(){
-  const price = parseFloat(document.getElementById('reqPrice').value)||0;
-  if (!price){ toast('Enter a price'); return; }
-  await db.collection('stockRequests').doc(S.reqCtx.id).update({status:'Priced', proposedPrice:price, pricedBy:'admin'});
-  closeModal('reqModal');
-  toast('Price sent to shop for approval');
-  loadRequests();
-}
-async function forwardRequest(){
-  const supplierId = document.getElementById('reqSupplier').value;
-  const sup = S.suppliers.find(s=>s.id===supplierId);
-  if (!supplierId){ toast('Pick a supplier'); return; }
-  await db.collection('stockRequests').doc(S.reqCtx.id).update({status:'Forwarded', forwardedTo:supplierId, forwardedToName:sup.name});
-  closeModal('reqModal');
-  toast('Forwarded to '+sup.name);
-  loadRequests();
-}
-
-// ---- STOCK ----
 async function loadCatalogue(){
   const snap = await db.collection('catalogue').orderBy('createdAt','desc').get();
   S.catalogue = snap.docs.map(d=>({id:d.id, ...d.data()}));
@@ -1305,7 +1150,6 @@ function renderStockTable(){
       <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap">
         ${p.supplierOfferPrice && p.supplierOfferPrice !== p.buyPrice ? `<button class="btn btn-p btn-sm" onclick="acceptSupplierOffer('${p.id}',${p.supplierOfferPrice})">Accept</button>` : ''}
         <button class="btn btn-s btn-sm" style="flex:1" onclick='openEditProduct(${JSON.stringify(p.id)})'>Edit</button>
-        <button class="btn btn-p btn-sm" style="flex:1" onclick='openDirectOrderModal(${JSON.stringify(p.id)})'>Order</button>
         <button class="btn btn-d btn-sm" onclick="deleteProduct('${p.id}')">Del</button>
       </div>
     </div>`;
@@ -1498,316 +1342,116 @@ async function runImportCatalogue(){
   }
 }
 
-// ---- ORDERS ----
+// ---- ORDERS (Placed → Paid → Fulfilled, or Declined) ----
 async function loadOrders(){
   const snap = await db.collection('orders').orderBy('createdAt','desc').get();
   S.orders = snap.docs.map(d=>({id:d.id, ...d.data()}));
   renderOrders();
+  renderPaymentsLedger();
 }
 function setOrdView(v){
   S.ordView = v;
   document.getElementById('ordViewBy').classList.toggle('active', v==='shop');
   document.getElementById('ordViewCombined').classList.toggle('active', v==='combined');
-  document.getElementById('ordViewAssign').classList.toggle('active', v==='assignments');
   renderOrders();
 }
-const ORDER_STEPS = ['Submitted','Confirmed','Invoiced','Paid','Ready','Fulfilled'];
 function statusPill(st){
-  if (st==='Declined') return `<span class="pill pill-re">Declined</span>`;
-  const map = {Submitted:'pill-wa', Confirmed:'pill-wa', Invoiced:'pill-ac', Paid:'pill-ac', Ready:'pill-ac', Fulfilled:'pill-ok'};
+  const map = {Placed:'pill-wa', Paid:'pill-ac', Fulfilled:'pill-ok', Declined:'pill-re'};
   return `<span class="pill ${map[st]||'pill-wa'}">${st}</span>`;
 }
-function assignStatusPill(st){
-  const map = {Assigned:'pill-wa', Confirmed:'pill-ac', Dispatched:'pill-ac', Delivered:'pill-ok'};
-  return `<span class="pill ${map[st]||'pill-wa'}">${st}</span>`;
-}
-// The action button(s) shown for an order depend entirely on its current
-// status — this is what keeps the pipeline from skipping a step. Supplier
-// progress (Assigned/Confirmed/Dispatched) is admin-only — a shop never
-// sees it, only "Ready" (store) or "Ready" (transit) once you decide.
 function orderActionsHtml(o){
   switch(o.status){
-    case 'Submitted': return `<button class="btn btn-s btn-sm" onclick="openReviewModal('${o.id}')">Confirm Order</button>`;
-    case 'Confirmed': return `<button class="btn btn-s btn-sm" onclick="sendInvoiceForOrder('${o.id}')">Send Invoice</button>`;
-    case 'Invoiced': return `<button class="btn btn-s btn-sm" onclick="markOrderPaid('${o.id}')">Mark Paid</button>`;
-    case 'Paid': return `<button class="btn btn-s btn-sm" onclick="dispatchDirect('${o.id}')">Ready at My Store</button>`;
-    case 'Ready': return `<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
-        ${o.deliveryRequested ? `<span style="font-size:10px;color:var(--wa);font-weight:700">🚚 Shop requested delivery</span>` : `<span style="font-size:10px;color:var(--tx2)">${o.fulfillMethod==='transit'?'In transit':'Ready for pickup'}</span>`}
-        <button class="btn btn-s btn-sm" onclick="markOrderDelivered('${o.id}')">Mark Fulfilled</button>
-      </div>`;
+    case 'Placed': return `<button class="btn btn-s btn-sm" onclick="markOrderPaid('${o.id}')">Mark Paid</button> <button class="btn btn-d btn-sm" onclick="declineOrder('${o.id}')">Decline</button>`;
+    case 'Paid': return `<button class="btn btn-s btn-sm" onclick="markOrderFulfilled('${o.id}')">Mark Fulfilled</button>`;
     default: return '';
   }
 }
 function renderOrders(){
   const wrap = document.getElementById('ordersWrap');
-  if (S.ordView==='assignments'){ renderAssignments(wrap); return; }
   if (!S.orders.length){ wrap.innerHTML = '<div class="empty">No orders submitted yet.</div>'; return; }
-  if (S.ordView==='shop'){
-    const byShop = {};
-    S.orders.forEach(o=>{ (byShop[o.shopCode]=byShop[o.shopCode]||[]).push(o); });
-    wrap.innerHTML = Object.entries(byShop).map(([code,list])=>`
-      <div class="card">
-        <div style="font-weight:800;font-size:13px;margin-bottom:6px">${list[0].shopName||code}</div>
-        ${list.map(o=>`<div class="srow"><div><div style="font-size:12px;font-weight:600">${o.items.map(i=>i.name+' ×'+i.qty).join(', ')}</div>
+  if (S.ordView==='combined'){ renderCombinedBySupplier(wrap); return; }
+  const byShop = {};
+  S.orders.forEach(o=>{ (byShop[o.shopCode]=byShop[o.shopCode]||[]).push(o); });
+  wrap.innerHTML = Object.entries(byShop).map(([code,list])=>`
+    <div class="card">
+      <div style="font-weight:800;font-size:13px;margin-bottom:6px">${list[0].shopName||code}</div>
+      ${list.map(o=>`<div class="srow" style="display:block;padding:9px 0">
+        <div style="display:flex;justify-content:space-between;gap:10px">
+          <div><div style="font-size:12px;font-weight:600">${o.items.map(i=>i.name+' ×'+i.qty).join(', ')}</div>
           <div style="font-size:10px;color:var(--tx2)">${new Date(o.createdAt).toLocaleDateString()}</div></div>
-          <div style="text-align:right">${statusPill(o.status)}<div style="font-size:11px;margin-top:3px">KSh ${fmt(o.total)}</div>
-          <div style="margin-top:5px">${orderActionsHtml(o)}</div></div></div>`).join('')}
-      </div>`).join('');
-  } else {
-    const agg = {};
-    S.orders.filter(o=>o.status==='Paid').forEach(o=>o.items.forEach(i=>{
-      agg[i.prodId] = agg[i.prodId] || {name:i.name, qty:0, byShop:[], orderIds:[]};
-      agg[i.prodId].qty += i.qty;
-      agg[i.prodId].byShop.push(`${i.qty}× ${o.shopName||o.shopCode}`);
-      agg[i.prodId].orderIds.push(o.id);
-    }));
-    const rows = Object.entries(agg);
-    wrap.innerHTML = rows.length ? `<div class="card"><div style="font-size:10px;color:var(--tx2);margin-bottom:8px">Paid orders, grouped by product — ready to send to a supplier</div>${rows.map(([prodId,r])=>`
-      <div class="srow"><div><div style="font-weight:700;font-size:12px">${r.name}</div>
-      <div style="font-size:10px;color:var(--tx2)">${r.byShop.join(' · ')}</div></div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <div style="font-weight:800;font-size:13px">${r.qty} units</div>
-        <button class="btn btn-s btn-sm" onclick='openAssignModal(${JSON.stringify(prodId)},${JSON.stringify(r.name)},${r.qty},${JSON.stringify(r.orderIds)})'>Assign to Supplier</button>
-      </div></div>`).join('')}</div>`
-      : '<div class="empty">Nothing paid and waiting on a supplier yet.</div>';
-  }
-}
-
-// ---- REVIEW (accept some or all of what a shop asked for) ----
-function openReviewModal(orderId){
-  const o = S.orders.find(x=>x.id===orderId); if (!o) return;
-  S.reviewCtx = {orderId};
-  document.getElementById('reviewTitle').textContent = 'Confirm — '+(o.shopName||o.shopCode);
-  document.getElementById('reviewItemsWrap').innerHTML = o.items.map((it,i)=>`
-    <div class="srow"><label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-      <input type="checkbox" class="chk rv-chk" data-idx="${i}" checked>${it.name} (requested ${it.qty})</label>
-      <input class="inline" type="number" value="${it.qty}" id="rvq-${i}" style="width:64px"></div>`).join('');
-  openModal('reviewModal');
-}
-async function saveReview(){
-  const o = S.orders.find(x=>x.id===S.reviewCtx.orderId); if (!o) return;
-  const accepted = [];
-  o.items.forEach((it,i)=>{
-    const chk = document.querySelector(`.rv-chk[data-idx="${i}"]`);
-    const qty = parseFloat(document.getElementById('rvq-'+i).value)||0;
-    if (chk.checked && qty>0) accepted.push({...it, qty});
-  });
-  const total = accepted.reduce((a,i)=>a+i.price*i.qty,0);
-  const status = accepted.length ? 'Confirmed' : 'Declined';
-  await db.collection('orders').doc(o.id).update({items:accepted, total, status});
-  closeModal('reviewModal');
-  toast(accepted.length ? 'Order reviewed — ready to invoice' : 'Order declined');
-  loadOrders();
-}
-
-// ---- INVOICE → PAID → DISPATCH → DELIVERED (per order) ----
-async function sendInvoiceForOrder(orderId){
-  const o = S.orders.find(x=>x.id===orderId); if (!o) return;
-  const invRef = await db.collection('invoices').add({
-    shopCode:o.shopCode, shopName:o.shopName, items:o.items, total:o.total,
-    status:'sent', orderId:o.id, createdAt: Date.now()
-  });
-  await db.collection('orders').doc(o.id).update({status:'Invoiced', invoiceId:invRef.id});
-  toast('Invoice sent to '+(o.shopName||o.shopCode));
-  loadOrders();
+          <div style="text-align:right">${statusPill(o.status)}<div style="font-size:11px;margin-top:3px">KSh ${fmt(o.total)}</div></div>
+        </div>
+        <div style="display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;justify-content:flex-end">
+          ${orderActionsHtml(o)}
+          ${['Paid','Fulfilled'].includes(o.status) ? `<button class="btn btn-s btn-sm" onclick="showOrderReceiptById('${o.id}')">Receipt</button>` : ''}
+        </div>
+      </div>`).join('')}
+    </div>`).join('');
 }
 async function markOrderPaid(orderId){
-  const o = S.orders.find(x=>x.id===orderId); if (!o) return;
-  await db.collection('orders').doc(o.id).update({status:'Paid'});
-  if (o.invoiceId) await db.collection('invoices').doc(o.invoiceId).update({status:'paid'});
+  await db.collection('orders').doc(orderId).update({status:'Paid'});
   toast('Marked paid');
   loadOrders();
 }
-async function dispatchDirect(orderId){
-  await db.collection('orders').doc(orderId).update({status:'Ready', fulfillMethod:'store'});
-  toast('Marked ready at your store');
-  loadOrders();
-}
-async function markOrderDelivered(orderId){
+async function markOrderFulfilled(orderId){
   await db.collection('orders').doc(orderId).update({status:'Fulfilled'});
   toast('Marked fulfilled ✓');
   loadOrders();
 }
-
-// ---- SUPPLIER ASSIGNMENTS (spans multiple shops' Paid orders) ----
-async function loadAssignments(){
-  const snap = await db.collection('assignments').orderBy('createdAt','desc').get();
-  S.assignments = snap.docs.map(d=>({id:d.id, ...d.data()}));
-  if (S.ordView==='assignments') renderOrders();
-  renderAssignments(document.getElementById('deliveryWrap'));
-}
-function renderAssignments(wrap){
-  if (!S.assignments.length){ wrap.innerHTML = '<div class="empty">No assignments yet — assign Paid orders to a supplier from the Combined view, or place a direct order from Suppliers.</div>'; return; }
-  const batched = {}, single = [];
-  S.assignments.forEach(a => { if (a.poId) (batched[a.poId] = batched[a.poId]||[]).push(a); else single.push(a); });
-  const batchCards = Object.entries(batched).map(([poId, lines]) => {
-    const total = lines.reduce((a,l)=>a+(l.buyPrice||0)*l.qty,0);
-    const paid = lines.every(l=>l.paymentStatus==='Paid');
-    return `<div class="srow">
-      <div><div style="font-weight:700;font-size:12px">${lines.map(l=>l.prodName+' ×'+l.qty).join(', ')}</div>
-      <div style="font-size:10px;color:var(--tx2)">${lines[0].supplierName} · KSh ${fmt(total)} · <span style="color:var(--ac3)">Direct order</span></div></div>
-      <div style="text-align:right">
-        <span class="pill ${paid?'pill-ok':'pill-wa'}" style="cursor:pointer" onclick="togglePoPayment('${poId}','${paid?'Paid':'Pending'}')">${paid?'Paid':'Pending'}</span>
-        <div style="margin-top:4px"><button class="btn btn-s btn-sm" onclick="showPoReceiptByPoId('${poId}')">Receipt</button></div>
-      </div></div>`;
-  });
-  const singleRows = single.map(a=>`
-    <div class="srow">
-      <div><div style="font-weight:700;font-size:12px">${a.prodName}</div>
-      <div style="font-size:10px;color:var(--tx2)">${a.qty} units · ${a.supplierName}</div></div>
-      <div style="text-align:right">
-        ${assignStatusPill(a.status)}
-        <div style="margin-top:4px">
-          <span class="pill ${a.paymentStatus==='Paid'?'pill-ok':'pill-wa'}" style="cursor:pointer" onclick="toggleAssignmentPayment('${a.id}','${a.paymentStatus}')">${a.paymentStatus||'Pending'}</span>
-        </div>
-      </div></div>`);
-  wrap.innerHTML = `<div class="card">${batchCards.join('') + singleRows.join('')}</div>`;
-}
-async function togglePoPayment(poId, current){
-  const next = current==='Paid' ? 'Pending' : 'Paid';
-  const batch = db.batch();
-  S.assignments.filter(a=>a.poId===poId).forEach(a => batch.update(db.collection('assignments').doc(a.id), {paymentStatus: next}));
-  await batch.commit();
-  loadAssignments();
-}
-function showPoReceiptByPoId(poId){
-  const lines = S.assignments.filter(a=>a.poId===poId);
-  if (!lines.length) return;
-  const total = lines.reduce((a,l)=>a+(l.buyPrice||0)*l.qty,0);
-  showPoReceipt({
-    supplierName: lines[0].supplierName, createdAt: lines[0].createdAt, poId, total,
-    items: lines.map(l=>({name:l.prodName, qty:l.qty, buyPrice:l.buyPrice||0}))
-  });
-}
-function openAssignModal(prodId, name, qty, orderIds){
-  S.assignCtx = {prodId, name, orderIds: orderIds||[]};
-  document.getElementById('assignTitle').textContent = 'Assign — '+name;
-  document.getElementById('assignQty').value = qty;
-  openModal('assignModal');
-}
-async function createAssignment(){
-  const supplierId = document.getElementById('assignSupplier').value;
-  const qty = parseFloat(document.getElementById('assignQty').value)||0;
-  const sup = S.suppliers.find(s=>s.id===supplierId);
-  if (!supplierId || !qty){ toast('Pick a supplier and a quantity'); return; }
-  await db.collection('assignments').add({
-    prodId: S.assignCtx.prodId, prodName: S.assignCtx.name, qty,
-    supplierId, supplierName: sup.name, sourceOrderIds: S.assignCtx.orderIds,
-    status: 'Assigned', paymentStatus: 'Pending', createdAt: Date.now()
-  });
-  // This is the "next I send the product to supplier" step — the order
-  // moves to Dispatched right away (route: supplier); its finer progress
-  // (Confirmed/Dispatched/Delivered) lives on the assignment and is
-  // reflected back onto the order automatically as the supplier updates it.
-  if (S.assignCtx.orderIds.length){
-    const batch = db.batch();
-    S.assignCtx.orderIds.forEach(oid => batch.update(db.collection('orders').doc(oid), {status:'Ready', fulfillMethod:'transit'}));
-    await batch.commit();
-  }
-  closeModal('assignModal');
-  toast('Assigned to '+sup.name);
-  loadAssignments();
+async function declineOrder(orderId){
+  if (!confirm('Decline this order? The shop will see it as declined.')) return;
+  await db.collection('orders').doc(orderId).update({status:'Declined'});
+  toast('Order declined');
   loadOrders();
 }
-async function toggleAssignmentPayment(id, current){
-  await db.collection('assignments').doc(id).update({paymentStatus: current==='Paid' ? 'Pending' : 'Paid'});
-  loadAssignments();
+function showOrderReceiptById(id){
+  const o = S.orders.find(x=>x.id===id);
+  if (o) showOrderReceipt(o);
 }
-
-// ---- DIRECT ORDER TO SUPPLIER (restock — not tied to any shop order) ----
-function openDirectOrderModal(prodId){
-  const priced = S.catalogue.filter(p=>p.status!=='pending');
-  document.getElementById('doProduct').innerHTML = priced.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-  const active = S.suppliers.filter(s=>s.status!=='pending');
-  document.getElementById('doSupplier').innerHTML = '<option value="">Choose supplier…</option>' + active.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-  document.getElementById('doQty').value = '';
-  S.supCart = [];
-  renderSupCart();
-  if (prodId){
-    document.getElementById('doProduct').value = prodId;
-    const p = S.catalogue.find(x=>x.id===prodId);
-    if (p && p.supplierId) document.getElementById('doSupplier').value = p.supplierId;
-  }
-  openModal('directOrderModal');
-}
-function addSupCart(){
-  const prodId = document.getElementById('doProduct').value;
-  const qty = parseFloat(document.getElementById('doQty').value)||0;
-  const p = S.catalogue.find(x=>x.id===prodId);
-  if (!p || !qty){ toast('Pick a product and quantity'); return; }
-  const ex = S.supCart.find(c=>c.prodId===prodId);
-  if (ex) ex.qty += qty;
-  else S.supCart.push({prodId:p.id, name:p.name, qty, buyPrice:p.buyPrice||0});
-  document.getElementById('doQty').value = '';
-  renderSupCart();
-}
-function chSupQty(i,d){
-  S.supCart[i].qty += d;
-  if (S.supCart[i].qty<=0) S.supCart.splice(i,1);
-  renderSupCart();
-}
-function clearSupCart(){ S.supCart=[]; renderSupCart(); }
-function renderSupCart(){
-  const el = document.getElementById('supCartBody');
-  if (!el) return;
-  if (!S.supCart.length){
-    el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">Add products above</div></div>';
-    document.getElementById('supCartTotal').textContent = 'KSh 0';
-    return;
-  }
-  const total = S.supCart.reduce((a,c)=>a+c.buyPrice*c.qty,0);
-  el.innerHTML = S.supCart.map((c,i)=>`
-    <div class="cart-item"><div class="ci-name">${c.name}</div>
-      <div class="qty-wrap"><button class="qty-btn" onclick="chSupQty(${i},-1)">-</button>
-      <span style="font-size:12px;font-weight:800;min-width:18px;text-align:center">${c.qty}</span>
-      <button class="qty-btn" onclick="chSupQty(${i},1)">+</button></div>
-      <div class="ci-total">KSh ${fmt(c.buyPrice*c.qty)}</div></div>`).join('');
-  document.getElementById('supCartTotal').textContent = 'KSh '+fmt(total);
-}
-async function submitDirectOrder(){
-  const supplierId = document.getElementById('doSupplier').value;
-  const sup = S.suppliers.find(s=>s.id===supplierId);
-  if (!sup){ toast('Choose a supplier'); return; }
-  if (!S.supCart.length){ toast('Add at least one product'); return; }
-  const poId = 'po_'+Date.now();
-  const createdAt = Date.now();
-  const batch = db.batch();
-  S.supCart.forEach(c => {
-    const ref = db.collection('assignments').doc();
-    batch.set(ref, {
-      prodId: c.prodId, prodName: c.name, qty: c.qty, buyPrice: c.buyPrice,
-      supplierId, supplierName: sup.name, sourceOrderIds: [],
-      status: 'Assigned', paymentStatus: 'Pending', poId, createdAt
-    });
-  });
-  try {
-    await batch.commit();
-  } catch(e) {
-    toast('Could not place order: '+(e.code||e.message));
-    console.error('submitDirectOrder failed:', e);
-    return;
-  }
-  const receipt = { supplierName: sup.name, items: S.supCart.map(c=>({...c})), createdAt, poId };
-  receipt.total = receipt.items.reduce((a,c)=>a+c.buyPrice*c.qty,0);
-  closeModal('directOrderModal');
-  toast('Order placed with '+sup.name);
-  S.supCart = [];
-  loadAssignments();
-  showPoReceipt(receipt);
-}
-function showPoReceipt(po){
-  document.getElementById('poReceiptBody').innerHTML = `
+function showOrderReceipt(o){
+  document.getElementById('orderReceiptBody').innerHTML = `
     <div class="invoice">
       <div class="inv-hdr">
-        <div class="inv-title">Purchase Order</div>
-        <div class="inv-sub">${po.supplierName}</div>
-        <div class="inv-sub">${new Date(po.createdAt).toLocaleString()}</div>
+        <div class="inv-title">Krystal Network</div>
+        <div class="inv-sub">${o.shopName||o.shopCode}</div>
+        <div class="inv-sub">${new Date(o.createdAt).toLocaleString()}</div>
       </div>
       <table><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Total</th></tr></thead>
-      <tbody>${po.items.map(i=>`<tr><td>${i.name}</td><td>${i.qty}</td><td>KSh ${fmt(i.buyPrice)}</td><td>KSh ${fmt(i.buyPrice*i.qty)}</td></tr>`).join('')}</tbody></table>
-      <div class="inv-total">TOTAL: KSh ${fmt(po.total)}</div>
+      <tbody>${o.items.map(i=>`<tr><td>${i.name}</td><td>${i.qty}</td><td>KSh ${fmt(i.price)}</td><td>KSh ${fmt(i.price*i.qty)}</td></tr>`).join('')}</tbody></table>
+      <div class="inv-total">TOTAL: KSh ${fmt(o.total)}</div>
+      <div style="text-align:center;margin-top:8px;font-size:10px;color:#999">Status: ${o.status}</div>
     </div>`;
-  openModal('poReceiptModal');
+  openModal('orderReceiptModal');
+}
+// Groups every open (Placed/Paid) order line by the product's supplier, so
+// you can see everything you need from one supplier at a glance and message
+// them directly — this doesn't create any records, it's just a live view.
+function renderCombinedBySupplier(wrap){
+  const open = S.orders.filter(o => ['Placed','Paid'].includes(o.status));
+  const bySupplier = {};
+  open.forEach(o => (o.items||[]).forEach(it => {
+    const p = S.catalogue.find(c=>c.id===it.prodId);
+    const key = (p && p.supplierId) || 'unassigned';
+    const sup = S.suppliers.find(s=>s.id===key);
+    bySupplier[key] = bySupplier[key] || { name: (p&&p.supplier) || 'No supplier set', phone: sup?sup.phone:'', items:{} };
+    bySupplier[key].items[it.prodId||it.name] = bySupplier[key].items[it.prodId||it.name] || {name:it.name, qty:0};
+    bySupplier[key].items[it.prodId||it.name].qty += it.qty;
+  }));
+  const groups = Object.values(bySupplier);
+  if (!groups.length){ wrap.innerHTML = '<div class="empty">Nothing open right now.</div>'; return; }
+  wrap.innerHTML = groups.map(g => {
+    const items = Object.values(g.items);
+    const msg = `Hi ${g.name}, I need:\n` + items.map(i=>`- ${i.name} ×${i.qty}`).join('\n');
+    const phoneDigits = (g.phone||'').replace(/\D/g,'');
+    const waLink = phoneDigits ? `https://wa.me/${phoneDigits}?text=${encodeURIComponent(msg)}` : null;
+    return `<div class="card" style="margin-bottom:8px">
+      <div style="font-weight:800;font-size:13px;margin-bottom:6px">${g.name}</div>
+      ${items.map(i=>`<div class="srow"><div style="font-size:12px">${i.name}</div><div style="font-weight:700;font-size:12px">×${i.qty}</div></div>`).join('')}
+      ${waLink
+        ? `<a class="btn btn-p btn-full" style="margin-top:8px;text-decoration:none;display:block;text-align:center" href="${waLink}" target="_blank" rel="noopener">WhatsApp ${g.name}</a>`
+        : `<div style="font-size:10px;color:var(--wa);margin-top:6px">No phone number on file for this supplier</div>`}
+    </div>`;
+  }).join('');
 }
 
 // ---- PAYMENT ----
@@ -1831,28 +1475,24 @@ async function savePaymentMethod(){
   toast('Payment method saved — shops will see this');
 }
 
-// ---- PAYMENTS LEDGER ----
-async function loadInvoices(){
-  const snap = await db.collection('invoices').orderBy('createdAt','desc').get();
-  S.invoices = snap.docs.map(d=>({id:d.id, ...d.data()}));
-  renderPaymentsLedger();
-}
+// ---- PAYMENTS LEDGER (reads straight off orders — no separate invoices) ----
 function renderPaymentsLedger(){
   const el = document.getElementById('paymentsLedger');
-  if (!S.invoices.length){ el.innerHTML = '<div class="empty">No invoices sent yet.</div>'; return; }
-  el.innerHTML = S.invoices.map(inv=>`<div class="srow">
-    <div><div style="font-weight:700;font-size:12px">${inv.shopName||inv.shopCode}</div>
-    <div style="font-size:10px;color:var(--tx2)">${inv.items.map(i=>i.name+' ×'+i.qty).join(', ')}</div>
-    <div style="font-size:10px;color:var(--tx2)">${new Date(inv.createdAt).toLocaleDateString()}</div></div>
-    <div style="text-align:right"><span class="pill ${inv.status==='paid'?'pill-ok':'pill-wa'}">${(inv.status||'sent').toUpperCase()}</span>
-    <div style="font-size:12px;font-weight:800;margin-top:4px">KSh ${fmt(inv.total)}</div></div></div>`).join('');
+  const paid = S.orders.filter(o => ['Paid','Fulfilled'].includes(o.status));
+  if (!paid.length){ el.innerHTML = '<div class="empty">No payments recorded yet.</div>'; return; }
+  el.innerHTML = paid.map(o=>`<div class="srow">
+    <div><div style="font-weight:700;font-size:12px">${o.shopName||o.shopCode}</div>
+    <div style="font-size:10px;color:var(--tx2)">${o.items.map(i=>i.name+' ×'+i.qty).join(', ')}</div>
+    <div style="font-size:10px;color:var(--tx2)">${new Date(o.createdAt).toLocaleDateString()}</div></div>
+    <div style="text-align:right"><span class="pill ${o.status==='Fulfilled'?'pill-ok':'pill-ac'}">${o.status.toUpperCase()}</span>
+    <div style="font-size:12px;font-weight:800;margin-top:4px">KSh ${fmt(o.total)}</div></div></div>`).join('');
 }
 
 // ---- BACKUP ----
 async function downloadBackup(){
   toast('Preparing backup…');
   try {
-    const cols = ['shops','catalogue','orders','invoices','suppliers','assignments','stockRequests'];
+    const cols = ['shops','catalogue','orders','suppliers'];
     const data = {};
     for (const c of cols){
       const snap = await db.collection(c).get();
