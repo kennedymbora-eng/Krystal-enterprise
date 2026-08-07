@@ -647,32 +647,16 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
       <div id="rp-monthly" style="display:none"><div class="grid3" style="margin-bottom:10px"><div class="kpi k-gr"><div class="kpi-lbl">Revenue</div><div class="kpi-val" id="rpMRev">KSh 0</div></div><div class="kpi k-am"><div class="kpi-lbl">Profit</div><div class="kpi-val" id="rpMPft">KSh 0</div></div><div class="kpi k-bl"><div class="kpi-lbl">Sales</div><div class="kpi-val" id="rpMTx">0</div></div></div><div class="card"><div class="card-title">Daily</div><div id="rpMDaily"></div></div></div>
     </div>
 
-    <!-- ORDER STOCK (Krystal Network test integration) -->
+    <!-- ORDER STOCK (Krystal Network) -->
     <div id="pg-orderstock" class="page">
       <div class="sec-head"><div class="sec-title">Order Stock</div></div>
 
       <div class="set-sec-title" style="margin-top:0">Low Stock <span id="osLowCount" style="color:var(--wa)">0</span></div>
-      <div class="card" id="osLowList" style="margin-bottom:10px"></div>
-
-      <div class="set-sec-title">My Stock Requests</div>
-      <div class="card" id="osStockRequests" style="margin-bottom:10px"></div>
-      <div class="card" style="margin-bottom:14px">
-        <div style="font-size:11px;color:var(--tx2);margin-bottom:8px">Request a product that isn't listed yet — add as many as you need, then send them together.</div>
-        <div style="display:flex;gap:6px;align-items:center">
-          <input type="text" id="reqCustomName" placeholder="Product name…" style="flex:2">
-          <input type="number" id="reqCustomQty" placeholder="Qty" value="1" min="1" style="flex:1;width:60px">
-          <button class="btn btn-p btn-sm" style="flex-shrink:0" onclick="addCustomRequestItem()">Add</button>
-        </div>
-      </div>
-
-      <div class="card" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <div style="font-size:11px;color:var(--tx2)">New to the network? Send your whole existing stock list over so the admin can price it.</div>
-        <button class="btn btn-s btn-sm" id="osSyncBtn" onclick="syncAllStockToNetwork()" style="flex-shrink:0">Sync All My Stock</button>
-      </div>
+      <div class="card" id="osLowList" style="margin-bottom:14px"></div>
 
       <div class="set-sec-title">Browse Network Catalogue</div>
       <div id="osSeedWrap" style="display:none;margin-bottom:8px">
-        <div style="font-size:11px;color:var(--tx2)">No products in the network catalogue yet — sync your stock above and the admin will price it.</div>
+        <div style="font-size:11px;color:var(--tx2)">No products in the network catalogue yet — check back once the admin has approved some.</div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
         <div class="search-wrap" style="margin-bottom:0">
@@ -683,23 +667,12 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
       <div class="cat-row" id="osCats"></div>
       <div class="pos-grid" id="osGrid"></div>
 
-      <div class="set-sec-title">My Network Listings</div>
-      <div class="card" id="osMyListings" style="margin-bottom:14px"></div>
-
       <div class="set-sec-title">My Orders</div>
       <div class="card" id="osMyOrders" style="margin-bottom:14px"></div>
-
-      <div class="set-sec-title">Invoices</div>
-      <div class="card" id="osInvoices" style="margin-bottom:14px"></div>
 
       <div class="set-sec-title">Payment Method</div>
       <div class="card" id="osPayment" style="font-size:12px;color:var(--tx2)"></div>
 
-      <div class="cart-fab stacked" id="reqCartFab" onclick="openModal('reqCartModal')">
-        <span class="cart-fab-count" id="reqCartFabCount">0</span>
-        <span class="cart-fab-label">Review Request</span>
-        <span class="cart-fab-total" id="reqCartFabTotal">Send</span>
-      </div>
       <div class="cart-fab" id="netCartFab" onclick="openModal('netCartModal')">
         <span class="cart-fab-count" id="netCartFabCount">0</span>
         <span class="cart-fab-label">View Order</span>
@@ -929,18 +902,6 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
   </div>
 </div>
 
-<!-- Stock Request Cart (bulk pricing requests) -->
-<div class="overlay" id="reqCartModal">
-  <div class="sheet">
-    <div class="sheet-hdr"><div class="sheet-title">Request <span id="reqCartCount" style="font-size:11px;color:var(--tx2);font-weight:600;margin-left:2px"></span></div><button class="sheet-close" onclick="closeModal('reqCartModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-    <div style="font-size:11px;color:var(--tx2);padding:0 2px 8px">These don't have a network price yet — send them together and the admin will price the batch.</div>
-    <div class="cart-body" id="reqCartBody"></div>
-    <div class="cart-ftr">
-      <div style="display:flex;gap:7px"><button class="btn btn-d btn-sm" onclick="clearReqCart()">Clear</button><button class="btn btn-p btn-full" onclick="submitStockRequest()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Send Request</button></div>
-    </div>
-  </div>
-</div>
-
 <!-- Invoice -->
 <div class="overlay" id="invoiceModal">
   <div class="sheet">
@@ -1037,7 +998,7 @@ const S = {
   items:[], sales:[], suppliers:[],
   cart:[], editItem:null, editSup:null, restockId:null,
   stockCat:'All', posCat:'All',
-  catalogue:[], netCart:[], reqCart:[], myOrders:[], osCat:'All', // Krystal Network (Order Stock tab)
+  catalogue:[], netCart:[], myOrders:[], osCat:'All', // Krystal Network (Order Stock tab)
   user:null,      // Firebase Auth user
   userDoc:null,   // Firestore user profile doc
   shopCode:'',
@@ -1874,7 +1835,6 @@ function renderStock() {
   const ICO_EDIT = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
   const ICO_BOX = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><line x1="12" y1="12" x2="12" y2="19"/><line x1="9" y1="15" x2="15" y2="15"/></svg>';
   const ICO_DEL = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
-  const ICO_NET = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 3h15v13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>';
   tb.innerHTML = list.map(i => {
     return `<tr><td style="font-weight:700">${i.name}</td><td>${badge(i.cat)}</td>
       <td><span class="${stockCls(i)}">${i.stock}</span><span style="font-size:10px;color:var(--tx2)">/${i.reorder}</span></td>
@@ -1883,38 +1843,9 @@ function renderStock() {
       <td><div style="display:flex;gap:3px">
         <button class="btn btn-s btn-ico btn-sm" onclick="openEditItem('${i.id}')">${ICO_EDIT}</button>
         <button class="btn btn-s btn-ico btn-sm" onclick="openRestock('${i.id}')">${ICO_BOX}</button>
-        <button class="btn btn-s btn-ico btn-sm" title="List on Krystal Network" onclick="listOnNetwork('${i.id}')">${ICO_NET}</button>
         <button class="btn btn-d btn-ico btn-sm" onclick="delItem('${i.id}')">${ICO_DEL}</button>
       </div></td></tr>`;
   }).join('');
-}
-async function syncAllStockToNetwork() {
-  const btn = document.getElementById('osSyncBtn');
-  if (!S.items.length) { toast('No stock to sync'); return; }
-  btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Syncing…';
-  try {
-    await ensureNetworkIdentity(); // no-op if already bound; closes the race with the fire-and-forget call at boot
-    const existingSnap = await db.collection('catalogue').where('addedBy','==',S.shopCode).get();
-    const existingNames = new Set(existingSnap.docs.map(d => d.data().name));
-    const toAdd = S.items.filter(it => !existingNames.has(it.name));
-    let batch = db.batch(), count = 0, total = 0;
-    for (const it of toAdd) {
-      const ref = db.collection('catalogue').doc();
-      batch.set(ref, {name:it.name, category:it.cat, supplier:'', buyPrice:0, sellPrice:0, status:'pending', source:'shop', addedBy:S.shopCode, shopName: S.shopDoc?.shopName || S.shopCode, createdAt:Date.now()});
-      count++; total++;
-      if (count===450) { await batch.commit(); batch = db.batch(); count=0; }
-    }
-    if (count>0) await batch.commit();
-    toast(total ? `Sent ${total} item${total===1?'':'s'} for pricing` : 'Everything is already listed');
-  } catch(e) { toast('Sync failed: '+e.message); }
-  btn.disabled = false; btn.textContent = orig;
-}
-async function listOnNetwork(itemId) {
-  const it = S.items.find(x => x.id===itemId); if (!it) return;
-  const result = await autoListOnNetwork(it);
-  if (result==='exists') toast('Already listed — waiting on network admin to price it');
-  else if (result==='listed') toast('Sent to Krystal Network — admin will set a price');
-  else toast('Could not list item — try again');
 }
 
 function openAddItem() {
@@ -1966,21 +1897,6 @@ async function saveItem() {
   d.id = id;
   await db.collection('shops').doc(S.shopCode).collection('items').doc(id).set(d, {merge:true});
   closeModal('itemModal'); toast(S.editItem?'Item updated':'Item added');
-  if (isNew) autoListOnNetwork(d); // silently flag it for the network admin to price — no toast, best-effort
-}
-async function autoListOnNetwork(item) {
-  try {
-    await ensureNetworkIdentity(); // no-op if already bound; closes the race with the fire-and-forget call at boot
-    const existing = await db.collection('catalogue')
-      .where('addedBy','==',S.shopCode).where('name','==',item.name).limit(1).get();
-    if (!existing.empty) return 'exists';
-    await db.collection('catalogue').add({
-      name: item.name, category: item.cat, supplier: '',
-      buyPrice: 0, sellPrice: 0, status: 'pending', source: 'shop',
-      addedBy: S.shopCode, shopName: S.shopDoc?.shopName || S.shopCode, createdAt: Date.now()
-    });
-    return 'listed';
-  } catch(e) { return 'error'; }
 }
 async function delItem(id) {
   if (!(await customConfirm('This can\'t be undone.', {title:'Delete this item?', danger:true, confirmLabel:'Delete'}))) return;
@@ -2452,8 +2368,7 @@ async function renderOrderStock() {
     const linked = i.catalogueId && S.catalogue.find(p => p.id===i.catalogueId);
     const actionHtml = linked
       ? `<button class="btn btn-p btn-sm" onclick="reorderFromNetwork('${i.id}',${suggestQty})">Reorder ${suggestQty}</button>`
-      : `<button class="btn btn-s btn-sm" onclick="quickFindInCatalogue('${i.name.replace(/'/g,"\\'")}')">Find</button>
-         <button class="btn btn-p btn-sm" onclick="addReqCart('${i.name.replace(/'/g,"\\'")}',${suggestQty})">Request ${suggestQty}</button>`;
+      : `<button class="btn btn-s btn-sm" onclick="quickFindInCatalogue('${i.name.replace(/'/g,"\\'")}')">Find in catalogue</button>`;
     return `
     <div class="srow">
       <div><div style="font-weight:700;font-size:12px">${i.name}</div>
@@ -2466,70 +2381,12 @@ async function renderOrderStock() {
   document.getElementById('osSeedWrap').style.display = S.catalogue.length ? 'none' : 'block';
   renderCatalogueGrid();
   renderNetCart();
-  renderReqCart();
   loadMyOrders();
-  loadMyInvoices();
   loadNetworkPaymentMethod();
-  loadMyListings();
-  loadMyStockRequests();
 }
-async function loadMyListings() {
-  const el = document.getElementById('osMyListings');
-  try {
-    const snap = await db.collection('catalogue').where('addedBy','==',S.shopCode).get();
-    const list = snap.docs.map(d => ({id:d.id, ...d.data()}));
-    if (!list.length) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">You haven\'t listed any products yet</div></div>'; return; }
-    el.innerHTML = list.map(p => `<div class="srow">
-      <div><div style="font-size:12px;font-weight:600">${p.name}</div>
-      <div style="font-size:10px;color:var(--tx2)">${p.status==='pending' ? 'Awaiting admin price' : 'Live · KSh '+fmt(p.sellPrice)}</div></div>
-      ${p.status==='pending'
-        ? `<div style="display:flex;gap:5px"><button class="btn btn-s btn-sm" onclick="editMyListing('${p.id}','${p.name.replace(/'/g,"\\'")}','${(p.category||'').replace(/'/g,"\\'")}')">Edit</button>
-           <button class="btn btn-d btn-sm" onclick="deleteMyListing('${p.id}')">Delete</button></div>`
-        : `<span style="font-size:10px;color:var(--tx2)">Contact admin to remove</span>`}
-      </div>`).join('');
-  } catch(e) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">Could not load your listings</div></div>'; }
-}
-async function editMyListing(id, currentName, currentCat) {
-  const name = await customPrompt('Product name', {title:'Edit Listing', value:currentName});
-  if (name===null) return;
-  const cat = await customPrompt('Category', {title:'Edit Listing', value:currentCat});
-  if (cat===null) return;
-  try {
-    await db.collection('catalogue').doc(id).update({name: name.trim(), category: cat.trim()});
-    toast('Listing updated');
-    loadMyListings();
-  } catch(e) { toast('Could not update — it may already be priced'); }
-}
-async function deleteMyListing(id) {
-  const ok = await customConfirm('The admin will no longer see it to price.', {title:'Remove this listing?', danger:true, confirmLabel:'Remove'});
-  if (!ok) return;
-  try {
-    await db.collection('catalogue').doc(id).delete();
-    toast('Listing removed');
-    loadMyListings();
-  } catch(e) { toast('Could not delete — it may already be priced'); }
-}
-async function loadMyInvoices() {
-  const el = document.getElementById('osInvoices');
-  try {
-    const snap = await db.collection('invoices').where('shopCode','==',S.shopCode).orderBy('createdAt','desc').limit(15).get();
-    const invs = snap.docs.map(d => d.data());
-    if (!invs.length) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">No invoices yet</div></div>'; return; }
-    const pillCls = {sent:'wa', paid:'gr'};
-    el.innerHTML = invs.map(inv => `<div class="srow">
-      <div><div style="font-size:12px;font-weight:600">${inv.items.map(i=>i.name+' ×'+i.qty).join(', ')}</div>
-      <div style="font-size:10px;color:var(--tx2)">${new Date(inv.createdAt).toLocaleDateString()}</div></div>
-      <div style="text-align:right"><div style="font-size:10px;font-weight:800;color:var(--${pillCls[inv.status]||'wa'})">${(inv.status||'sent').toUpperCase()}</div>
-      <div style="font-size:11px">KSh ${fmt(inv.total)}</div></div></div>`).join('');
-  } catch(e) { el.innerHTML = `<div class="empty" style="padding:14px"><div style="font-size:11px">Could not load invoices: ${e.message}</div></div>`; }
-}
-const ORDER_STEPS = ['Submitted','Confirmed','Invoiced','Paid','Ready','Fulfilled'];
-function stepperHtml(status) {
-  if (status==='Declined') return `<div style="font-size:10px;font-weight:800;color:var(--re);margin-top:5px">Declined by admin</div>`;
-  const idx = ORDER_STEPS.indexOf(status);
-  return `<div style="display:flex;gap:3px;margin-top:6px">` + ORDER_STEPS.map((s,i) =>
-    `<div style="flex:1;height:4px;border-radius:2px;background:${i<=idx?'var(--ac)':'var(--bd)'}"></div>`
-  ).join('') + `</div>`;
+function statusPill(st){
+  const map = {Placed:'wa', Paid:'ac', Fulfilled:'gr', Declined:'re'};
+  return map[st] || 'wa';
 }
 async function loadMyOrders() {
   const el = document.getElementById('osMyOrders');
@@ -2539,29 +2396,17 @@ async function loadMyOrders() {
     S.myOrders = orders;
     if (!orders.length) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">No orders submitted yet</div></div>'; return; }
     const outstanding = orders.filter(o => !['Fulfilled','Declined'].includes(o.status)).reduce((a,o)=>a+(o.total||0),0);
-    const pillCls = {Submitted:'wa', Confirmed:'wa', Invoiced:'ac', Paid:'ac', Ready:'ac', Fulfilled:'gr', Declined:'re'};
     const rows = orders.map(o => {
-      let subLabel = '';
-      let actionHtml = '';
-      if (o.status==='Ready') {
-        subLabel = o.fulfillMethod==='transit' ? 'Out for delivery' : 'Ready for pickup at Krystal Enterprise';
-        actionHtml = o.deliveryRequested
-          ? `<div style="font-size:10px;color:var(--ac);margin-top:4px">Delivery requested — awaiting dispatch</div>`
-          : `<button class="btn btn-s btn-sm" style="margin-top:5px" onclick="requestDelivery('${o.id}')">Request Delivery</button>`;
-      }
-      if (['Paid','Ready','Fulfilled'].includes(o.status)) {
-        actionHtml += ` <button class="btn btn-s btn-sm" style="margin-top:5px" onclick="showOrderReceiptById('${o.id}')">Receipt</button>`;
-      }
+      const actionHtml = ['Paid','Fulfilled'].includes(o.status)
+        ? `<button class="btn btn-s btn-sm" style="margin-top:5px" onclick="showOrderReceiptById('${o.id}')">Receipt</button>` : '';
       return `<div class="srow" style="display:block;padding:10px 0">
         <div style="display:flex;justify-content:space-between;gap:10px">
           <div><div style="font-size:12px;font-weight:600">${o.items.map(i=>i.name+' ×'+i.qty).join(', ')}</div>
           <div style="font-size:10px;color:var(--tx2)">${new Date(o.createdAt).toLocaleDateString()}</div></div>
-          <div style="text-align:right"><div style="font-size:10px;font-weight:800;color:var(--${pillCls[o.status]||'wa'})">${o.status}</div>
+          <div style="text-align:right"><div style="font-size:10px;font-weight:800;color:var(--${statusPill(o.status)})">${o.status}</div>
           <div style="font-size:11px">KSh ${fmt(o.total)}</div></div>
         </div>
-        ${subLabel ? `<div style="font-size:10px;color:var(--tx2);margin-top:3px">${subLabel}</div>` : ''}
         ${actionHtml}
-        ${stepperHtml(o.status)}
       </div>`;
     });
     el.innerHTML = `<div class="srow" style="font-weight:800;font-size:12px"><div>Total owed on open orders</div><div>KSh ${fmt(outstanding)}</div></div>` + rows.join('');
@@ -2588,13 +2433,6 @@ function showOrderReceipt(order) {
     </div>`;
   openModal('invoiceModal');
 }
-async function requestDelivery(orderId) {
-  try {
-    await db.collection('orders').doc(orderId).update({deliveryRequested: true, deliveryRequestedAt: Date.now()});
-    toast('Delivery requested — admin will arrange it');
-    loadMyOrders();
-  } catch(e) { toast('Could not send request'); }
-}
 async function loadNetworkPaymentMethod() {
   const el = document.getElementById('osPayment');
   try {
@@ -2614,108 +2452,6 @@ async function reorderFromNetwork(itemId, suggestQty) {
   if (!ok) return;
   addNetCart(p.id, suggestQty);
   openModal('netCartModal');
-}
-function addReqCart(name, qty=1) {
-  const ex = S.reqCart.find(c => c.name.toLowerCase()===name.toLowerCase());
-  if (ex) ex.qty += qty;
-  else S.reqCart.push({name, qty});
-  renderReqCart();
-  toast(name+' added to request');
-}
-function addCustomRequestItem() {
-  const nameEl = document.getElementById('reqCustomName');
-  const qtyEl = document.getElementById('reqCustomQty');
-  const name = (nameEl.value||'').trim();
-  const qty = parseInt(qtyEl.value)||1;
-  if (!name) { toast('Enter a product name'); return; }
-  addReqCart(name, qty);
-  nameEl.value=''; qtyEl.value='1'; nameEl.focus();
-}
-function chReqQty(i,d) {
-  S.reqCart[i].qty += d;
-  if (S.reqCart[i].qty<=0) S.reqCart.splice(i,1);
-  renderReqCart();
-}
-function clearReqCart() { S.reqCart=[]; renderReqCart(); }
-function renderReqCart() {
-  const el = document.getElementById('reqCartBody');
-  const fab = document.getElementById('reqCartFab');
-  if (!el) return;
-  const totalQty = S.reqCart.reduce((a,b)=>a+b.qty,0);
-  if (!S.reqCart.length) {
-    el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">Add low-stock or custom items above</div></div>';
-    document.getElementById('reqCartCount').textContent = '';
-    if (fab) fab.classList.remove('show');
-    closeModal('reqCartModal');
-    return;
-  }
-  el.innerHTML = S.reqCart.map((c,i) => `
-    <div class="cart-item"><div class="ci-name">${c.name}</div>
-      <div class="qty-wrap"><button class="qty-btn" onclick="chReqQty(${i},-1)">-</button>
-      <span style="font-size:12px;font-weight:800;min-width:18px;text-align:center">${c.qty}</span>
-      <button class="qty-btn" onclick="chReqQty(${i},1)">+</button></div></div>`).join('');
-  document.getElementById('reqCartCount').textContent = '('+totalQty+')';
-  if (fab) {
-    fab.classList.add('show');
-    document.getElementById('reqCartFabCount').textContent = totalQty;
-  }
-}
-async function submitStockRequest() {
-  if (!S.reqCart.length) { toast('Add items first'); return; }
-  try {
-    await ensureNetworkIdentity(); // no-op if already bound; closes the race with the fire-and-forget call at boot
-    await db.collection('stockRequests').add({
-      shopCode: S.shopCode, shopName: S.shopDoc?.shopName || S.shopCode,
-      items: S.reqCart.map(c => ({name:c.name, qty:c.qty})),
-      status: 'Requested', createdAt: Date.now()
-    });
-    S.reqCart = [];
-    renderReqCart();
-    closeModal('reqCartModal');
-    toast('Request sent — the network will confirm pricing');
-    loadMyStockRequests();
-  } catch(e) { toast('Could not send request: '+e.message); }
-}
-async function loadMyStockRequests() {
-  const el = document.getElementById('osStockRequests');
-  try {
-    const snap = await db.collection('stockRequests').where('shopCode','==',S.shopCode).orderBy('createdAt','desc').limit(10).get();
-    const list = snap.docs.map(d => ({id:d.id, ...d.data()}));
-    const active = list.filter(r => !['Ordered','Declined'].includes(r.status));
-    if (!active.length) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">No open requests</div></div>'; return; }
-    el.innerHTML = active.map(r => {
-      // Back-compat: older requests were single-item (productName/qty/proposedPrice
-      // at the top level) — newer ones are batched under items[].
-      const items = r.items || [{name:r.productName, qty:r.qty, proposedPrice:r.proposedPrice}];
-      const priced = r.status==='Priced';
-      const total = priced ? items.reduce((a,i)=>a+(i.proposedPrice||0)*i.qty,0) : 0;
-      return `<div class="srow" style="display:block;padding:10px 0">
-        <div style="font-size:12px;font-weight:600">${items.map(i=>i.name+' ×'+i.qty).join(', ')}</div>
-        <div style="font-size:10px;color:var(--tx2);margin-top:2px">${priced ? 'Offered — total KSh '+fmt(total) : 'Waiting on network to confirm price'}</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
-          <span class="pill" style="background:${priced?'rgba(99,102,241,.15)':'rgba(245,158,11,.15)'};color:${priced?'var(--ac3)':'var(--wa)'}">${r.status}</span>
-          ${priced ? `<button class="btn btn-p btn-sm" onclick="approveStockRequest('${r.id}')">Approve</button>` : ''}
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e) { el.innerHTML = `<div class="empty" style="padding:14px"><div style="font-size:11px">Could not load requests: ${e.message}</div></div>`; }
-}
-async function approveStockRequest(id) {
-  try {
-    const snap = await db.collection('stockRequests').doc(id).get();
-    const r = snap.data();
-    const items = r.items || [{name:r.productName, qty:r.qty, proposedPrice:r.proposedPrice}];
-    const orderItems = items.map((i,idx) => ({prodId:'req-'+id+'-'+idx, name:i.name, price:i.proposedPrice||0, qty:i.qty}));
-    const total = orderItems.reduce((a,i)=>a+i.price*i.qty,0);
-    const orderRef = await db.collection('orders').add({
-      shopCode: r.shopCode, shopName: r.shopName,
-      items: orderItems, total, status: 'Confirmed', createdAt: Date.now()
-    });
-    await db.collection('stockRequests').doc(id).update({status:'Ordered', orderId: orderRef.id});
-    toast('Approved — now on its way through invoicing');
-    loadMyStockRequests();
-    loadMyOrders();
-  } catch(e) { toast('Could not approve request'); }
 }
 function osPills() {
   const cats = ['All', ...new Set(S.catalogue.map(p => p.category).filter(Boolean))];
@@ -2789,20 +2525,13 @@ async function submitNetworkOrder() {
       shopName: S.shopDoc?.shopName || S.shopCode,
       items: S.netCart.map(c => ({prodId:c.prodId, name:c.name, price:c.price, qty:c.qty})),
       total: S.netCart.reduce((a,b)=>a+b.price*b.qty,0),
-      status: 'Submitted',
+      status: 'Placed',
       createdAt: Date.now()
-    });
-    // Best-effort demand-trend bump per product — never blocks order
-    // submission if a particular counter update fails.
-    S.netCart.forEach(c => {
-      db.collection('catalogue').doc(c.prodId).update({
-        unitsOrdered: firebase.firestore.FieldValue.increment(c.qty)
-      }).catch(e => console.warn('Demand counter skipped:', e.code || e.message));
     });
     S.netCart = [];
     renderNetCart();
     closeModal('netCartModal');
-    toast('Order sent to network ✓');
+    toast('Order placed ✓');
   } catch(e) { toast('Could not submit order: '+e.message); }
 }
 
