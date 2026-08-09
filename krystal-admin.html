@@ -1394,9 +1394,60 @@ async function markOrderPaid(orderId){
   loadOrders();
 }
 async function markOrderFulfilled(orderId){
+  const o = S.orders.find(x=>x.id===orderId);
   await db.collection('orders').doc(orderId).update({status:'Fulfilled'});
-  toast('Marked fulfilled ✓');
+  if (o) await syncFulfilledOrderToInventory(o);
+  toast('Marked fulfilled ✓ — added to shop inventory');
   loadOrders();
+}
+// Matches ordered line items against the shop's existing inventory by name
+// (same fuzzy matching used for catalogue duplicate detection) — increments
+// stock on a match, creates a new item otherwise, and links catalogueId so
+// future reorders from the shop app go straight to the right product.
+async function syncFulfilledOrderToInventory(order){
+  try {
+    const itemsSnap = await db.collection('shops').doc(order.shopCode).collection('items').get();
+    const shopItems = itemsSnap.docs.map(d=>({id:d.id, ...d.data()}));
+    const batch = db.batch();
+    (order.items||[]).forEach(oi => {
+      const match = findShopItemMatch(shopItems, oi.name);
+      if (match) {
+        const ref = db.collection('shops').doc(order.shopCode).collection('items').doc(match.id);
+        batch.update(ref, {
+          stock: (match.stock||0) + oi.qty,
+          catalogueId: match.catalogueId || oi.prodId || null
+        });
+      } else {
+        const ref = db.collection('shops').doc(order.shopCode).collection('items').doc();
+        const catProd = S.catalogue.find(p=>p.id===oi.prodId);
+        batch.set(ref, {
+          name: oi.name,
+          cat: catProd?.category || 'Uncategorized',
+          stock: oi.qty,
+          reorder: Math.max(Math.ceil(oi.qty*0.2), 1),
+          cost: oi.price||0,
+          price: oi.price||0,
+          barcode: null,
+          catalogueId: oi.prodId || null,
+          createdAt: Date.now()
+        });
+      }
+    });
+    await batch.commit();
+  } catch(e) { console.warn('Inventory sync skipped:', e.code || e.message); }
+}
+function findShopItemMatch(items, name){
+  const core = coreTokens(name);
+  if (!core.length) return null;
+  let best=null, bestScore=0;
+  items.forEach(it=>{
+    const iCore = coreTokens(it.name);
+    if (!iCore.length) return;
+    const overlap = core.filter(w=>iCore.includes(w)).length;
+    const score = overlap/Math.max(core.length, iCore.length);
+    if (score>bestScore){bestScore=score;best=it;}
+  });
+  return bestScore>=0.6 ? best : null;
 }
 async function declineOrder(orderId){
   if (!confirm('Decline this order? The shop will see it as declined.')) return;
