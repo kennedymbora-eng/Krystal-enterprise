@@ -2314,7 +2314,12 @@ function renderMonthly() {
 async function ensureNetworkIdentity() {
   if (!S.shopCode) return;
   try {
-    if (!auth.currentUser) await auth.signInAnonymously();
+    // No anonymous fallback here on purpose: Firestore rules now require
+    // shopUsers/{uid} to match an existing userShops/{uid} record (the
+    // real email/password shop session established at login), so an
+    // anonymous uid could never pass this write anyway. If we get here
+    // signed out, something upstream is broken — bail rather than mask it.
+    if (!auth.currentUser) { console.warn('Network identity sync skipped: not signed in'); return; }
     const uid = auth.currentUser.uid;
 
     const shopRef = db.collection('shops').doc(S.shopCode);
