@@ -2385,6 +2385,7 @@ async function renderOrderStock() {
   await loadCatalogue();
   document.getElementById('osSeedWrap').style.display = S.catalogue.length ? 'none' : 'block';
   renderCatalogueGrid();
+  await loadDraftCart();
   renderNetCart();
   loadMyOrders();
   loadNetworkPaymentMethod();
@@ -2485,14 +2486,42 @@ function addNetCart(id, qty=1) {
   if (ex) ex.qty += qty;
   else S.netCart.push({prodId:id, name:p.name, price:p.sellPrice||0, qty});
   renderNetCart();
+  saveDraftCart();
   toast(p.name+' added to order');
 }
 function chNetQty(i,d) {
   S.netCart[i].qty += d;
   if (S.netCart[i].qty<=0) S.netCart.splice(i,1);
   renderNetCart();
+  saveDraftCart();
 }
-function clearNetCart() { S.netCart=[]; renderNetCart(); }
+function clearNetCart() { S.netCart=[]; renderNetCart(); saveDraftCart(); }
+let _draftSaveTimer = null;
+function saveDraftCart() {
+  // Debounced — qty +/- taps fire fast, no need for a write per tap.
+  clearTimeout(_draftSaveTimer);
+  _draftSaveTimer = setTimeout(async () => {
+    if (!S.shopCode) return;
+    try {
+      await ensureNetworkIdentity();
+      await db.collection('shops').doc(S.shopCode).update({
+        draftCart: S.netCart.map(c => ({prodId:c.prodId, name:c.name, price:c.price, qty:c.qty}))
+      });
+    } catch(e) { console.warn('Draft cart save skipped:', e.code || e.message); }
+  }, 800);
+}
+async function loadDraftCart() {
+  if (!S.shopCode || S.netCart.length) return; // don't clobber an in-progress cart already in memory
+  try {
+    const snap = await db.collection('shops').doc(S.shopCode).get();
+    const draft = snap.exists ? (snap.data().draftCart || []) : [];
+    if (draft.length) {
+      S.netCart = draft;
+      renderNetCart();
+      toast('Picked up where you left off — ' + draft.length + ' item' + (draft.length===1?'':'s') + ' in your cart');
+    }
+  } catch(e) { console.warn('Draft cart load skipped:', e.code || e.message); }
+}
 function renderNetCart() {
   const el = document.getElementById('netCartBody');
   const fab = document.getElementById('netCartFab');
@@ -2537,6 +2566,7 @@ async function submitNetworkOrder() {
     renderNetCart();
     closeModal('netCartModal');
     toast('Order placed ✓');
+    db.collection('shops').doc(S.shopCode).update({draftCart: []}).catch(()=>{}); // clear the saved draft — best effort
   } catch(e) { toast('Could not submit order: '+e.message); }
 }
 
