@@ -2477,6 +2477,11 @@ function statusPill(st){
   const map = {Placed:'wa', Paid:'ac', Fulfilled:'gr', Declined:'re'};
   return map[st] || 'wa';
 }
+function normalizeItemName(s){ return (s||'').toLowerCase().trim().replace(/\s+/g,' '); }
+function findLocalItemByName(name){
+  const n = normalizeItemName(name);
+  return S.items.find(i => normalizeItemName(i.name) === n);
+}
 async function loadMyOrders() {
   const el = document.getElementById('osMyOrders');
   try {
@@ -2486,8 +2491,14 @@ async function loadMyOrders() {
     if (!orders.length) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">No orders submitted yet</div></div>'; return; }
     const outstanding = orders.filter(o => !['Fulfilled','Declined'].includes(o.status)).reduce((a,o)=>a+(o.total||0),0);
     const rows = orders.map(o => {
-      const actionHtml = ['Paid','Fulfilled'].includes(o.status)
+      let actionHtml = ['Paid','Fulfilled'].includes(o.status)
         ? `<button class="btn btn-s btn-sm" style="margin-top:5px" onclick="showOrderReceiptById('${o.id}')">Receipt</button>` : '';
+      if (o.status === 'Fulfilled') {
+        const unlisted = o.items.filter(i => !findLocalItemByName(i.name));
+        if (unlisted.length) {
+          actionHtml += ` <button class="btn btn-p btn-sm" style="margin-top:5px" onclick="addOrderItemsToInventory('${o.id}')">Add ${unlisted.length===o.items.length?'':unlisted.length+' '}new item${unlisted.length===1?'':'s'} to inventory</button>`;
+        }
+      }
       return `<div class="srow" style="display:block;padding:10px 0">
         <div style="display:flex;justify-content:space-between;gap:10px">
           <div><div style="font-size:12px;font-weight:600">${o.items.map(i=>i.name+' ×'+i.qty).join(', ')}</div>
@@ -2500,6 +2511,30 @@ async function loadMyOrders() {
     });
     el.innerHTML = `<div class="srow" style="font-weight:800;font-size:12px"><div>Total owed on open orders</div><div>KSh ${fmt(outstanding)}</div></div>` + rows.join('');
   } catch(e) { el.innerHTML = `<div class="empty" style="padding:14px"><div style="font-size:11px">Could not load orders: ${e.message}</div></div>`; }
+}
+// Items the admin already matched to an existing inventory item were
+// auto-stocked when the order was marked Fulfilled (see the admin app) —
+// this only ever touches items that came in genuinely new, so the owner
+// picks the category/reorder point instead of us guessing at it.
+async function addOrderItemsToInventory(orderId) {
+  const o = S.myOrders.find(x=>x.id===orderId); if (!o) return;
+  const unlisted = o.items.filter(i => !findLocalItemByName(i.name));
+  if (!unlisted.length) { toast('Already in your inventory'); loadMyOrders(); return; }
+  try {
+    const batch = db.batch();
+    unlisted.forEach(i => {
+      const ref = db.collection('shops').doc(S.shopCode).collection('items').doc();
+      batch.set(ref, {
+        name: i.name, cat: 'Uncategorized', stock: i.qty,
+        reorder: Math.max(Math.ceil(i.qty*0.2), 1),
+        cost: i.price||0, price: i.price||0,
+        barcode: null, catalogueId: i.prodId||null, createdAt: Date.now()
+      });
+    });
+    await batch.commit();
+    toast(unlisted.length+' item'+(unlisted.length===1?'':'s')+' added — check Inventory to set category/reorder point');
+    loadMyOrders();
+  } catch(e) { toast('Could not add items: '+e.message); }
 }
 function showOrderReceiptById(id) {
   const o = S.myOrders.find(x=>x.id===id);
