@@ -2525,6 +2525,7 @@ async function addOrderItemsToInventory(orderId) {
     unlisted.forEach(i => {
       const ref = db.collection('shops').doc(S.shopCode).collection('items').doc();
       batch.set(ref, {
+        id: ref.id, // the items onSnapshot listener matches on this field, not the Firestore doc id — every other item-write path in this app sets it (see saveItem())
         name: i.name, cat: 'Uncategorized', stock: i.qty,
         reorder: Math.max(Math.ceil(i.qty*0.2), 1),
         cost: i.price||0, price: i.price||0,
