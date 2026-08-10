@@ -1397,7 +1397,7 @@ async function markOrderFulfilled(orderId){
   const o = S.orders.find(x=>x.id===orderId);
   await db.collection('orders').doc(orderId).update({status:'Fulfilled'});
   if (o) await syncFulfilledOrderToInventory(o);
-  toast('Marked fulfilled ✓ — added to shop inventory');
+  toast('Marked fulfilled ✓ — stock updated for matching items');
   loadOrders();
 }
 // Matches ordered line items against the shop's existing inventory by name
@@ -1409,31 +1409,24 @@ async function syncFulfilledOrderToInventory(order){
     const itemsSnap = await db.collection('shops').doc(order.shopCode).collection('items').get();
     const shopItems = itemsSnap.docs.map(d=>({id:d.id, ...d.data()}));
     const batch = db.batch();
+    let matched = 0;
     (order.items||[]).forEach(oi => {
       const match = findShopItemMatch(shopItems, oi.name);
+      // Only touch items the shop already stocks — auto-bump their stock.
+      // Anything brand-new is intentionally left alone here: the shop app
+      // shows an "Add to Inventory" button on the fulfilled order for any
+      // item it doesn't recognize, so the owner decides the category/
+      // reorder point themselves instead of us guessing.
       if (match) {
         const ref = db.collection('shops').doc(order.shopCode).collection('items').doc(match.id);
         batch.update(ref, {
           stock: (match.stock||0) + oi.qty,
           catalogueId: match.catalogueId || oi.prodId || null
         });
-      } else {
-        const ref = db.collection('shops').doc(order.shopCode).collection('items').doc();
-        const catProd = S.catalogue.find(p=>p.id===oi.prodId);
-        batch.set(ref, {
-          name: oi.name,
-          cat: catProd?.category || 'Uncategorized',
-          stock: oi.qty,
-          reorder: Math.max(Math.ceil(oi.qty*0.2), 1),
-          cost: oi.price||0,
-          price: oi.price||0,
-          barcode: null,
-          catalogueId: oi.prodId || null,
-          createdAt: Date.now()
-        });
+        matched++;
       }
     });
-    await batch.commit();
+    if (matched) await batch.commit();
   } catch(e) { console.warn('Inventory sync skipped:', e.code || e.message); }
 }
 function findShopItemMatch(items, name){
