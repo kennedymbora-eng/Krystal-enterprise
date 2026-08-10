@@ -55,6 +55,7 @@ input,select,textarea{font-family:var(--font);}
 body.light .auth-screen::before,body.light .auth-screen::after{opacity:.22;}
 @keyframes authDrift{0%{transform:translate(0,0) scale(1);}50%{transform:translate(30px,22px) scale(1.15);}100%{transform:translate(-22px,30px) scale(.95);}}
 .auth-logo{width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,var(--ac),var(--ac3));display:flex;align-items:center;justify-content:center;margin-bottom:16px;position:relative;z-index:1;animation:logoGlow 2.8s ease-in-out infinite;}
+.auth-illust{width:100%;max-width:230px;height:auto;opacity:.55;margin-bottom:2px;position:relative;z-index:1;}
 @keyframes logoGlow{0%,100%{box-shadow:0 4px 24px rgba(0,212,170,.25);}50%{box-shadow:0 4px 34px rgba(0,212,170,.55);}}
 .auth-title{font-size:22px;font-weight:900;margin-bottom:4px;position:relative;z-index:1;}
 .auth-sub{font-size:12px;color:var(--tx2);margin-bottom:28px;text-align:center;position:relative;z-index:1;}
@@ -183,6 +184,10 @@ input,select{background:var(--sf2);border:1px solid var(--bd);color:var(--tx);bo
 input:focus,select:focus{border-color:var(--ac);}
 select option{background:var(--sf);}
 input[disabled]{opacity:.45;}
+.pw-wrap{position:relative;}
+.pw-wrap input{padding-right:38px;}
+.pw-toggle{position:absolute;right:2px;top:50%;transform:translateY(-50%);background:none;border:none;padding:8px;color:var(--tx2);cursor:pointer;display:flex;align-items:center;}
+.pw-toggle:active{color:var(--tx);}
 textarea{background:var(--sf2);border:1px solid var(--bd);color:var(--tx);border-radius:var(--r8);padding:9px 11px;font-size:13px;width:100%;outline:none;resize:vertical;}
 .search-wrap{position:relative;flex:1;}
 .search-wrap input{padding-left:32px;}
@@ -374,6 +379,20 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
 <!-- ═══════ AUTH SCREENS ═══════ -->
 <!-- Login -->
 <div class="auth-screen" id="authLogin">
+  <svg class="auth-illust" viewBox="0 0 320 100" fill="none" stroke="var(--ac)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="18" y="46" width="14" height="34"/>
+    <rect x="36" y="28" width="14" height="52"/>
+    <rect x="54" y="52" width="14" height="28"/>
+    <path d="M76 80 Q160 46 252 80"/>
+    <polygon points="262,58 282,40 302,58"/>
+    <rect x="268" y="58" width="28" height="22"/>
+    <g transform="translate(148,44)">
+      <rect x="0" y="0" width="38" height="15" rx="4"/>
+      <line x1="25" y1="0" x2="25" y2="15"/>
+      <circle cx="9" cy="17" r="3.2"/>
+      <circle cx="29" cy="17" r="3.2"/>
+    </g>
+  </svg>
   <div class="auth-logo">
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#071a15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 4 9 12 22 20 9"/><line x1="4" y1="9" x2="20" y2="9"/><line x1="12" y1="2" x2="8" y2="9"/><line x1="12" y1="2" x2="16" y2="9"/><line x1="8" y1="9" x2="12" y2="22"/><line x1="16" y1="9" x2="12" y2="22"/></svg>
   </div>
@@ -386,7 +405,10 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
     </div>
     <div class="fg" style="margin-bottom:14px">
       <label>Password</label>
-      <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password">
+      <div class="pw-wrap">
+        <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password">
+        <button type="button" class="pw-toggle" onclick="togglePwVisibility('li-pass',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
     </div>
     <div class="auth-err" id="li-err"></div>
     <button class="btn btn-p btn-full" onclick="doLogin()" id="li-btn">Sign In</button>
@@ -406,6 +428,20 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
 
 <!-- Create Shop (owners only) -->
 <div class="auth-screen" id="authCreateShop">
+  <svg class="auth-illust" viewBox="0 0 320 100" fill="none" stroke="var(--ac)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="18" y="46" width="14" height="34"/>
+    <rect x="36" y="28" width="14" height="52"/>
+    <rect x="54" y="52" width="14" height="28"/>
+    <path d="M76 80 Q160 46 252 80"/>
+    <polygon points="262,58 282,40 302,58"/>
+    <rect x="268" y="58" width="28" height="22"/>
+    <g transform="translate(148,44)">
+      <rect x="0" y="0" width="38" height="15" rx="4"/>
+      <line x1="25" y1="0" x2="25" y2="15"/>
+      <circle cx="9" cy="17" r="3.2"/>
+      <circle cx="29" cy="17" r="3.2"/>
+    </g>
+  </svg>
   <div class="auth-logo">
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#071a15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 4 9 12 22 20 9"/><line x1="4" y1="9" x2="20" y2="9"/><line x1="12" y1="2" x2="8" y2="9"/><line x1="12" y1="2" x2="16" y2="9"/><line x1="8" y1="9" x2="12" y2="22"/><line x1="16" y1="9" x2="12" y2="22"/></svg>
   </div>
@@ -415,7 +451,7 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
     <div class="frow"><div class="fg"><label>Your Name</label><input type="text" id="cs-uname" placeholder="Ken Mbora"></div></div>
     <div class="frow"><div class="fg"><label>Shop Name</label><input type="text" id="cs-sname" placeholder="Krystal Wholesale"></div></div>
     <div class="frow"><div class="fg"><label>Email</label><input type="email" id="cs-email" placeholder="you@example.com" autocomplete="email"></div></div>
-    <div class="frow"><div class="fg"><label>Password</label><input type="password" id="cs-pass" placeholder="Min 6 characters" autocomplete="new-password"></div></div>
+    <div class="frow"><div class="fg"><label>Password</label><div class="pw-wrap"><input type="password" id="cs-pass" placeholder="Min 6 characters" autocomplete="new-password"><button type="button" class="pw-toggle" onclick="togglePwVisibility('cs-pass',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div></div>
     <div class="auth-err" id="cs-err"></div>
     <button class="btn btn-p btn-full" onclick="doCreateShop()" id="cs-btn">Create Shop</button>
   </div>
@@ -424,6 +460,20 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
 
 <!-- Join Shop (cashiers / invited staff) -->
 <div class="auth-screen" id="authJoinShop">
+  <svg class="auth-illust" viewBox="0 0 320 100" fill="none" stroke="var(--ac)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="18" y="46" width="14" height="34"/>
+    <rect x="36" y="28" width="14" height="52"/>
+    <rect x="54" y="52" width="14" height="28"/>
+    <path d="M76 80 Q160 46 252 80"/>
+    <polygon points="262,58 282,40 302,58"/>
+    <rect x="268" y="58" width="28" height="22"/>
+    <g transform="translate(148,44)">
+      <rect x="0" y="0" width="38" height="15" rx="4"/>
+      <line x1="25" y1="0" x2="25" y2="15"/>
+      <circle cx="9" cy="17" r="3.2"/>
+      <circle cx="29" cy="17" r="3.2"/>
+    </g>
+  </svg>
   <div class="auth-logo">
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#071a15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 4 9 12 22 20 9"/><line x1="4" y1="9" x2="20" y2="9"/><line x1="12" y1="2" x2="8" y2="9"/><line x1="12" y1="2" x2="16" y2="9"/><line x1="8" y1="9" x2="12" y2="22"/><line x1="16" y1="9" x2="12" y2="22"/></svg>
   </div>
@@ -435,7 +485,7 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
     </div>
     <div class="frow"><div class="fg"><label>Your Name</label><input type="text" id="js-name" placeholder="Your full name"></div></div>
     <div class="frow"><div class="fg"><label>Email</label><input type="email" id="js-email" placeholder="you@example.com" autocomplete="email"></div></div>
-    <div class="frow"><div class="fg"><label>Password</label><input type="password" id="js-pass" placeholder="Min 6 characters" autocomplete="new-password"></div></div>
+    <div class="frow"><div class="fg"><label>Password</label><div class="pw-wrap"><input type="password" id="js-pass" placeholder="Min 6 characters" autocomplete="new-password"><button type="button" class="pw-toggle" onclick="togglePwVisibility('js-pass',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div></div>
     <div class="frow"><div class="fg"><label>Shop Code</label><input type="text" id="js-code" placeholder="XX-XXXXX" style="text-transform:uppercase;letter-spacing:2px;font-weight:700;font-size:15px;text-align:center"></div></div>
     <div class="auth-err" id="js-err"></div>
     <button class="btn btn-p btn-full" onclick="doJoinShop()" id="js-btn">Join Shop</button>
@@ -1265,6 +1315,14 @@ function cancelBoot() {
   auth.signOut();
   showAuth('authLogin');
   document.getElementById('li-err').textContent = 'Timed out — please try again';
+}
+const EYE_OPEN  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_SHUT  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+function togglePwVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const showing = input.type === 'text';
+  input.type = showing ? 'password' : 'text';
+  btn.innerHTML = showing ? EYE_OPEN : EYE_SHUT;
 }
 function showAuth(id) {
   document.querySelectorAll('.auth-screen').forEach(s => s.classList.remove('show'));
