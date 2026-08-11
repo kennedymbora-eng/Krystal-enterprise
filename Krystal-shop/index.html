@@ -966,6 +966,17 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
 </div>
 
 
+<!-- Add to Inventory (from a fulfilled order) — owner sets their own sell price -->
+<div class="overlay" id="addToInvModal">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title">Set Selling Price</div><button class="sheet-close" onclick="closeModal('addToInvModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div style="font-size:11px;color:var(--tx2);margin-bottom:10px">These are new to your inventory — set what you'll sell each for before they show up in POS.</div>
+    <div id="addToInvBody"></div>
+    <button class="btn btn-p btn-full" style="margin-top:6px" onclick="saveAddToInvItems()">Add to Inventory</button>
+  </div>
+</div>
+
 <!-- Invite Staff -->
 <div class="overlay" id="inviteModal">
   <div class="sheet">
@@ -1051,7 +1062,7 @@ const S = {
   items:[], sales:[], suppliers:[],
   cart:[], editItem:null, editSup:null, restockId:null,
   stockCat:'All', posCat:'All',
-  catalogue:[], netCart:[], myOrders:[], osCat:'All', // Krystal Network (Order Stock tab)
+  catalogue:[], netCart:[], myOrders:[], pendingInvItems:[], osCat:'All', // Krystal Network (Order Stock tab)
   user:null,      // Firebase Auth user
   userDoc:null,   // Firestore user profile doc
   shopCode:'',
@@ -2514,26 +2525,50 @@ async function loadMyOrders() {
 }
 // Items the admin already matched to an existing inventory item were
 // auto-stocked when the order was marked Fulfilled (see the admin app) —
-// this only ever touches items that came in genuinely new, so the owner
-// picks the category/reorder point instead of us guessing at it.
-async function addOrderItemsToInventory(orderId) {
+// this only ever touches items that came in genuinely new. Category comes
+// straight from the network listing (no harm reusing that), but the sell
+// price is always the owner's own call, so it's left blank here.
+function addOrderItemsToInventory(orderId) {
   const o = S.myOrders.find(x=>x.id===orderId); if (!o) return;
   const unlisted = o.items.filter(i => !findLocalItemByName(i.name));
   if (!unlisted.length) { toast('Already in your inventory'); loadMyOrders(); return; }
+  S.pendingInvItems = unlisted.map(i => {
+    const catProd = S.catalogue.find(p => p.id === i.prodId);
+    return { name: i.name, cat: catProd?.category || 'Uncategorized', stock: i.qty, cost: i.price||0, catalogueId: i.prodId||null };
+  });
+  renderAddToInvBody();
+  openModal('addToInvModal');
+}
+function renderAddToInvBody() {
+  document.getElementById('addToInvBody').innerHTML = S.pendingInvItems.map((i,idx) => `
+    <div class="card" style="margin-bottom:8px">
+      <div style="font-weight:700;font-size:12px">${i.name}</div>
+      <div style="font-size:10px;color:var(--tx2);margin-bottom:6px">${i.cat} · ${i.stock} units · cost KSh ${fmt(i.cost)} each</div>
+      <div class="fg" style="margin-bottom:0"><label>Sell price (KSh)</label><input type="number" min="0" step="1" id="pinv-price-${idx}" placeholder="e.g. ${Math.round(i.cost*1.15) || ''}"></div>
+    </div>`).join('');
+}
+async function saveAddToInvItems() {
+  const items = S.pendingInvItems || [];
+  if (!items.length) { closeModal('addToInvModal'); return; }
+  const priced = items.map((i,idx) => ({...i, price: parseFloat(document.getElementById('pinv-price-'+idx).value) || 0}));
+  const missing = priced.find(i => !i.price);
+  if (missing) { toast('Enter a sell price for '+missing.name); return; }
   try {
     const batch = db.batch();
-    unlisted.forEach(i => {
+    priced.forEach(i => {
       const ref = db.collection('shops').doc(S.shopCode).collection('items').doc();
       batch.set(ref, {
         id: ref.id, // the items onSnapshot listener matches on this field, not the Firestore doc id — every other item-write path in this app sets it (see saveItem())
-        name: i.name, cat: 'Uncategorized', stock: i.qty,
-        reorder: Math.max(Math.ceil(i.qty*0.2), 1),
-        cost: i.price||0, price: i.price||0,
-        barcode: null, catalogueId: i.prodId||null, createdAt: Date.now()
+        name: i.name, cat: i.cat, stock: i.stock,
+        reorder: Math.max(Math.ceil(i.stock*0.2), 1),
+        cost: i.cost, price: i.price,
+        barcode: null, catalogueId: i.catalogueId, createdAt: Date.now()
       });
     });
     await batch.commit();
-    toast(unlisted.length+' item'+(unlisted.length===1?'':'s')+' added — check Inventory to set category/reorder point');
+    toast(priced.length+' item'+(priced.length===1?'':'s')+' added to inventory');
+    S.pendingInvItems = [];
+    closeModal('addToInvModal');
     loadMyOrders();
   } catch(e) { toast('Could not add items: '+e.message); }
 }
