@@ -1081,7 +1081,60 @@ const S = {
 firebase.initializeApp(FIREBASE_CONFIG);
 const db   = firebase.firestore();
 const auth = firebase.auth();
-try { db.enablePersistence({ synchronizeTabs: true }); } catch(e) {}
+// ── OFFLINE CACHE ─────────────────────────────────────
+// Keep every document this phone has loaded, and never let Firestore garbage-collect
+// it. enablePersistence() is async: its failure arrives as a rejected promise, which
+// the old try/catch around it could never catch.
+db.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
+db.enablePersistence({ synchronizeTabs: true }).catch(e => {
+  console.warn('Offline cache unavailable:', e.code || e.message);
+  window._offlineCacheFailed = true;
+});
+
+// READ helper: use the server when there's signal, the saved copy when there isn't.
+// A plain .get() while offline (or on a weak signal) can sit for ~10s before
+// falling back to the cache — this answers from the phone straight away instead.
+async function fsGet(ref) {
+  const offlineish = e => e && (e.code === 'unavailable' || /offline/i.test(e.message || ''));
+  if (!navigator.onLine) return ref.get({ source: 'cache' });
+  const server = ref.get();
+  const slow = new Promise(r => setTimeout(() => r('slow'), 5000));
+  let first;
+  try { first = await Promise.race([server, slow]); }
+  catch (e) { if (offlineish(e)) return ref.get({ source: 'cache' }); throw e; }
+  if (first !== 'slow') return first;
+  // Weak signal: use what's on the phone if there is something, otherwise keep waiting.
+  try {
+    const cached = await ref.get({ source: 'cache' });
+    if (cached.exists === true || cached.empty === false) { server.catch(() => {}); return cached; }
+  } catch (_) {}
+  return server;
+}
+
+// WRITE helper: Firestore applies a write to the local cache instantly, but the
+// promise only resolves once the SERVER confirms — which never happens offline, so
+// an awaited save would leave the screen frozen. This resolves on server confirmation
+// OR after a short wait, whichever comes first. The write stays queued on the phone and
+// syncs on its own; a late rejection (e.g. a rules denial) still surfaces as a toast.
+function writeThrough(promise) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const t = setTimeout(() => { if (!settled) { settled = true; resolve(); } }, navigator.onLine ? 3000 : 0);
+    promise.then(
+      () => { if (!settled) { settled = true; clearTimeout(t); resolve(); } },
+      e => {
+        clearTimeout(t);
+        if (!settled) { settled = true; reject(e); }
+        else toast('A saved change was rejected by the server: ' + (e.code || e.message));
+      });
+  });
+}
+function savedMsg(msg) { return navigator.onLine ? msg : msg + ' — will sync when online'; }
+function requireOnline(what) {
+  if (navigator.onLine) return true;
+  toast(what + ' needs an internet connection');
+  return false;
+}
 
 // ── LOGO TAP (triple-tap to access admin) ─────────────
 let _tapCount = 0, _tapTimer = null;
@@ -1126,7 +1179,7 @@ async function bootUser(user) {
   try {
     // Step 1: Look up which shop this user belongs to
     showLoading('Finding your shop…');
-    const userShopSnap = await db.collection('userShops').doc(user.uid).get();
+    const userShopSnap = await fsGet(db.collection('userShops').doc(user.uid));
 
     if (!userShopSnap.exists) {
       // No shop linked — this is a brand new account with no shop yet.
@@ -1148,9 +1201,9 @@ async function bootUser(user) {
     // this batch), which is most of where a slow login was going.
     showLoading('Loading your shop…');
     const [registrySnap, userDocSnap, shopInfoSnap] = await Promise.all([
-      db.collection('shopRegistry').doc(shopCode).get(),
-      db.collection('shops').doc(shopCode).collection('users').doc(user.uid).get(),
-      db.collection('shops').doc(shopCode).collection('info').doc('config').get()
+      fsGet(db.collection('shopRegistry').doc(shopCode)),
+      fsGet(db.collection('shops').doc(shopCode).collection('users').doc(user.uid)),
+      fsGet(db.collection('shops').doc(shopCode).collection('info').doc('config'))
     ]);
 
     if (registrySnap.exists && registrySnap.data().status === 'paused') {
@@ -1202,8 +1255,8 @@ async function bootUser(user) {
     showAuth('authLogin');
     const msg = e.code === 'permission-denied'
       ? 'Permission denied — check your Firestore rules are published'
-      : e.message === 'Failed to get document because the client is offline.'
-      ? 'No internet connection — connect and try again'
+      : (e.code === 'unavailable' || /offline|cache/i.test(e.message || ''))
+      ? 'No saved data on this phone yet — connect to the internet once to load your shop'
       : 'Error loading account: ' + e.message;
     document.getElementById('li-err').textContent = msg;
   }
@@ -1453,6 +1506,7 @@ async function doCreateShop() {
 
 
 async function doResetPassword() {
+  if (!requireOnline('Resetting your password')) return;
   const email = document.getElementById('li-email').value.trim();
   if (!email) { document.getElementById('li-err').textContent = 'Enter your email first'; return; }
   try {
@@ -1466,7 +1520,10 @@ async function doResetPassword() {
 }
 
 async function doSignOut() {
-  if (!(await customConfirm('You will need to sign in again to access this shop.', {title:'Sign out?'}))) return;
+  const signOutMsg = navigator.onLine
+    ? 'You will need to sign in again to access this shop.'
+    : "You're offline. If you sign out now you can't sign back in until you have internet. Unsynced changes stay on this phone and send once you sign in again.";
+  if (!(await customConfirm(signOutMsg, {title:'Sign out?'}))) return;
   teardownListeners();
   S.items=[]; S.sales=[]; S.cart=[];
   document.querySelectorAll('.pin-screen').forEach(s => s.classList.remove('show'));
@@ -1650,9 +1707,9 @@ async function handlePinSetupEntry() {
   const salt = genPinSalt();
   const hash = await hashPin(pin, salt);
   try {
-    await db.collection('shops').doc(S.shopCode).collection('users').doc(uid).update({
+    await writeThrough(db.collection('shops').doc(S.shopCode).collection('users').doc(uid).update({
       pinHash: hash, pinSalt: salt, pinSetAt: Date.now()
-    });
+    }));
   } catch(e) {
     document.getElementById('pinSetupErr').textContent = 'Could not save PIN — check your connection and try again';
     _pinSetupFirst = null;
@@ -1749,7 +1806,7 @@ function startListeners() {
   updateCloudStatus('syncing');
   const shopRef = db.collection('shops').doc(S.shopCode);
 
-  S.unsubs.push(shopRef.collection('items').onSnapshot(snap => {
+  S.unsubs.push(shopRef.collection('items').onSnapshot({ includeMetadataChanges: true }, snap => {
     snap.docChanges().forEach(ch => {
       const d = ch.doc.data();
       const idx = S.items.findIndex(i => i.id === d.id);
@@ -1757,8 +1814,8 @@ function startListeners() {
       else if (idx > -1) S.items[idx] = d;
       else S.items.push(d);
     });
-    refreshPage();
-    updateCloudStatus('online');
+    if (snap.docChanges().length) refreshPage(); // metadata-only events just update the sync pill
+    syncStateFromSnap(snap);
   }, () => updateCloudStatus('offline')));
 
   S.unsubs.push(shopRef.collection('sales').orderBy('ts','desc').limit(200).onSnapshot(snap => {
@@ -1986,13 +2043,13 @@ async function saveItem() {
   const id = S.editItem || 'i'+Date.now();
   const isNew = !S.editItem;
   d.id = id;
-  await db.collection('shops').doc(S.shopCode).collection('items').doc(id).set(d, {merge:true});
-  closeModal('itemModal'); toast(S.editItem?'Item updated':'Item added');
+  await writeThrough(db.collection('shops').doc(S.shopCode).collection('items').doc(id).set(d, {merge:true}));
+  closeModal('itemModal'); toast(savedMsg(S.editItem?'Item updated':'Item added'));
 }
 async function delItem(id) {
   if (!(await customConfirm('This can\'t be undone.', {title:'Delete this item?', danger:true, confirmLabel:'Delete'}))) return;
-  await db.collection('shops').doc(S.shopCode).collection('items').doc(id).delete();
-  toast('Deleted');
+  await writeThrough(db.collection('shops').doc(S.shopCode).collection('items').doc(id).delete());
+  toast(savedMsg('Deleted'));
 }
 function openRestock(id) {
   const it = S.items.find(i=>i.id===id); S.restockId = id;
@@ -2010,8 +2067,8 @@ async function saveRestock() {
   const nc = parseFloat(document.getElementById('rs-cost').value)||0;
   const upd = { stock: newStock };
   if (nc > 0) upd.cost = nc;
-  await db.collection('shops').doc(S.shopCode).collection('items').doc(S.restockId).update(upd);
-  closeModal('restockModal'); toast('Restocked '+qty+' units');
+  await writeThrough(db.collection('shops').doc(S.shopCode).collection('items').doc(S.restockId).update(upd));
+  closeModal('restockModal'); toast(savedMsg('Restocked '+qty+' units'));
 }
 
 // ── ADD TO MY SHOP (import from Krystal Network catalogue) ──
@@ -2045,16 +2102,16 @@ async function saveImport() {
   try {
     const existing = S.items.find(i => i.catalogueId===S.importCatalogueId);
     if (existing) {
-      await db.collection('shops').doc(S.shopCode).collection('items').doc(existing.id).update({
+      await writeThrough(db.collection('shops').doc(S.shopCode).collection('items').doc(existing.id).update({
         stock: existing.stock + qty, price, reorder, cost: p.sellPrice||existing.cost
-      });
+      }));
     } else {
       const id = 'i'+Date.now();
-      await db.collection('shops').doc(S.shopCode).collection('items').doc(id).set({
+      await writeThrough(db.collection('shops').doc(S.shopCode).collection('items').doc(id).set({
         id, name: p.name, cat: p.category||'Uncategorized', barcode: null,
         stock: qty, reorder, cost: p.sellPrice||0, price,
         catalogueId: S.importCatalogueId
-      });
+      }));
     }
     // Best-effort demand-trend bump on the shared catalogue doc — never
     // blocks the import itself if this fails for any reason.
@@ -2063,7 +2120,7 @@ async function saveImport() {
       unitsImported: firebase.firestore.FieldValue.increment(qty)
     }).catch(e => console.warn('Demand counter skipped:', e.code || e.message));
     closeModal('importModal');
-    toast('Added to your shop ✓');
+    toast(savedMsg('Added to your shop ✓'));
   } catch(e) { toast('Could not add item: '+e.message); }
 }
 
@@ -2306,13 +2363,13 @@ async function completeSale() {
   });
   batch.commit().catch(e => {
     console.error('Sale sync error:', e);
-    toast('Sale saved on this device — will sync when back online');
+    toast('A sale could not be saved to the server (' + (e.code || e.message) + ') — check Sales History');
   });
 
   S.cart=[]; document.getElementById('custName').value='';
   renderCart(); renderPOS(); renderHist();
   showInvoice(sale);
-  toast('Sale recorded — KSh '+fmt(sale.total));
+  toast(savedMsg('Sale recorded — KSh '+fmt(sale.total)));
 }
 function toggleHistory() {
   const pv=document.getElementById('posView'), hv=document.getElementById('histView');
@@ -2404,6 +2461,7 @@ function renderMonthly() {
 // word for it.
 async function ensureNetworkIdentity() {
   if (!S.shopCode) return;
+  if (!navigator.onLine) return; // identity binding needs the server; it's already bound from earlier online sessions
   try {
     // No anonymous fallback here on purpose: Firestore rules now require
     // shopUsers/{uid} to match an existing userShops/{uid} record (the
@@ -2447,9 +2505,9 @@ async function ensureNetworkIdentity() {
 async function loadCatalogue(force) {
   if (S.catalogue.length && !force) return;
   try {
-    const snap = await db.collection('catalogue').where('status','==','priced').get();
+    const snap = await fsGet(db.collection('catalogue').where('status','==','priced'));
     S.catalogue = snap.docs.map(d => ({id:d.id, ...d.data()}));
-  } catch(e) { toast('Could not load network catalogue'); }
+  } catch(e) { toast(navigator.onLine ? 'Could not load network catalogue' : 'Catalogue is not saved on this phone yet — open it once with internet'); }
 }
 async function renderCataloguePage() {
   try { await ensureNetworkIdentity(); } catch(e) { console.warn('Network identity sync skipped:', e.code || e.message); } // no-op if already bound — guards every read/write this page (and its buttons) triggers below
@@ -2474,7 +2532,11 @@ async function renderCataloguePage() {
   }).join('') : '<div class="empty" style="padding:14px"><div style="font-size:11px">Nothing low on stock 🎉</div></div>';
   document.getElementById('osLowCount').textContent = low.length;
   await loadCatalogue();
-  document.getElementById('osSeedWrap').style.display = S.catalogue.length ? 'none' : 'block';
+  const seed = document.getElementById('osSeedWrap');
+  seed.style.display = S.catalogue.length ? 'none' : 'block';
+  if (!S.catalogue.length) seed.firstElementChild.textContent = navigator.onLine
+    ? 'No products in the network catalogue yet — check back once the admin has approved some.'
+    : "You're offline and the catalogue isn't saved on this phone yet — open this page once with internet.";
   renderCatalogueGrid();
   await loadDraftCart();
   renderNetCart();
@@ -2496,7 +2558,7 @@ function findLocalItemByName(name){
 async function loadMyOrders() {
   const el = document.getElementById('osMyOrders');
   try {
-    const snap = await db.collection('orders').where('shopCode','==',S.shopCode).orderBy('createdAt','desc').limit(15).get();
+    const snap = await fsGet(db.collection('orders').where('shopCode','==',S.shopCode).orderBy('createdAt','desc').limit(15));
     const orders = snap.docs.map(d => ({id:d.id, ...d.data()}));
     S.myOrders = orders;
     if (!orders.length) { el.innerHTML = '<div class="empty" style="padding:14px"><div style="font-size:11px">No orders submitted yet</div></div>'; return; }
@@ -2565,8 +2627,8 @@ async function saveAddToInvItems() {
         barcode: null, catalogueId: i.catalogueId, createdAt: Date.now()
       });
     });
-    await batch.commit();
-    toast(priced.length+' item'+(priced.length===1?'':'s')+' added to inventory');
+    await writeThrough(batch.commit());
+    toast(savedMsg(priced.length+' item'+(priced.length===1?'':'s')+' added to inventory'));
     S.pendingInvItems = [];
     closeModal('addToInvModal');
     loadMyOrders();
@@ -2596,7 +2658,7 @@ function showOrderReceipt(order) {
 async function loadNetworkPaymentMethod() {
   const el = document.getElementById('osPayment');
   try {
-    const snap = await db.collection('settings').doc('network').get();
+    const snap = await fsGet(db.collection('settings').doc('network'));
     const text = snap.exists ? (snap.data().paymentMethod||'') : '';
     el.textContent = text || 'Not set yet — check back once the network admin sets a payment method.';
   } catch(e) { el.textContent = 'Could not load payment method.'; }
@@ -2677,7 +2739,7 @@ function saveDraftCart() {
 async function loadDraftCart() {
   if (!S.shopCode || S.netCart.length) return; // don't clobber an in-progress cart already in memory
   try {
-    const snap = await db.collection('shops').doc(S.shopCode).get();
+    const snap = await fsGet(db.collection('shops').doc(S.shopCode));
     const draft = snap.exists ? (snap.data().draftCart || []) : [];
     if (draft.length) {
       S.netCart = draft;
@@ -2718,18 +2780,19 @@ async function submitNetworkOrder() {
   if (!S.netCart.length) { toast('Cart is empty'); return; }
   try {
     await ensureNetworkIdentity(); // no-op if already bound; closes the race with the fire-and-forget call at boot
-    await db.collection('orders').add({
+    // Offline: the order is queued on the phone and sent automatically when signal returns.
+    await writeThrough(db.collection('orders').add({
       shopCode: S.shopCode,
       shopName: S.shopDoc?.shopName || S.shopCode,
       items: S.netCart.map(c => ({prodId:c.prodId, name:c.name, price:c.price, qty:c.qty})),
       total: S.netCart.reduce((a,b)=>a+b.price*b.qty,0),
       status: 'Placed',
       createdAt: Date.now()
-    });
+    }));
     S.netCart = [];
     renderNetCart();
     closeModal('netCartModal');
-    toast('Order placed ✓');
+    toast(navigator.onLine ? 'Order placed ✓' : "Order saved — it will be sent when you're back online");
     db.collection('shops').doc(S.shopCode).update({draftCart: []}).catch(()=>{}); // clear the saved draft — best effort
   } catch(e) { toast('Could not submit order: '+e.message); }
 }
@@ -2739,7 +2802,7 @@ async function renderStaff() {
   const el = document.getElementById('staffList');
   el.innerHTML = '<div style="color:var(--tx2);font-size:12px">Loading…</div>';
   try {
-    const snap = await db.collection('shops').doc(S.shopCode).collection('users').get();
+    const snap = await fsGet(db.collection('shops').doc(S.shopCode).collection('users'));
     const staff = snap.docs.map(d => d.data());
     el.innerHTML = staff.map(u => `
       <div class="staff-item">
@@ -2752,7 +2815,7 @@ async function renderStaff() {
         ${u.uid!==S.user?.uid?`<button class="btn btn-d btn-xs" onclick="removeStaff('${u.uid}','${(u.name||u.email).replace(/'/g,'')}')" style="margin-left:6px">Remove</button>`:'<span style="font-size:10px;color:var(--tx2);margin-left:6px">You</span>'}
       </div>`).join('') || '<div class="empty"><div>No staff found</div></div>';
     // Also show pending invites
-    const invSnap = await db.collection('invites').where('shopCode','==',S.shopCode).where('status','==','pending').get();
+    const invSnap = await fsGet(db.collection('invites').where('shopCode','==',S.shopCode).where('status','==','pending'));
     if (!invSnap.empty) {
       el.innerHTML += '<div class="set-sec-title" style="margin-top:14px">Pending Invites</div>' +
         '<div style="font-size:10px;color:var(--tx2);margin-bottom:8px">No emails are sent automatically — share the shop code yourself using the buttons below.</div>' +
@@ -2768,6 +2831,7 @@ async function renderStaff() {
 }
 
 async function inviteStaff() {
+  if (!requireOnline('Inviting staff')) return;
   const emailRaw = document.getElementById('inv-email').value.trim();
   const email = emailRaw.toLowerCase();
   const name  = document.getElementById('inv-name').value.trim();
@@ -2797,6 +2861,7 @@ async function inviteStaff() {
 }
 
 async function removeStaff(uid, name) {
+  if (!requireOnline('Removing staff')) return;
   if (!(await customConfirm(name+' will lose access to this shop immediately.', {title:'Remove '+name+'?', danger:true, confirmLabel:'Remove'}))) return;
   await db.collection('shops').doc(S.shopCode).collection('users').doc(uid).delete();
   toast(name+' removed');
@@ -2804,6 +2869,7 @@ async function removeStaff(uid, name) {
 }
 
 async function cancelInvite(id) {
+  if (!requireOnline('Cancelling an invite')) return;
   if (!(await customConfirm('They won\'t be able to join with this invite anymore.', {title:'Cancel this invite?', danger:true, confirmLabel:'Cancel Invite'}))) return;
   await db.collection('invites').doc(id).update({status:'cancelled'});
   toast('Invite cancelled');
@@ -2842,11 +2908,11 @@ async function saveShopInfo() {
     email:    document.getElementById('s-email').value.trim(),
     tag:      document.getElementById('s-tag').value.trim(),
   };
-  await db.collection('shops').doc(S.shopCode).collection('info').doc('config').set(d, {merge:true});
+  await writeThrough(db.collection('shops').doc(S.shopCode).collection('info').doc('config').set(d, {merge:true}));
   S.shopDoc = Object.assign(S.shopDoc||{}, d);
   applyShopInfo();
   ensureNetworkIdentity().catch(e => console.warn('Network identity sync skipped:', e.code || e.message)); // keep the network's copy of this shop's profile fresh, and the uid binding
-  toast('Shop info saved');
+  toast(savedMsg('Shop info saved'));
 }
 
 function saveReceiptSettings() {
@@ -2912,8 +2978,10 @@ function updateOfflineStatus() {
   const el = document.getElementById('aboutOffline');
   if (!el) return;
   if (location.protocol!=='https:') { el.textContent='Unavailable (needs HTTPS)'; el.style.color='var(--tx2)'; return; }
-  if (navigator.onLine) { el.textContent='Online — offline cache active'; el.style.color='var(--gr)'; }
-  else { el.textContent='Offline — using cached data'; el.style.color='var(--wa)'; }
+  const ready = !!(navigator.serviceWorker && navigator.serviceWorker.controller) && !window._offlineCacheFailed;
+  if (!ready) { el.textContent = navigator.onLine ? 'Not ready yet — close and reopen the app once while online' : 'Offline cache not ready'; el.style.color='var(--wa)'; }
+  else if (navigator.onLine) { el.textContent='Ready — works without internet'; el.style.color='var(--gr)'; }
+  else { el.textContent='Offline — using saved data'; el.style.color='var(--wa)'; }
 }
 
 function shareApp() {
@@ -2929,7 +2997,16 @@ function shareApp() {
 // or client-side role in this file.
 
 // ── CLOUD STATUS ─────────────────────────────────────
-function updateCloudStatus(state) {
+// Previously every snapshot said "Synced" — even one served from the phone's cache.
+// Now: pending local changes => Syncing (or "Offline · N waiting"), cache-only => Connecting.
+function syncStateFromSnap(snap) {
+  const pending = snap.docs.filter(d => d.metadata.hasPendingWrites).length;
+  if (!navigator.onLine) updateCloudStatus('offline', pending ? pending + ' waiting' : '');
+  else if (pending) updateCloudStatus('syncing', 'Syncing…');
+  else if (snap.metadata.fromCache) updateCloudStatus('syncing', 'Connecting…');
+  else updateCloudStatus('online');
+}
+function updateCloudStatus(state, extra) {
   const pill  = document.getElementById('syncPill');
   const dot   = document.getElementById('syncDot');
   const label = document.getElementById('syncLabel');
@@ -2937,10 +3014,20 @@ function updateCloudStatus(state) {
   const map = {online:['online','Synced'],syncing:['syncing','Syncing…'],offline:['offline','Offline']};
   const [cls,text] = map[state]||map.offline;
   if (dot)   { dot.className='sync-dot '+cls; }
-  if (label) label.textContent = text;
+  if (label) label.textContent = extra ? (state === 'offline' ? 'Offline · ' + extra : extra) : text;
 }
-window.addEventListener('online',  ()=>updateCloudStatus('online'));
-window.addEventListener('offline', ()=>updateCloudStatus('offline'));
+window.addEventListener('online', () => {
+  if (!S.user) return;
+  updateCloudStatus('syncing', 'Syncing…');
+  updateOfflineStatus();
+  db.waitForPendingWrites().then(() => { updateCloudStatus('online'); toast('Back online — all changes synced'); }).catch(() => {});
+});
+window.addEventListener('offline', () => {
+  if (!S.user) return;
+  updateCloudStatus('offline');
+  updateOfflineStatus();
+  toast("You're offline — sales and stock changes are saved on this phone");
+});
 
 // ── UTILS ─────────────────────────────────────────────
 function fmt(n) { return Math.round(n).toLocaleString(); }
@@ -2981,13 +3068,16 @@ function initPWA() {
     navigator.serviceWorker.register('./sw.js')
       .then(reg => { _swReg=reg; watchForUpdates(reg); updateOfflineStatus(); })
       .catch(e => console.warn('SW:', e.message));
+    const hadController = !!navigator.serviceWorker.controller; // false on the very first install
     navigator.serviceWorker.addEventListener('controllerchange', () => {
+      // First install: nothing stale to refresh — and reloading here would interrupt a login.
+      if (!hadController) { updateOfflineStatus(); return; }
       if (_swRefreshing) return; _swRefreshing=true; location.reload();
     });
   }
   if (location.protocol==='https:') {
     const name = S.shopDoc?.shopName||'Krystal';
-    const manifest = {name:name+' Manager',short_name:name,id:location.origin+'/',display:'standalone',orientation:'portrait',background_color:'#0f1117',theme_color:'#0f1117',start_url:location.origin+'/',scope:location.origin+'/',icons:[{src:new URL('shop-icon.png',location.href).href,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
+    const manifest = {name:name+' Manager',short_name:name,id:new URL('./',location.href).href,display:'standalone',orientation:'portrait',background_color:'#0f1117',theme_color:'#0f1117',start_url:new URL('./',location.href).href,scope:new URL('./',location.href).href,icons:[{src:new URL('shop-icon.png',location.href).href,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
     const blob = new Blob([JSON.stringify(manifest)],{type:'application/json'});
     document.getElementById('pwaManifest').href = URL.createObjectURL(blob);
   }
