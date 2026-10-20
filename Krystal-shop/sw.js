@@ -3,7 +3,7 @@
 // Bump CACHE only when the precache list below changes. index.html itself is
 // fetched network-first, so normal app updates never need a bump.
 // (The 'electropro-v' prefix is relied on by the app's "Check Now" update button.)
-const CACHE = 'electropro-v1';
+const CACHE = 'electropro-v2';
 
 // Must match the <script> URLs in index.html exactly.
 const FIREBASE = [
