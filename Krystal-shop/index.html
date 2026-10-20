@@ -342,6 +342,30 @@ body.cashier-mode #kpiProfitToday{display:none;}
 body.cashier-mode #kpiSalesToday{grid-column:1/-1;}
 body.cashier-mode #dashCatProfitCard{display:none;}
 
+/* ── REPAIRS ── */
+.rp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.rp-stat{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r12);padding:10px;text-align:center;}
+.rp-stat-v{font-size:16px;font-weight:800;}
+.rp-stat-l{font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+.rp-filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;-webkit-overflow-scrolling:touch;}
+.rp-filters .cat-pill{white-space:nowrap;flex-shrink:0;}
+.rp-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r12);padding:14px;margin-bottom:10px;}
+.rp-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.rp-device{font-size:14px;font-weight:800;}
+.rp-meta{font-size:10px;color:var(--tx2);margin-top:2px;}
+.rp-status{font-size:10px;font-weight:800;padding:3px 9px;border-radius:8px;white-space:nowrap;border:none;cursor:pointer;}
+.rp-st-pending{background:rgba(245,158,11,.15);color:var(--wa);}
+.rp-st-progress{background:rgba(99,102,241,.2);color:#a5b4fc;}
+.rp-st-done{background:rgba(16,185,129,.15);color:var(--gr);}
+.rp-st-cancelled{background:rgba(239,68,68,.15);color:var(--re);}
+.rp-cust{font-size:12px;color:var(--tx2);margin-top:8px;}
+.rp-issue{font-size:12px;margin-top:3px;}
+.rp-note{font-size:10px;color:var(--tx2);margin-top:3px;}
+.rp-money{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:10px;padding-top:10px;border-top:1px solid var(--bd);text-align:center;}
+.rp-money-l{font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;}
+.rp-money-v{font-size:12px;font-weight:800;margin-top:2px;}
+.rp-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+
 /* ── MISC ── */
 .empty{text-align:center;padding:30px 16px;color:var(--tx2);}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--sf);border:1px solid var(--ac);color:var(--tx);padding:9px 18px;border-radius:20px;font-size:12px;font-weight:700;z-index:9000;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;box-shadow:var(--sh);}
@@ -733,6 +757,19 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
       <div class="card" id="osPayment" style="font-size:12px;color:var(--tx2)"></div>
     </div>
 
+    <!-- REPAIRS (optional module — enabled from Settings) -->
+    <div id="pg-repairs" class="page">
+      <div class="sec-head"><div class="sec-title">Repair Jobs</div><button class="btn btn-p btn-sm" onclick="openRepairModal()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Job</button></div>
+      <div class="rp-stats">
+        <div class="rp-stat"><div class="rp-stat-v" id="rpStPending">0</div><div class="rp-stat-l">Pending</div></div>
+        <div class="rp-stat"><div class="rp-stat-v" id="rpStProgress">0</div><div class="rp-stat-l">In Progress</div></div>
+        <div class="rp-stat"><div class="rp-stat-v" id="rpStProfit" style="color:var(--gr)">0</div><div class="rp-stat-l">Profit · Month</div></div>
+      </div>
+      <div class="search-wrap" style="margin-bottom:10px"><span class="search-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><input type="text" id="repairQ" placeholder="Search repairs…" oninput="renderRepairs()"></div>
+      <div class="rp-filters" id="repairFilters"></div>
+      <div id="repairList"></div>
+    </div>
+
     <!-- STAFF (owner only) -->
     <div id="pg-staff" class="page">
       <div class="sec-head"><div class="sec-title">Staff</div><button class="btn btn-p btn-sm" onclick="openModal('inviteModal')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Invite</button></div>
@@ -761,6 +798,14 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
         <div class="card">
           <div class="set-row"><div><div class="set-lbl">Light Theme</div><div class="set-sub">Switch to light / dark mode</div></div><label class="toggle"><input type="checkbox" id="s-light" onchange="applyTheme()"><span class="tslider"></span></label></div>
           <div class="set-row"><div><div class="set-lbl">Accent Colour</div></div><div style="display:flex;gap:7px"><div class="cdot active" style="background:#00d4aa" onclick="setAccent('#00d4aa',this)"></div><div class="cdot" style="background:#6366f1" onclick="setAccent('#6366f1',this)"></div><div class="cdot" style="background:#f59e0b" onclick="setAccent('#f59e0b',this)"></div><div class="cdot" style="background:#ef4444" onclick="setAccent('#ef4444',this)"></div><div class="cdot" style="background:#10b981" onclick="setAccent('#10b981',this)"></div></div></div>
+        </div>
+      </div>
+
+      <!-- Optional modules (owner only) -->
+      <div class="set-sec" id="modulesSec">
+        <div class="set-sec-title">Optional Features</div>
+        <div class="card">
+          <div class="set-row"><div><div class="set-lbl">Repair Jobs</div><div class="set-sub">Track phone repairs: customer, fault, parts, labour and profit</div></div><label class="toggle"><input type="checkbox" id="s-repairs" onchange="toggleRepairs(this.checked)"><span class="tslider"></span></label></div>
         </div>
       </div>
 
@@ -850,6 +895,22 @@ code{background:var(--sf2);border:1px solid var(--bd);border-radius:4px;padding:
     <div class="frow"><div class="fg"><label>Stock Qty</label><input type="number" id="ii-stock" min="0" placeholder="0"></div><div class="fg"><label>Reorder Level</label><input type="number" id="ii-reorder" min="0" placeholder="10"></div></div>
     <div class="frow"><div class="fg"><label>Cost Price (KSh)</label><input type="number" id="ii-cost" min="0" placeholder="0"></div><div class="fg"><label>Sell Price (KSh) *</label><input type="number" id="ii-price" min="0" placeholder="0"></div></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px"><button class="btn btn-s" onclick="closeModal('itemModal')">Cancel</button><button class="btn btn-p" onclick="saveItem()">Save Item</button></div>
+  </div>
+</div>
+
+<!-- Repair Job -->
+<div class="overlay" id="repairModal">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr"><div class="sheet-title" id="repairModalTitle">New Repair Job</div><button class="sheet-close" onclick="closeModal('repairModal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="frow"><div class="fg"><label>Customer Name</label><input id="rj-name" placeholder="Walk-in"></div><div class="fg"><label>Phone No.</label><input id="rj-phone" type="tel" placeholder="07xx xxx xxx"></div></div>
+    <div class="frow"><div class="fg"><label>Device *</label><input id="rj-device" placeholder="e.g. Itel A36"></div></div>
+    <div class="frow"><div class="fg"><label>Issue / Repair Type *</label><input id="rj-issue" placeholder="e.g. Charging port, screen"></div></div>
+    <div class="frow"><div class="fg"><label>Parts Cost (KSh)</label><input type="number" id="rj-parts" min="0" placeholder="0" oninput="updateRepairProfit()"></div><div class="fg"><label>Labour Cost (KSh)</label><input type="number" id="rj-labour" min="0" placeholder="0" oninput="updateRepairProfit()"></div></div>
+    <div class="frow"><div class="fg"><label>Total Charged (KSh)</label><input type="number" id="rj-charged" min="0" placeholder="0" oninput="updateRepairProfit()"></div><div class="fg"><label>Status</label><select id="rj-status"><option value="pending">Pending</option><option value="progress">In Progress</option><option value="done">Done</option><option value="cancelled">Cancelled</option></select></div></div>
+    <div class="frow"><div class="fg"><label>Notes / IMEI / Serial</label><input id="rj-notes" placeholder="Optional"></div></div>
+    <div style="font-size:12px;color:var(--tx2);margin-bottom:12px">Profit: <strong id="rjProfit" style="color:var(--gr)">KSh 0</strong></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-s" onclick="closeModal('repairModal')">Cancel</button><button class="btn btn-p" id="rjSaveBtn" onclick="saveRepair()">Save Job</button></div>
   </div>
 </div>
 
@@ -1063,6 +1124,7 @@ const S = {
   cart:[], editItem:null, editSup:null, restockId:null,
   stockCat:'All', posCat:'All',
   catalogue:[], netCart:[], myOrders:[], pendingInvItems:[], osCat:'All', // Krystal Network (Order Stock tab)
+  repairs:[], repairFilter:'all', editRepair:null, repairUnsub:null,       // Repair Jobs (optional module)
   user:null,      // Firebase Auth user
   userDoc:null,   // Firestore user profile doc
   shopCode:'',
@@ -1805,6 +1867,7 @@ function startListeners() {
   if (!S.shopCode) return;
   updateCloudStatus('syncing');
   const shopRef = db.collection('shops').doc(S.shopCode);
+  startRepairsListener(); // no-op unless the Repairs module is switched on
 
   S.unsubs.push(shopRef.collection('items').onSnapshot({ includeMetadataChanges: true }, snap => {
     snap.docChanges().forEach(ch => {
@@ -1831,14 +1894,24 @@ function startListeners() {
 function teardownListeners() {
   S.unsubs.forEach(u => { try { u(); } catch(e) {} });
   S.unsubs = [];
+  S.repairUnsub = null; S.repairs = [];
 }
 
 // ── NAVIGATION ────────────────────────────────────────
 const OWNER_PAGES  = ['dashboard','stock','sales','reports','catalogue','myorders','staff','settings'];
 const CASHIER_PAGES = ['dashboard','sales'];
+// Repairs is an optional module: the owner switches it on in Settings, and
+// once on, both owners and cashiers (e.g. a technician) can use it.
+function repairsOn() { return !!(S.shopDoc && S.shopDoc.repairsEnabled); }
+function allowedPages() {
+  const base = (S.role === 'owner' ? OWNER_PAGES : CASHIER_PAGES).slice();
+  if (!repairsOn()) return base.filter(p => p !== 'repairs');
+  if (!base.includes('repairs')) base.splice(base.indexOf('sales') + 1, 0, 'repairs');
+  return base;
+}
 
 function showPage(id) {
-  const allowed = S.role === 'owner' ? OWNER_PAGES : CASHIER_PAGES;
+  const allowed = allowedPages();
   if (!allowed.includes(id)) id = allowed[0];
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('pg-' + id)?.classList.add('active');
@@ -1849,6 +1922,7 @@ function showPage(id) {
   document.body.classList.toggle('cashier-mode', S.role === 'cashier');
   ({dashboard:renderDash, stock:renderStock,
     sales:() => { renderPOS(); renderHist(); },
+    repairs:renderRepairs,
     reports:renderReports,
     catalogue:renderCataloguePage,
     myorders:renderMyOrdersPage,
@@ -1870,6 +1944,7 @@ function buildSidebar() {
     {page:'dashboard', icon:svgDash(),   label:'Dashboard'},
     {page:'sales',     icon:svgSales(),  label:'Sales / POS'},
   ];
+  if (repairsOn()) pages.splice(pages.findIndex(p => p.page === 'sales') + 1, 0, {page:'repairs', icon:svgWrench(), label:'Repairs'});
   nav.innerHTML = pages.map(p => `
     <div class="sb-item" data-page="${p.page}" onclick="showPage('${p.page}');closeSidebar()">
       ${p.icon} ${p.label}
@@ -2798,6 +2873,212 @@ async function submitNetworkOrder() {
 }
 
 // ── STAFF ─────────────────────────────────────────────
+// ── REPAIR JOBS (optional module) ─────────────────────
+const RP_STATUS = {pending:'Pending', progress:'In Progress', done:'Done', cancelled:'Cancelled'};
+const RP_NEXT   = {pending:'progress', progress:'done', done:'done', cancelled:'pending'};
+function esc(s) { return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function repairCode() {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let c = '';
+  for (let i = 0; i < 5; i++) c += chars[Math.floor(Math.random()*chars.length)];
+  return c;
+}
+function repairProfit(r) { return (r.charged||0) - (r.parts||0) - (r.labour||0); }
+
+function startRepairsListener() {
+  stopRepairsListener();
+  if (!S.shopCode || !repairsOn()) return;
+  S.repairUnsub = db.collection('shops').doc(S.shopCode).collection('repairs')
+    .orderBy('createdAt','desc').limit(300)
+    .onSnapshot(snap => {
+      S.repairs = snap.docs.map(d => d.data());
+      refreshPage();
+    }, e => console.warn('Repairs listener:', e.code || e.message));
+  S.unsubs.push(S.repairUnsub);
+}
+function stopRepairsListener() {
+  if (S.repairUnsub) { try { S.repairUnsub(); } catch(e) {} S.repairUnsub = null; }
+  S.repairs = [];
+}
+
+async function toggleRepairs(on) {
+  const box = document.getElementById('s-repairs');
+  try {
+    await writeThrough(db.collection('shops').doc(S.shopCode).collection('info').doc('config').set({repairsEnabled: on}, {merge:true}));
+  } catch(e) {
+    box.checked = !on;
+    toast('Could not change setting: ' + (e.code || e.message));
+    return;
+  }
+  S.shopDoc = Object.assign(S.shopDoc || {}, {repairsEnabled: on});
+  if (on) startRepairsListener(); else stopRepairsListener();
+  buildSidebar();
+  document.querySelectorAll('.sb-item').forEach(b => b.classList.toggle('active', b.dataset.page === 'settings'));
+  toast(savedMsg(on ? 'Repairs switched on — find it in the menu' : 'Repairs switched off (your jobs are kept)'));
+}
+
+function renderRepairs() {
+  if (!repairsOn()) return;
+  const showPft = S.role !== 'cashier';
+  const list = S.repairs;
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
+  document.getElementById('rpStPending').textContent  = list.filter(r => r.status === 'pending').length;
+  document.getElementById('rpStProgress').textContent = list.filter(r => r.status === 'progress').length;
+  document.getElementById('rpStProfit').textContent = showPft
+    ? fmt(list.filter(r => r.status === 'done' && (r.completedAt || r.createdAt) >= monthStart).reduce((a,r) => a + repairProfit(r), 0))
+    : '—';
+
+  const filters = ['all','pending','progress','done','cancelled'];
+  document.getElementById('repairFilters').innerHTML = filters.map(f =>
+    `<button class="cat-pill${S.repairFilter===f?' active':''}" onclick="S.repairFilter='${f}';renderRepairs()">${f==='all'?'All':RP_STATUS[f]}</button>`).join('');
+
+  const q = (document.getElementById('repairQ').value || '').toLowerCase().trim();
+  const shown = list.filter(r =>
+    (S.repairFilter === 'all' || r.status === S.repairFilter) &&
+    (!q || [r.customer, r.phone, r.device, r.issue, r.code, r.notes].some(v => (v||'').toLowerCase().includes(q))));
+
+  const ICO_EDIT = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+  const ICO_REC  = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+  const ICO_WA   = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>';
+  const ICO_DEL  = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
+
+  document.getElementById('repairList').innerHTML = shown.length ? shown.map(r => {
+    const pft = repairProfit(r);
+    return `<div class="rp-card">
+      <div class="rp-top">
+        <div><div class="rp-device">${esc(r.device)}</div><div class="rp-meta">#${esc(r.code||'')} · ${fmtDate(r.createdAt)}</div></div>
+        <button class="rp-status rp-st-${r.status}" onclick="cycleRepairStatus('${r.id}')" title="Tap to move to the next status">${RP_STATUS[r.status]||r.status}</button>
+      </div>
+      <div class="rp-cust">${esc(r.customer || 'Walk-in')}${r.phone ? ' · ' + esc(r.phone) : ''}</div>
+      <div class="rp-issue">${esc(r.issue)}</div>
+      ${r.notes ? `<div class="rp-note">${esc(r.notes)}</div>` : ''}
+      <div class="rp-money">
+        <div><div class="rp-money-l">Parts</div><div class="rp-money-v">${fmt(r.parts||0)}</div></div>
+        <div><div class="rp-money-l">Labour</div><div class="rp-money-v">${fmt(r.labour||0)}</div></div>
+        <div><div class="rp-money-l">Charged</div><div class="rp-money-v" style="color:var(--ac)">${fmt(r.charged||0)}</div></div>
+        <div><div class="rp-money-l">Profit</div><div class="rp-money-v" style="color:${pft<0?'var(--re)':'var(--gr)'}">${showPft ? (pft>=0?'+':'')+fmt(pft) : '—'}</div></div>
+      </div>
+      <div class="rp-actions">
+        <button class="btn btn-s btn-sm" onclick="openRepairModal('${r.id}')">${ICO_EDIT} Edit</button>
+        <button class="btn btn-s btn-sm" onclick="showRepairReceipt('${r.id}')">${ICO_REC} Receipt</button>
+        ${r.status==='done' && r.phone ? `<button class="btn btn-s btn-sm" onclick="notifyRepairReady('${r.id}')">${ICO_WA} Notify</button>` : ''}
+        ${S.role==='owner' ? `<button class="btn btn-d btn-ico btn-sm" onclick="delRepair('${r.id}')">${ICO_DEL}</button>` : ''}
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty"><div style="font-size:12px">${list.length ? 'No repairs match' : 'No repair jobs yet — tap New Job'}</div></div>`;
+}
+
+function updateRepairProfit() {
+  const v = id => parseFloat(document.getElementById(id).value) || 0;
+  const p = v('rj-charged') - v('rj-parts') - v('rj-labour');
+  const el = document.getElementById('rjProfit');
+  el.textContent = 'KSh ' + (p<0?'-':'') + fmt(Math.abs(p));
+  el.style.color = p < 0 ? 'var(--re)' : 'var(--gr)';
+}
+
+function openRepairModal(id) {
+  const r = id ? S.repairs.find(x => x.id === id) : null;
+  S.editRepair = r ? r.id : null;
+  document.getElementById('repairModalTitle').textContent = r ? 'Edit Repair Job' : 'New Repair Job';
+  document.getElementById('rjSaveBtn').textContent = r ? 'Update Job' : 'Save Job';
+  document.getElementById('rj-name').value    = r ? (r.customer||'') : '';
+  document.getElementById('rj-phone').value   = r ? (r.phone||'') : '';
+  document.getElementById('rj-device').value  = r ? r.device : '';
+  document.getElementById('rj-issue').value   = r ? r.issue : '';
+  document.getElementById('rj-parts').value   = r ? (r.parts||0) : '';
+  document.getElementById('rj-labour').value  = r ? (r.labour||0) : '';
+  document.getElementById('rj-charged').value = r ? (r.charged||0) : '';
+  document.getElementById('rj-status').value  = r ? r.status : 'pending';
+  document.getElementById('rj-notes').value   = r ? (r.notes||'') : '';
+  updateRepairProfit();
+  openModal('repairModal');
+}
+
+async function saveRepair() {
+  const device = document.getElementById('rj-device').value.trim();
+  const issue  = document.getElementById('rj-issue').value.trim();
+  if (!device) { toast('Enter the device'); return; }
+  if (!issue)  { toast('Enter the issue / repair type'); return; }
+  const old = S.editRepair ? S.repairs.find(x => x.id === S.editRepair) : null;
+  const status = document.getElementById('rj-status').value;
+  const d = {
+    id: old ? old.id : 'rp' + Date.now() + Math.random().toString(36).slice(2,5),
+    code: old ? old.code : repairCode(),
+    customer: document.getElementById('rj-name').value.trim(),
+    phone: document.getElementById('rj-phone').value.trim(),
+    device, issue,
+    parts:   parseFloat(document.getElementById('rj-parts').value)   || 0,
+    labour:  parseFloat(document.getElementById('rj-labour').value)  || 0,
+    charged: parseFloat(document.getElementById('rj-charged').value) || 0,
+    status,
+    notes: document.getElementById('rj-notes').value.trim(),
+    createdAt: old ? old.createdAt : Date.now(),
+    updatedAt: Date.now(),
+    staffName: old ? (old.staffName||'') : (S.userDoc?.name || '')
+  };
+  if (status === 'done') d.completedAt = (old && old.completedAt) || Date.now();
+  try {
+    await writeThrough(db.collection('shops').doc(S.shopCode).collection('repairs').doc(d.id).set(d, {merge:true}));
+  } catch(e) { toast('Could not save job: ' + (e.code || e.message)); return; }
+  closeModal('repairModal');
+  toast(savedMsg(old ? 'Job updated' : 'Job saved'));
+}
+
+async function cycleRepairStatus(id) {
+  const r = S.repairs.find(x => x.id === id); if (!r) return;
+  const next = RP_NEXT[r.status] || 'pending';
+  if (next === r.status) return;
+  const upd = { status: next, updatedAt: Date.now() };
+  if (next === 'done') upd.completedAt = r.completedAt || Date.now();
+  try {
+    await writeThrough(db.collection('shops').doc(S.shopCode).collection('repairs').doc(id).update(upd));
+    toast(savedMsg('Marked ' + RP_STATUS[next]));
+  } catch(e) { toast('Could not update: ' + (e.code || e.message)); }
+}
+
+async function delRepair(id) {
+  if (!(await customConfirm("This can't be undone.", {title:'Delete this repair job?', danger:true, confirmLabel:'Delete'}))) return;
+  try {
+    await writeThrough(db.collection('shops').doc(S.shopCode).collection('repairs').doc(id).delete());
+    toast(savedMsg('Job deleted'));
+  } catch(e) { toast('Could not delete: ' + (e.code || e.message)); }
+}
+
+function showRepairReceipt(id) {
+  const r = S.repairs.find(x => x.id === id); if (!r) return;
+  const p = S.localPrefs, info = S.shopDoc || {};
+  const footer = [p.invFooter, p.invMpesa&&info.mpesa?'M-Pesa: '+info.mpesa:'', p.invPhone&&info.phone?'Tel: '+info.phone:''].filter(Boolean).join(' · ');
+  // Customer receipt shows the total only — parts/labour split would reveal the shop's margin.
+  document.getElementById('invoiceBody').innerHTML = `
+    <div class="invoice">
+      <div class="inv-hdr">
+        <div class="inv-title">${esc(info.shopName||'Krystal')}</div>
+        ${info.location?`<div class="inv-sub">${esc(info.location)}</div>`:''}
+        <div class="inv-sub">Repair Receipt · #${esc(r.code||'')}</div>
+        <div class="inv-sub">${fmtDate(r.createdAt)}</div>
+      </div>
+      <div style="font-size:11px;line-height:1.8">
+        <div><strong>Customer:</strong> ${esc(r.customer||'Walk-in')}${r.phone?' · '+esc(r.phone):''}</div>
+        <div><strong>Device:</strong> ${esc(r.device)}</div>
+        <div><strong>Issue:</strong> ${esc(r.issue)}</div>
+        ${r.notes?`<div><strong>Notes:</strong> ${esc(r.notes)}</div>`:''}
+        <div><strong>Status:</strong> ${RP_STATUS[r.status]||esc(r.status)}</div>
+      </div>
+      <div class="inv-total">TOTAL: KSh ${fmt(r.charged||0)}</div>
+      ${footer?`<div style="text-align:center;margin-top:8px;font-size:10px;color:#999">${esc(footer)}</div>`:''}
+    </div>`;
+  openModal('invoiceModal');
+}
+
+function notifyRepairReady(id) {
+  const r = S.repairs.find(x => x.id === id); if (!r || !r.phone) return;
+  let n = r.phone.replace(/\D/g, '');
+  if (n.startsWith('0')) n = '254' + n.slice(1);
+  else if (n.length === 9) n = '254' + n;
+  const shop = (S.shopDoc && S.shopDoc.shopName) || 'our shop';
+  const msg = `Hello${r.customer?' '+r.customer:''}, your ${r.device} is ready for collection at ${shop}. Amount due: KSh ${fmt(r.charged||0)}. Thank you!`;
+  window.open('https://wa.me/' + n + '?text=' + encodeURIComponent(msg), '_blank');
+}
+
 async function renderStaff() {
   const el = document.getElementById('staffList');
   el.innerHTML = '<div style="color:var(--tx2);font-size:12px">Loading…</div>';
@@ -2886,6 +3167,8 @@ function renderSettings() {
   document.getElementById('s-mpesa').value= shopInfo.mpesa||'';
   document.getElementById('s-email').value= shopInfo.email||'';
   document.getElementById('s-tag').value  = shopInfo.tag||'';
+  document.getElementById('s-repairs').checked = repairsOn();
+  document.getElementById('modulesSec').style.display = S.role === 'owner' ? '' : 'none';
   document.getElementById('s-light').checked = !!p.light;
   document.getElementById('s-inv-mpesa').checked = p.invMpesa!==false;
   document.getElementById('s-inv-phone').checked = p.invPhone!==false;
@@ -3039,7 +3322,7 @@ function refreshPage() {
   const active = document.querySelector('.page.active');
   if (!active) return;
   const id = active.id.replace('pg-','');
-  ({dashboard:renderDash,stock:renderStock,sales:()=>{renderPOS();renderHist();},reports:renderReports,staff:renderStaff,settings:renderSettings})[id]?.();
+  ({dashboard:renderDash,stock:renderStock,sales:()=>{renderPOS();renderHist();},repairs:renderRepairs,reports:renderReports,staff:renderStaff,settings:renderSettings})[id]?.();
 }
 function genShopCode(shopName) {
   const chars='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -3058,6 +3341,7 @@ const svgStaff     =()=>svg('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
 const svgSettings  =()=>svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>');
 const svgAdmin     =()=>svg('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>');
 const svgTruck     =()=>svg('<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>');
+const svgWrench    =()=>svg('<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>');
 const svgOrders    =()=>svg('<path d="M9 2h6l1 4H8z"/><path d="M4 6h16l-1.5 14a2 2 0 0 1-2 2H7.5a2 2 0 0 1-2-2z"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="15" y2="15"/>');
 
 // ── PWA ───────────────────────────────────────────────
