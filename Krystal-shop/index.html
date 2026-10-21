@@ -463,9 +463,94 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac);box-shadow:0 0 0 
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important;}}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.topbar,.sidebar,.auth-card,.card,.sheet,.pos-item{background:var(--sf);}}
 
+
+/* ══ LIQUID GLASS v2 ══ ambient light, specular edges, drawn SVG product art ══ */
+:root{
+  --glass-hi:rgba(255,255,255,.34);--glass-lo:rgba(255,255,255,.05);
+  --spec:inset 0 1px 0 rgba(255,255,255,.34),inset 0 -1px 0 rgba(255,255,255,.05),inset 0 0 0 1px rgba(255,255,255,.06);
+  --r-card:20px;
+}
+body.light{--glass-hi:rgba(255,255,255,.95);--glass-lo:rgba(255,255,255,.35);--spec:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(120,140,190,.12),inset 0 0 0 1px rgba(255,255,255,.55);}
+/* drifting colour orbs behind the glass — gives the blur something to refract */
+body::before,body::after{content:"";position:fixed;z-index:0;pointer-events:none;border-radius:50%;filter:blur(46px);opacity:.55;will-change:transform;}
+body::before{width:300px;height:300px;left:-90px;top:8%;background:radial-gradient(circle at 35% 35%,#2dd4bf,rgba(45,212,191,0) 70%);animation:orbA 22s ease-in-out infinite alternate;}
+body::after{width:340px;height:340px;right:-120px;top:38%;background:radial-gradient(circle at 60% 40%,#7c8cff,rgba(124,140,255,0) 70%);animation:orbB 26s ease-in-out infinite alternate;}
+body.light::before,body.light::after{opacity:.38;}
+@keyframes orbA{to{transform:translate(70px,140px) scale(1.15);}}
+@keyframes orbB{to{transform:translate(-90px,-120px) scale(1.1);}}
+.topbar,.sidebar,.page,.cart-fab{position:relative;}
+.page{z-index:1;}
+.topbar{z-index:50;}
+.sidebar{position:fixed;}
+.cart-fab{position:fixed;}
+
+/* glass surfaces: lit top edge + soft depth */
+.topbar,.card,.sheet,.tbl-wrap,.cart-item,.paused-contact{box-shadow:var(--spec),0 14px 34px rgba(0,0,0,.18);}
+.topbar{background:linear-gradient(180deg,var(--glass-hi) -80%,var(--sf) 60%);}
+.hamburger,.tb-date,.sync-pill{border-radius:12px;box-shadow:var(--spec);}
+.hamburger{width:40px;height:40px;}
+.tb-icon{border-radius:11px;width:30px;height:30px;box-shadow:var(--spec),0 6px 14px rgba(94,234,212,.28);}
+.sync-pill{padding:5px 10px;}
+.sec-title{font-size:19px;letter-spacing:-.4px;}
+.sec-head .btn{border-radius:12px;}
+
+/* search + chips */
+.search-wrap input{height:42px;border-radius:14px;padding-left:36px;box-shadow:var(--spec);}
+.search-ico{left:13px;z-index:2;}
+#pg-sales .btn.btn-s[title="Scan barcode"],#pg-stock .btn.btn-s[title="Scan barcode"]{width:42px!important;height:42px!important;border-radius:14px;background:var(--sf2);box-shadow:var(--spec);}
+#posCats,#stockCats{flex-wrap:nowrap;overflow-x:auto;gap:7px;margin:0 -12px 12px;padding:2px 12px 4px;scroll-padding:0 12px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;}
+#posCats::-webkit-scrollbar,#stockCats::-webkit-scrollbar{display:none;}
+#posCats .cat-pill,#stockCats .cat-pill{flex:0 0 auto;white-space:nowrap;padding:8px 15px;font-size:12px;border-radius:999px;scroll-snap-align:start;box-shadow:var(--spec);}
+#posCats .cat-pill.active,#stockCats .cat-pill.active{box-shadow:var(--spec),0 6px 18px rgba(94,234,212,.35);font-weight:800;}
+
+/* product cards */
+.pos-grid{gap:11px;padding:2px 2px 96px;}
+.pos-item{border-radius:var(--r-card);padding:9px 9px 11px;background:linear-gradient(165deg,var(--glass-hi) -120%,var(--sf) 55%);box-shadow:var(--spec),0 10px 26px rgba(0,0,0,.16);transition:transform .18s cubic-bezier(.3,1.4,.5,1),box-shadow .18s,border-color .18s;}
+.pos-item::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,0) 38%);}
+.pos-item:active{transform:scale(.95);}
+.pos-item.in-cart{border-color:rgba(94,234,212,.6);box-shadow:var(--spec),0 0 0 1px rgba(94,234,212,.35),0 12px 28px rgba(45,212,191,.2);}
+.pos-visual{height:84px;border-radius:15px;margin-bottom:9px;background:radial-gradient(130% 100% at 15% 0%,rgba(var(--c),.42),rgba(var(--c),0) 62%),linear-gradient(160deg,rgba(var(--c),.24),rgba(var(--c),.07));border:1px solid rgba(var(--c),.34);color:rgb(var(--c));box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -14px 22px rgba(0,0,0,.10);}
+.pos-visual:before{width:90px;height:90px;right:-28px;top:-42px;background:radial-gradient(circle,rgba(255,255,255,.5),rgba(255,255,255,0) 70%);}
+.pos-visual:after{content:"";position:absolute;left:0;right:0;top:0;height:46%;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0));border-radius:15px 15px 60% 60%/15px 15px 22px 22px;pointer-events:none;}
+.pos-art{position:relative;z-index:1;width:66px;height:66px;filter:drop-shadow(0 6px 9px rgba(var(--c),.55)) drop-shadow(0 1px 0 rgba(255,255,255,.35));transition:transform .25s cubic-bezier(.3,1.4,.5,1);}
+.pos-item:hover .pos-art{transform:translateY(-2px) scale(1.06);}
+.pos-add{position:absolute;right:8px;top:8px;z-index:3;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#06231f;background:linear-gradient(145deg,#fff,rgba(255,255,255,.7));box-shadow:0 4px 12px rgba(0,0,0,.28),inset 0 -2px 4px rgba(0,0,0,.08);}
+.pos-item:active .pos-add{background:linear-gradient(145deg,#5eead4,#8b9cff);}
+.pos-qty{position:absolute;left:8px;top:8px;z-index:3;min-width:24px;height:24px;padding:0 7px;border-radius:99px;display:grid;place-items:center;font-size:12px;font-weight:900;color:#04231e;background:linear-gradient(135deg,#5eead4,#a7f3d0);box-shadow:0 4px 12px rgba(45,212,191,.55);animation:qtyPop .25s cubic-bezier(.3,1.6,.5,1);}
+.pos-qty[hidden]{display:none;}
+@keyframes qtyPop{from{transform:scale(.4);opacity:0;}to{transform:scale(1);opacity:1;}}
+.pos-name{font-size:12.5px;font-weight:750;line-height:1.28;min-height:32px;margin:0 2px 6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.pos-price{font-size:17px;font-weight:900;letter-spacing:-.4px;margin:0 2px;color:var(--tx);}
+.pos-price small{font-size:10px;font-weight:700;color:var(--tx2);margin-right:3px;letter-spacing:0;}
+.pos-stock{display:flex;align-items:center;gap:6px;margin:6px 2px 0;font-size:10.5px;font-weight:650;color:var(--tx2);}
+.pos-stock i{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 0 3px rgba(52,211,153,.18);flex-shrink:0;}
+.pos-stock.low{color:#fbbf24;}.pos-stock.low i{background:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.2);}
+.pos-stock.crit{color:#fb7185;}.pos-stock.crit i{background:#fb7185;box-shadow:0 0 0 3px rgba(251,113,133,.22);animation:pulse 1.4s infinite;}
+body.light .pos-stock.low{color:#b45309;}body.light .pos-stock.crit{color:#be123c;}
+
+/* floating cart — frosted capsule */
+.cart-fab{left:14px;right:14px;border-radius:24px;padding:11px 12px 11px 16px;gap:12px;background:linear-gradient(120deg,rgba(15,186,162,.92),rgba(105,120,247,.92));-webkit-backdrop-filter:blur(20px) saturate(170%);backdrop-filter:blur(20px) saturate(170%);border:1px solid rgba(255,255,255,.38);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -10px 20px rgba(0,0,0,.10),0 16px 36px rgba(48,70,170,.45);}
+.cart-fab::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,0) 52%);}
+.cart-fab>*{position:relative;}
+.cart-fab-count{width:30px;height:30px;font-size:13px;background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.4);}
+.cart-fab-label{font-size:13px;opacity:.95;}
+.cart-fab-total{font-size:15px;font-weight:900;background:#fff;color:#27306f;padding:9px 15px;border-radius:15px;box-shadow:0 4px 12px rgba(0,0,0,.2);}
+
+/* sheets + sidebar */
+.sheet{border-radius:26px 26px 0 0;border-top:1px solid rgba(255,255,255,.28);}
+.sheet-handle{width:42px;height:5px;border-radius:9px;background:rgba(255,255,255,.3);}
+.sidebar{border-radius:0 26px 26px 0;box-shadow:var(--spec),22px 0 60px rgba(0,0,0,.35);}
+.sb-item{border-radius:14px;}
+.sb-item.active{box-shadow:var(--spec);background:linear-gradient(135deg,rgba(94,234,212,.22),rgba(139,156,255,.2));}
+.btn-p{box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 8px 20px rgba(94,234,212,.28);}
+body.light .btn-p,body.light .cat-pill.active{color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.25);}
+.rp-card,.rp-stat{border-radius:18px;box-shadow:var(--spec),0 10px 26px rgba(0,0,0,.14);}
+
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><linearGradient id="kGloss" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".55" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><linearGradient id="kBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".55"/><stop offset="1" stop-color="currentColor" stop-opacity=".16"/></linearGradient></defs></svg>
+
 
 <!-- ═══════ AUTH SCREENS ═══════ -->
 <!-- Login -->
@@ -2402,39 +2487,76 @@ function handleScanResult(code, context) {
 }
 
 // ── POS ───────────────────────────────────────────────
-// Local-only product visuals: no uploads, external image URLs, or Firebase Storage.
-// A category/name match selects a small illustrated glyph plus a familiar emoji.
+// Local-only product art: hand-drawn glass SVGs, no emojis / uploads / external images.
+// Every icon is a 64x64 drawing that uses currentColor, so the tile colour tints it.
+const A_STROKE = 'fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"';
+const ART = {
+  phone: `<rect x="19" y="6" width="26" height="52" rx="7" fill="url(#kBody)" stroke="currentColor" stroke-width="2.2"/><rect x="23" y="11" width="18" height="40" rx="3.5" fill="currentColor" fill-opacity=".32"/><path d="M23 11h18L29 51h-6z" fill="url(#kGloss)"/><path d="M28.5 8.6h7" ${A_STROKE} stroke-width="1.8"/><circle cx="32" cy="54.4" r="1.3" fill="currentColor"/>`,
+  case: `<path d="M32 6l21 7.5V30c0 14-9 23-21 28C20 53 11 44 11 30V13.5z" fill="url(#kBody)" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M32 6l21 7.5V30c0 14-9 23-21 28z" fill="currentColor" fill-opacity=".14"/><path d="M32 6L11 13.5V30c0 6 1.7 11 4.6 15L32 6z" fill="url(#kGloss)"/><path d="M22.5 31.5l7 7 12.5-14.5" ${A_STROKE} stroke-width="3.4"/>`,
+  battery: `<rect x="6" y="19" width="45" height="27" rx="7" fill="url(#kBody)" stroke="currentColor" stroke-width="2.2"/><rect x="51" y="27" width="6" height="11" rx="2.5" fill="currentColor"/><rect x="11" y="24" width="9" height="17" rx="2.5" fill="currentColor" fill-opacity=".85"/><rect x="23" y="24" width="9" height="17" rx="2.5" fill="currentColor" fill-opacity=".6"/><rect x="35" y="24" width="9" height="17" rx="2.5" fill="currentColor" fill-opacity=".3"/><path d="M6 26a7 7 0 0 1 7-7h30L28 46H13a7 7 0 0 1-7-7z" fill="url(#kGloss)"/>`,
+  cable: `<path d="M15 12c0 0-8 4-8 14 0 14 22 8 22 22" ${A_STROKE} stroke-width="3.6"/><rect x="7.5" y="4" width="15" height="13" rx="3.5" fill="url(#kBody)" stroke="currentColor" stroke-width="2.2"/><rect x="11" y="7.5" width="8" height="6" rx="1.5" fill="currentColor"/><rect x="21" y="46" width="16" height="13" rx="4" fill="url(#kBody)" stroke="currentColor" stroke-width="2.2"/><path d="M37 49.5h12a3 3 0 0 1 3 3v0a3 3 0 0 1-3 3H37" fill="url(#kBody)" stroke="currentColor" stroke-width="2.2"/><path d="M44 49.8v5.4M47.6 49.8v5.4" ${A_STROKE} stroke-width="1.8"/><path d="M8 6h9l-2 10H9z" fill="url(#kGloss)"/>`,
+  earphones: `<path d="M11 38V31a21 21 0 0 1 42 0v7" ${A_STROKE} stroke-width="3.6"/><rect x="6" y="35" width="14" height="22" rx="6.5" fill="url(#kBody)" stroke="currentColor" stroke-width="2.2"/><rect x="44" y="35" width="14" height="22" rx="6.5" fill="url(#kBody)" stroke="currentColor" stroke-width="2.2"/><path d="M9 40a4 4 0 0 1 4-4h2L10 52H9z" fill="url(#kGloss)"/><path d="M47 40a4 4 0 0 1 4-4h2l-5 16h-1z" fill="url(#kGloss)"/>`,
+  speaker: `<rect x="13" y="5" width="38" height="54" rx="10" fill="url(#kBody)" stroke="currentColor" stroke-width="2.2"/><circle cx="32" cy="19" r="5.5" fill="currentColor" fill-opacity=".5" stroke="currentColor" stroke-width="2"/><circle cx="32" cy="41" r="12" fill="currentColor" fill-opacity=".28" stroke="currentColor" stroke-width="2.2"/><circle cx="32" cy="41" r="5" fill="currentColor"/><path d="M13 15a10 10 0 0 1 10-10h6L13 40z" fill="url(#kGloss)"/>`,
+  sd: `<path d="M17 5h21l11 11v39a4 4 0 0 1-4 4H17a4 4 0 0 1-4-4V9a4 4 0 0 1 4-4z" fill="url(#kBody)" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M20 9v10M26 9v10M32 9v10" ${A_STROKE} stroke-width="3"/><rect x="19" y="30" width="26" height="19" rx="4" fill="currentColor" fill-opacity=".3"/><path d="M17 5h14L17 30z" fill="url(#kGloss)"/>`,
+  repair: `<g transform="translate(5 5) scale(2.25)"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" fill="url(#kBody)" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></g><circle cx="16.5" cy="47.5" r="3.2" fill="currentColor"/><path d="M16 5v8M12 9h8" ${A_STROKE} stroke-width="2.6"/>`,
+  watch: `<rect x="21" y="3" width="22" height="18" rx="5" fill="currentColor" fill-opacity=".34" stroke="currentColor" stroke-width="2"/><rect x="21" y="43" width="22" height="18" rx="5" fill="currentColor" fill-opacity=".34" stroke="currentColor" stroke-width="2"/><circle cx="32" cy="32" r="15" fill="url(#kBody)" stroke="currentColor" stroke-width="2.4"/><circle cx="32" cy="32" r="10.5" fill="currentColor" fill-opacity=".22"/><path d="M32 25v7.5l5 3" ${A_STROKE} stroke-width="2.8"/><path d="M19 28a14 14 0 0 1 13-13L19 40z" fill="url(#kGloss)"/>`,
+  camera: `<path d="M21 17l3.5-7h15L43 17" fill="currentColor" fill-opacity=".4" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><rect x="6" y="16" width="52" height="38" rx="9" fill="url(#kBody)" stroke="currentColor" stroke-width="2.2"/><circle cx="32" cy="35" r="12.5" fill="currentColor" fill-opacity=".3" stroke="currentColor" stroke-width="2.4"/><circle cx="32" cy="35" r="6" fill="currentColor"/><circle cx="28.8" cy="31.8" r="2" fill="#fff" fill-opacity=".8"/><circle cx="49" cy="24" r="2.2" fill="currentColor"/><path d="M6 25a9 9 0 0 1 9-9h14L6 46z" fill="url(#kGloss)"/>`,
+  bulb: `<path d="M32 4a18 18 0 0 0-10 33c2 1.7 3.2 3.6 3.2 6.2V46h13.6v-2.8c0-2.6 1.2-4.5 3.2-6.2A18 18 0 0 0 32 4z" fill="url(#kBody)" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M26.5 22l5.5 7 5.5-7" ${A_STROKE} stroke-width="2.6"/><path d="M32 29v17" ${A_STROKE} stroke-width="2.4"/><path d="M25 51h14M27 56h10M29.5 61h5" ${A_STROKE} stroke-width="3"/><path d="M22 14a15 15 0 0 1 9-8L19 30z" fill="url(#kGloss)"/>`,
+  strip: `<rect x="4" y="20" width="56" height="25" rx="8" fill="url(#kBody)" stroke="currentColor" stroke-width="2.2"/><rect x="10" y="26" width="13" height="13" rx="3.5" fill="currentColor" fill-opacity=".32"/><rect x="25.5" y="26" width="13" height="13" rx="3.5" fill="currentColor" fill-opacity=".32"/><rect x="41" y="26" width="13" height="13" rx="3.5" fill="currentColor" fill-opacity=".32"/><path d="M13.5 30.5v2.5M19.5 30.5v2.5M29 30.5v2.5M35 30.5v2.5M44.5 30.5v2.5M50.5 30.5v2.5" ${A_STROKE} stroke-width="2.2"/><path d="M32 45v6c0 4 3 7 7 7h14" ${A_STROKE} stroke-width="3.2"/><path d="M4 28a8 8 0 0 1 8-8h22L12 45H12a8 8 0 0 1-8-8z" fill="url(#kGloss)"/>`,
+  plug: `<path d="M25 24V8M39 24V8" ${A_STROKE} stroke-width="4.4"/><rect x="17" y="23" width="30" height="21" rx="8" fill="url(#kBody)" stroke="currentColor" stroke-width="2.2"/><path d="M32 44v6c0 5 4 9 9 9" ${A_STROKE} stroke-width="3.4"/><path d="M17 31a8 8 0 0 1 8-8h8L17 44z" fill="url(#kGloss)"/>`,
+  box: `<path d="M32 5l23 12v30L32 59 9 47V17z" fill="url(#kBody)" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M9 17l23 12 23-12M32 29v30" ${A_STROKE} stroke-width="2.2"/><path d="M32 5L9 17v30l8 4.2z" fill="url(#kGloss)"/><path d="M20.5 11l23 12" ${A_STROKE} stroke-width="2.4" opacity=".7"/>`
+};
 function productVisual(item) {
   const label = ((item && item.cat) || '') + ' ' + ((item && item.name) || '');
+  // [pattern, art key, tile colour as "r,g,b"] — first match wins
   const rules = [
-    [/screen|display|lcd|touch/i, '▯', '📱', '#dbeafe', '#1d4ed8'],
-    [/cover|case|pouch|protector|glass/i, '▱', '🛡️', '#f3e8ff', '#7e22ce'],
-    [/battery|power bank/i, '▰', '🔋', '#dcfce7', '#166534'],
-    [/charger|charging|adapter|cable|usb|type.?c/i, 'ϟ', '🔌', '#fef3c7', '#92400e'],
-    [/earphone|headphone|headset|airpod/i, '◖', '🎧', '#fce7f3', '#9d174d'],
-    [/speaker|sound/i, ')))', '🔊', '#ffedd5', '#9a3412'],
-    [/sim|memory|sd card|flash|card reader/i, '▤', '💾', '#e0e7ff', '#3730a3'],
-    [/repair|labour|service|software|unlock/i, '✚', '🛠️', '#ccfbf1', '#115e59'],
-    [/phone|mobile|smartphone/i, '▯', '📱', '#dbeafe', '#1e40af'],
-    [/watch/i, '◉', '⌚', '#e2e8f0', '#334155'],
-    [/camera/i, '◎', '📷', '#ede9fe', '#5b21b6'],
-    [/accessor/i, '✦', '✨', '#fae8ff', '#86198f']
+    [/bulb|lamp|\bled\b|torch|flash ?light/i, 'bulb', '250,204,21'],
+    [/extension|socket|power ?strip|multi ?plug|adapter strip/i, 'strip', '34,211,238'],
+    [/repair|labour|service|software|unlock/i, 'repair', '45,212,191'],
+    [/screen|display|lcd|touch/i, 'phone', '96,165,250'],
+    [/cover|case|pouch|protector|glass/i, 'case', '167,139,250'],
+    [/battery|power bank/i, 'battery', '52,211,153'],
+    [/charger|charging|adapter|cable|usb|type.?c|micro/i, 'cable', '251,191,36'],
+    [/earphone|headphone|headset|airpod|buds/i, 'earphones', '244,114,182'],
+    [/speaker|sound/i, 'speaker', '251,146,60'],
+    [/sim|memory|sd card|flash|card reader/i, 'sd', '129,140,248'],
+    [/repair|labour|service|software|unlock/i, 'repair', '45,212,191'],
+    [/electric|plug|wire|switch|fuse|socket/i, 'plug', '163,230,53'],
+    [/phone|mobile|smartphone/i, 'phone', '96,165,250'],
+    [/watch/i, 'watch', '148,163,184'],
+    [/camera/i, 'camera', '192,132,252'],
   ];
-  const hit = rules.find(r => r[0].test(label)) || [null, '✦', '📦', '#e2e8f0', '#334155'];
-  return `<div class="pos-visual" style="--visual-bg:${hit[3]};--visual-ink:${hit[4]}"><div class="pos-illustration" aria-hidden="true">${hit[1]}</div><span class="pos-emoji" aria-hidden="true">${hit[2]}</span></div>`;
+  const hit = rules.find(r => r[0].test(label)) || [null, 'box', '244,114,182'];
+  return `<div class="pos-visual" style="--c:${hit[2]}"><svg class="pos-art" viewBox="0 0 64 64" aria-hidden="true" focusable="false">${ART[hit[1]]}</svg></div>`;
+}
+function stockState(i) {
+  if (i.stock <= Math.min(2, i.reorder)) return ['crit', i.stock === 1 ? 'Only 1 left' : 'Only ' + i.stock + ' left'];
+  if (i.stock <= i.reorder) return ['low', 'Low · ' + i.stock + ' left'];
+  return ['', i.stock + ' in stock'];
+}
+function syncPosBadges() {
+  const m = {}; S.cart.forEach(c => m[c.itemId] = c.qty);
+  document.querySelectorAll('#posItems .pos-item').forEach(el => {
+    const q = m[el.dataset.id] || 0, b = el.querySelector('.pos-qty');
+    if (b) { b.textContent = q; b.hidden = !q; }
+    el.classList.toggle('in-cart', !!q);
+  });
 }
 function renderPOS() {
   pills('posCats','posCat',renderPOS);
   const q = document.getElementById('posQ').value.toLowerCase();
   const list = S.items.filter(i=>(S.posCat==='All'||i.cat===S.posCat)&&(!q||i.name.toLowerCase().includes(q))&&i.stock>0);
-  document.getElementById('posItems').innerHTML = list.map(i=>`
-    <div class="pos-item" role="button" tabindex="0" aria-label="Add ${esc(i.name)} to sale" onclick="addCart('${i.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();addCart('${i.id}');}">
-      <span class="pos-addhint" aria-hidden="true">+</span>
+  document.getElementById('posItems').innerHTML = list.map(i=>{
+    const [st, stTxt] = stockState(i);
+    return `
+    <div class="pos-item" data-id="${i.id}" role="button" tabindex="0" aria-label="Add ${esc(i.name)} to sale" onclick="addCart('${i.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();addCart('${i.id}');}">
+      <span class="pos-qty" hidden aria-hidden="true"></span>
+      <span class="pos-add" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
       ${productVisual(i)}
       <div class="pos-name">${esc(i.name)}</div>
-      <div class="pos-price">KSh ${fmt(i.price)}</div>
-      <div class="pos-stock">${i.stock<=i.reorder?'⚠️ Low stock':'📦'} Stock: ${i.stock}</div>
-    </div>`).join('') || '<div style="grid-column:span 2;text-align:center;color:var(--tx2);padding:20px;font-size:12px">No items</div>';
+      <div class="pos-price"><small>KSh</small>${fmt(i.price)}</div>
+      <div class="pos-stock ${st}"><i></i>${stTxt}</div>
+    </div>`;}).join('') || '<div style="grid-column:span 2;text-align:center;color:var(--tx2);padding:20px;font-size:12px">No items</div>';
   renderCart();
 }
 function addCart(id) {
@@ -2445,6 +2567,7 @@ function addCart(id) {
   renderCart();
 }
 function renderCart() {
+  syncPosBadges();
   const el = document.getElementById('cartBody');
   const fab = document.getElementById('cartFab');
   const totalQty = S.cart.reduce((a,b)=>a+b.qty,0);
